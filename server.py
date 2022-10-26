@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 import asyncio
 import shelve
+from time import sleep
 from simple_websocket_server import WebSocketServer, WebSocket
 from datetime import datetime
 from icecream import ic
-from multiprocessing import Process
-
+from multiprocessing import Process, Queue
 db = shelve.open('spam')
 #del db['dayplanned']
 
 clients = []
-
+messanger = None
+server_global = None
 
 def say(message):
-    for client in clients_global:
+    for client in clients:
         client.send(message)
         ic()
 
@@ -43,35 +44,37 @@ class JustChat(WebSocket):
         for client in clients:
             client.send_message(self.address[0] + u' - connected')
         clients.append(self)
-        clients_global = clients
+        global messanger 
+        messanger = self
         pass
 
     def handle_close(self):
         clients.remove(self)
         print(self.address, 'closed')
-        global clients_global
-        clients_global = clients
         for client in clients:
             client.send_message(self.address[0] + u' - disconnected')
 
 
-def ws_handler():
-    ic()
+def ws_handler(queue):
     ic('server connected')
     server = WebSocketServer('', 8765, JustChat)
+    queue.put(server)
     server.serve_forever()
 
 async def queue_handler():
     pass
 
-async def watch_params():
+def watch_params(queue):
     print('watch_params')
     while True:
-        await asyncio.sleep(10)
+        sleep(10)
         dt = datetime.today().strftime('%Y-%m-%d')
         if not db.get('dayplanned') or db.get('dayplanned') != dt:
             m = "You did not plan your day!"
             ic(m)
+            server = queue.get()
+
+            # ic(server.clients)
             say(m)
             ic()
 
@@ -83,12 +86,17 @@ async def main():
     # await task1
     # #await task2
     # await task3
+q = Queue()
 processes = []
-proc = Process(target=ws_handler)
+proc = Process(target=ws_handler, args=(q,))
 proc.start()
 processes.append(proc)
+proc1 = Process(target=watch_params, args=(q,))
+proc1.start()
+processes.append(proc1)
 try:
-    asyncio.run(main())
+    #asyncio.run(main())
+    pass
 except KeyboardInterrupt:
     pass
 finally:
