@@ -1,41 +1,27 @@
-
-import asyncio
-
-from autobahn.asyncio.websocket import WebSocketServerProtocol, WebSocketServerFactory
+from simple_websocket_server import WebSocketServer, WebSocket
 
 
-class MyServerProtocol(WebSocketServerProtocol):
+class SimpleChat(WebSocket):
+    def handle(self):
+        for client in clients:
+            if client != self:
+                client.send_message(self.address[0] + u' - ' + self.data)
+                print(self.address[0] + u' - ' + self.data)
 
-    def onConnect(self, request):
-        print("Client connecting: {0}".format(request.peer))
+    def connected(self):
+        print(self.address, 'connected')
+        for client in clients:
+            client.send_message(self.address[0] + u' - connected')
+        clients.append(self)
 
-    def onOpen(self):
-        print("WebSocket connection open.")
-
-    def onMessage(self, payload, isBinary):
-        if isBinary:
-            print("Binary message received: {0} bytes".format(len(payload)))
-        else:
-            print("Text message received: {0}".format(payload.decode('utf8')))
-
-        # echo back message verbatim
-        self.sendMessage(payload, isBinary)
-
-    def onClose(self, wasClean, code, reason):
-        print("WebSocket connection closed: {0}".format(reason))
+    def handle_close(self):
+        clients.remove(self)
+        print(self.address, 'closed')
+        for client in clients:
+            client.send_message(self.address[0] + u' - disconnected')
 
 
-if __name__ == '__main__':
-    factory = WebSocketServerFactory("ws://127.0.0.1:8765")
-    factory.protocol = MyServerProtocol
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    coro = loop.create_server(factory, '0.0.0.0', 8765)
-    server = loop.run_until_complete(coro)
-    try:
-        loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.close()
-        loop.close()
+clients = []
+
+server = WebSocketServer('', 8765, SimpleChat)
+server.serve_forever()
