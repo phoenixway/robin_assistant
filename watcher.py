@@ -1,8 +1,7 @@
+#!/usr/bin/env python3
+
 import asyncio
 import datetime
-
-
-1#!/usr/bin/env python3
 
 class Watcher:
     def __init__(self, modules):

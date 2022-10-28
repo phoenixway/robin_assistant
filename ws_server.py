@@ -6,7 +6,6 @@ import websockets
 from termcolor import colored
 from colorlog import ColoredFormatter
 import asyncio
-import shelve
 from datetime import datetime
 from icecream import ic
 import websockets
@@ -29,8 +28,9 @@ log.addHandler(stream)
 
 
 class Ws_server:
-    def __init__(self):
+    def __init__(self, modules):
         self.websocket = None
+        self.MODULES = modules
 
     async def say(self, message):
         global no_error
@@ -42,20 +42,20 @@ class Ws_server:
                 log.error('ConnectionClosedOK')
                 no_error = False
 
-    async def echo(self, websocket):
-        global no_error, MODULES
+    async def handle(self, websocket):
+        global no_error
         self.websocket = websocket
         while no_error:
             try:
-                name = await websocket.recv()
-                log.debug(f"Received: {name}")
-                greeting = f"Hello {name}!"
-                await websocket.send(greeting)
-                log.debug(f"Server sent: {greeting}")
+                input_text = await websocket.recv()
+                log.debug(f"Received: {input_text}")
+                answer = self.MODULES['ai_core'].parse(input_text)
+                await websocket.send(answer)
+                log.debug(f"Server sent: {answer}")
             except websockets.exceptions.ConnectionClosedOK:
                 log.error('ConnectionClosedOK')
                 no_error = False
 
     async def ws_handle(self):
-        await websockets.serve(self.echo, "localhost", 8765)
+        await websockets.serve(self.handle, "localhost", 8765)
         await asyncio.Future()  # run forever
