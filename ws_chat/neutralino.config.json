@@ -11,7 +11,7 @@
   ],
   "modes": {
     "window": {
-      "title": "chat4",
+      "title": "Robin chat",
       "width": 800,
       "height": 500,
       "minWidth": 400,
@@ -20,7 +20,7 @@
     }
   },
   "cli": {
-    "binaryName": "chat4",
+    "binaryName": "ws_chat",
     "resourcesPath": "/vue_chat/dist/",
     "extensionsPath": "/extensions/",
     "clientLibrary": "/www/neutralino.js",
