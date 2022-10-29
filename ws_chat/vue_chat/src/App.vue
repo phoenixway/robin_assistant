@@ -1,13 +1,17 @@
 <template>
   <div id="app">
     <div class="container">
-      <div class="messages">
-        <b-form-textarea id="output"></b-form-textarea>
-      </div>
+      <section ref="chatArea" class="chat-area">
+        <p v-for="message in messages" v-bind:key="message.body" class="message"
+          :class="{ 'message-out': message.author === 'you', 'message-in': message.author !== 'you' }">
+          {{ message.body }}
+        </p>
+      </section>
+
       <div class="chat" style="width: 100%; height: 33px;  ">
         <b-form-input id="input" placeholder="Send message.." style="float: left;"
           v-on:keydown.enter="test_keydown_handler" />
-        <b-button type="submit" id="send_button" style="float:right" variant="primary" v-on:click="send_message">
+        <b-button type="submit" id="send_button" style="float:right" variant="success" v-on:click="send_message">
           Відправити</b-button>
       </div>
 
@@ -16,6 +20,7 @@
 </template>
 
 <script>
+import Vue from 'vue'
 export default {
   name: 'App',
   components: {
@@ -24,22 +29,42 @@ export default {
     return {
       ws_socket: null,
       reconnecting: false,
+      bobMessage: '',
+      youMessage: '',
+      messages: [
+      ]
     }
   },
   methods: {
+    sendMessage(direction, mes) {
+      console.log('sendMess')
+      console.log(direction, mes)
+      console.log("Direction: =" + direction + "=")
+      if (direction === 'out') {
+        console.log('OUT')
+        this.messages.push({ body: mes, author: 'you' })
+      } else if (direction == 'in') {
+        console.log('IN')
+        this.messages.push({ body: mes, author: 'robin' })
+      } else {
+        alert('something went wrong')
+      }
+      Vue.nextTick(() => {
+        let messageDisplay = this.$refs.chatArea
+        messageDisplay.scrollTop = messageDisplay.scrollHeight
+      })
+    },
+    clearAllMessages() {
+      this.messages = []
+    },
     show_message(message) {
-      let output = document.getElementById("output");  
-      if (output.value != "")
-        output.value = output.value + "\r\n" + message;
-      else
-        output.value = message;
+      this.sendMessage('in', message)
     },
     send_message() {
       var input = document.getElementById("input");
       if (input.value === '/reload') {
         console.log('reload');
-        this.ws_socket.close();
-        this.ws_socket = new WebSocket("ws://127.0.0.1:8765");
+        this.reconnect()
       }
       else {
         var input_text
@@ -47,6 +72,7 @@ export default {
         console.log("send " + input_text)
         this.ws_socket.send(input_text);
         input.value = ""
+        this.sendMessage('out', input_text)
       }
 
     },
@@ -58,7 +84,7 @@ export default {
         // document.getElementById("input").focus();
       }
     },
-    reconnect(){
+    reconnect() {
       this.ws_socket = new WebSocket("ws://127.0.0.1:8765");
       this.ws_socket.onmessage = (event) => {
         this.show_message(event.data);
@@ -71,35 +97,116 @@ export default {
         if (this.reconnecting == true)
           this.show_message('Lost connection.');
         this.reconnecting = true;
-        setTimeout(() => {this.reconnect()}, 3000);
+        setTimeout(() => { this.reconnect() }, 3000);
+        document.getElementById("input").focus();
       };
     },
+    
+    toggleDarkMode() {
+      console.log('toggleDarkMode');
+      if (document.documentElement.classList.contains("light")) {
+        document.documentElement.classList.remove("light")
+        document.documentElement.classList.add("dark")
+      } else if (document.documentElement.classList.contains("dark")) {
+        document.documentElement.classList.remove("dark")
+        document.documentElement.classList.add("light")
+      } else {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add("dark")
+        } else {
+          const hours = new Date().getHours()
+          const isDayTime = hours > 6 && hours < 20
+          if (isDayTime)
+            document.documentElement.classList.add("light")
+          else
+          document.documentElement.classList.add("dark")
+        }
+      }
+    }
   },
   created() {
+    this.toggleDarkMode();
     this.reconnect();
   }
 }
 </script>
 
 <style>
+html {
+  font-family: Helvetica;
+  box-sizing: border-box;
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, 0);
+
+}
+
+.message-out {
+  color: white;
+  margin-left: 50%;
+}
+
+.message-in {
+  background: #F1F0F0;
+  color: black;
+}
+
+
+/* @media (prefers-color-scheme: dark) {
+  html {
+    color: #eee;
+    background: black;
+  }
+
+  #app {
+    
+    background: black;
+    border: 1px solid #2f4d1c;
+  }
+
+  .chat-area {
+    background: black;
+    border: 1px solid #2f4d1c;
+  }
+
+  .container {
+    background: black;
+  }
+
+  .message-out {
+    background: #121d0c;
+    color: black;
+  }
+
+  .message-in {
+    background: #2f4d1c;
+    color: black;
+  }
+
+  #input {
+    background: #122408;
+    border: 1px solid #122408;
+    forced-color-adjust: green;
+    color: grey;
+  }
+
+  #send_button {
+    background: #122408;
+    color: black;
+    focused-color: green;
+  }
+
+
+} */
+
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* text-align: center; */
-  color: #2c3e50;
   margin-top: 5px;
-}
-
-#output {
-  width: 100%;
-  height: 100%;
-  -webkit-box-sizing: border-box;
-  /* Safari/Chrome, other WebKit */
-  -moz-box-sizing: border-box;
-  /* Firefox, other Gecko */
-  box-sizing: border-box;
-  /* Opera/IE 8+ */
+  max-width: 600px;
+  text-align: center;
 }
 
 .container {
@@ -109,16 +216,126 @@ export default {
   overflow: hidden;
 }
 
-.messages {
-  float: left;
-  width: 100%;
-  height: 90%;
-  display: block;
-  overflow: scroll;
+#input {
+  width: calc(100% - 113px)
+}
+
+.chat-area {
+  height: 87%;
+  padding: 1em;
+  overflow: auto;
+  max-width: 580px;
+  min-width: 580px;
+  margin-top: 10px;
   margin-bottom: 10px;
+  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3)
+}
+
+.message {
+  width: 45%;
+  border-radius: 20px;
+  padding: .6em;
+  font-size: .95em;
+}
+
+.chat-inputs {
+  display: flex;
+  justify-content: space-between;
+}
+
+#person1-input {
+  padding: .5em;
+}
+
+#person2-input {
+  padding: .5em;
+}
+
+.form-control:focus {
+   border-color: green !important;
+   box-shadow: inherit !important;
+}
+/* COLORS
+================================================================================= */
+/* automatic/manual light mode */
+:root,
+:root.light {
+  --bg-color: white;
+  --border-color: grey;
+  --my-messages-bg: #407FFF;
+  --my-messages-color: white;
+  --in-messages-bg: #F0DA62;
+  --in-messages-color: black;
+
+}
+
+/* automatic dark mode */
+/* ❗️ keep the rules in sync with the manual dark mode below! */
+
+
+
+/* manual dark mode 
+/* ❗️ keep the rules in sync with the automatic dark mode above! */
+:root.dark {
+  --bg-color: black;
+  --border-color: darkgreen;
+  --my-messages-bg: #121d0c;
+  --in-messages-bg: #2e5d2a;
+  --my-messages-color: grey;
+  --in-messages-color: black;
+}
+
+/* use the variables */
+html {
+  /* color: #eee; */
+  background: var(--bg-color);
+}
+
+#app {
+  /* color: darkgreen; */
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+}
+
+.chat-area {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+}
+
+.container {
+  background: var(--bg-color);
+}
+
+.message-out {
+  background: var(--my-messages-bg);
+  color: var(--my-messages-color);
+}
+
+.message-in {
+  background: var(--in-messages-bg);
+  color: var(--in-messages-color);
+}
+
+#input::placeholder{
+  color: var(--my-messages-color);
+  background: var(--my-messages-bg);
+  /* border: 1px solid var(--border-color); */
 }
 
 #input {
-  width: calc(100% - 113px)
+  background: var(--my-messages-bg);
+  /* border: 1px solid var(--border-color); */
+  
+  color: var(--my-messages-color);
+}
+
+#send_button {
+  background: var(--my-messages-bg);
+  color: var(--my-messages-color);
+}
+
+body {
+  color: var(--some-value);
+  background-color: var(--bg-color);
 }
 </style>
