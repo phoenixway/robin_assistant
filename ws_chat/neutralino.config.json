@@ -1,0 +1,30 @@
+{
+  "applicationId": "js.neutralino.zero1",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "documentRoot": "/vue_chat/dist/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "nativeAllowList": [
+    "app.*"
+  ],
+  "modes": {
+    "window": {
+      "title": "chat4",
+      "width": 800,
+      "height": 500,
+      "minWidth": 400,
+      "minHeight": 200,
+      "icon": "/www/icon.png"
+    }
+  },
+  "cli": {
+    "binaryName": "chat4",
+    "resourcesPath": "/vue_chat/dist/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/www/neutralino.js",
+    "binaryVersion": "4.7.0",
+    "clientVersion": "3.6.0"
+  }
+}
