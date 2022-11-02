@@ -1,0 +1,16 @@
+[
+    [
+        "greetings",
+        "say_hello",
+        "i_planned_day",
+        "you_planned_day"
+    ],
+    [
+        "bye",
+        "say_bye"
+    ],
+    [
+        "cursing",
+        "answer_cursing"
+    ]
+]

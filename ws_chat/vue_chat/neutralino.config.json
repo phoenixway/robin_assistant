@@ -1,0 +1,30 @@
+{
+  "applicationId": "js.neutralino.zero1",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "documentRoot": "/dist/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "nativeAllowList": [
+    "app.*"
+  ],
+  "modes": {
+    "window": {
+      "title": "Robin chat",
+      "width": 605,
+      "height": 500,
+      "minWidth": 605,
+      "minHeight": 200,
+      "icon": "/www/icon.png"
+    }
+  },
+  "cli": {
+    "binaryName": "ws_chat",
+    "resourcesPath": "/dist/",
+    "extensionsPath": "/extensions/",
+    "clientLibrary": "/public/neutralino.js",
+    "binaryVersion": "4.7.0",
+    "clientVersion": "3.6.0"
+  }
+}
