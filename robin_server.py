@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 import asyncio
 import shelve
-# from icecream import ic
 import logging
 
 from robin_events import Robin_events
 from messages import Messages
 from watcher import Watcher
 from ai_core import AICore
-
-import asyncio
-from tgclient import *
-
-BOT_TOKEN = r"5700563667:AAG0Q-EK3f7hGo4EcwISGC87gIJ40morNTs"
 
 
 log = logging.getLogger('pythonConfig')
@@ -54,18 +48,8 @@ MODULES['events'].on_quit += quit
 async def fire_startup():
     MODULES['events'].on_startup('')
 
-bot = TelegramBot(BOT_TOKEN)
-
-@bot.message("text")
-def text(message):
-    answer = MODULES['ai_core'].parse(message['text'])
-    bot.sendMessage(message['chat']['id'], answer)
-    
-async def telegram_bot():
-    bot.run()
-
 async def main():
-    results = await asyncio.gather(messages.ws_handle(), watcher.watch(), fire_startup(), telegram_bot())
+    results = await asyncio.gather(messages.ws_serve(), watcher.watch(), fire_startup(), messages.telegram_serve())
     log.debug(results)
 
 log.info('Welcome!')

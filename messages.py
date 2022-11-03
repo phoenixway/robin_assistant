@@ -8,10 +8,9 @@ from datetime import datetime
 import websockets
 import logging
 from colorlog import ColoredFormatter
-from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton  # for reply keyboard (sends message)
-
+from tgclient import *
 from time import sleep
+import inspect
 
 no_error = True
 # bot = Bot(token=token)
@@ -45,38 +44,84 @@ log = logging.getLogger('pythonConfig')
 log.setLevel(LOG_LEVEL)
 log.addHandler(stream)
 
+TELEGRAM_BOT_TOKEN = r"5700563667:AAG0Q-EK3f7hGo4EcwISGC87gIJ40morNTs"
+telegram_bot = TelegramBot(TELEGRAM_BOT_TOKEN)
 
 class Messages:
+   
     def __init__(self, modules):
         self.websocket = None
         self.MODULES = modules
+        self.telegram_client_id = None
+        self.msg_id = None
 
     async def say(self, message):
-        global no_error
-        if no_error and self.websocket:
+        try:
+          await self.ws_say(message)
+        except:
+          print('An exception wsserver')
+        try:
+          self.telegram_say(message)
+        except:
+          print('An exception telegram b')       
+        
+
+    async def ws_say(self, message):
+        if self.websocket:
             try:
                 await self.websocket.send(message)
-                log.debug(f"Server sent: {message}")
+                log.debug(f"Ws server sent: {message}")
             except websockets.exceptions.ConnectionClosedOK:
                 log.error('ConnectionClosedOK')
-                no_error = False
 
-    async def handle(self, websocket):
-        global no_error
+    def get_answer(self, message):
+        return self.MODULES['ai_core'].parse(message)
+    
+    def telegram_say(self, message):
+        # log.debug(f"{inspect[0][3]}: message '{message}'")
+        try:
+          telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
+        except:
+          print("telegram_say error")
+        
+    
+    async def ws_process(self, websocket):
         self.websocket = websocket
         while True:
             input_text = await websocket.recv()
-            log.debug(f"Received: {input_text}")
-            answer = self.MODULES['ai_core'].parse(input_text)
-            await websocket.send(answer)
-            log.debug(f"Server sent: {answer}")
+            log.debug(f"Ws server received: {input_text}")
+            self.telegram_say(f"Ws server received: {input_text}")
+            answer = self.get_answer(input_text)
+            await self.say(answer)
 
-    async def ws_handle(self):
+    async def ws_serve(self):
         while True:
             try:
-                await websockets.serve(self.handle, "localhost", 8765)
+                log.debug("Ws server started.")
+                await websockets.serve(self.ws_process, "localhost", 8765)
                 await asyncio.Future()
             except websockets.exceptions.ConnectionClosedOK:
                 log.error('ConnectionClosedOK')
+
+    def run_tlbot(self):
+        log.debug('Telegram bot started.')
+        @telegram_bot.message("text")
+        def text(message):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            t = loop.create_task(self.ws_say(f"TelegramBot received: {message['text']}"))
+            loop.run_until_complete(t)
+            loop.close()
+            answer = self.get_answer(message['text'])
+            self.telegram_client_id = message['chat']['id']
+            asyncio.run(self.say(answer))
         
-          # run forever
+        telegram_bot.run()
+
+    async def telegram_serve(self):
+        import threading
+        t=threading.Thread(target=self.run_tlbot)
+        t.daemon = True
+        t.start()
+        
+
