@@ -1,4 +1,4 @@
-import logging
+import logging, asyncio
 from random import choice
 
 log = logging.getLogger('pythonConfig')
@@ -15,6 +15,15 @@ def you_planned_day2(modules):
 
 def say_bye(modules):
     log.debug('Exit starts..')
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        t = loop.create_task(modules['messages'].say('Good bye, master'))
+        # t.add_done_callback(lambda t: print(f'{t} done!')) 
+    else:
+        asyncio.run(modules['messages'].say('Good bye, master'))
     modules['events'].on_quit()
     return "Good bye, master"
 

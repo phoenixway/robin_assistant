@@ -10,9 +10,9 @@ class Watcher:
         while True:
             await asyncio.sleep(60*60)
             log.debug("im watch")
-            ws_server = self.MODULES['ws_server']
+            messages = self.MODULES['messages']
             dt = datetime.today().strftime('%Y-%m-%d')
             db = self.MODULES['db']
             if not db.get('dayplanned') or db.get('dayplanned') != dt:
                 m = "You did not plan your day!"
-                await ws_server.say(m)
+                await messages.say(m)

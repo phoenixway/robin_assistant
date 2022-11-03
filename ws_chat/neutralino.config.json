@@ -12,9 +12,9 @@
   "modes": {
     "window": {
       "title": "Robin chat",
-      "width": 800,
+      "width": 660,
       "height": 500,
-      "minWidth": 400,
+      "minWidth": 660,
       "minHeight": 200,
       "icon": "/www/icon.png"
     }

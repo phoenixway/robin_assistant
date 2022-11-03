@@ -40,18 +40,32 @@ export default {
       console.log('sendMess')
       console.log(direction, mes)
       console.log("Direction: =" + direction + "=")
+      console.log(this.messages)
       if (direction === 'out') {
         console.log('OUT')
         this.messages.push({ body: mes, author: 'you' })
       } else if (direction == 'in') {
         console.log('IN')
-        this.messages.push({ body: mes, author: 'robin' })
-      } else {
+        //  if (this.messages[this.messages.length - 1] === 'Lost connection.') {
+        //   this.messages[this.messages.length - 1] === 'Lost connection..'
+        // //   console.log('Lost connection runned') 
+        // //   console.log(this.messages)
+        // }
+        // else
+          this.messages.push({ body: mes, author: 'robin' })
+          console.log(this.messages)
+
+      } 
+      else {
         alert('something went wrong')
       }
       Vue.nextTick(() => {
-        let messageDisplay = this.$refs.chatArea
-        messageDisplay.scrollTop = messageDisplay.scrollHeight
+          console.log('vue next tick') 
+          // console.log(this.messages)
+          console.log(this.$refs)
+          let messageDisplay = this.$refs.chatArea
+          messageDisplay.scrollTop = messageDisplay.scrollHeight
+
       })
     },
     clearAllMessages() {
@@ -90,18 +104,22 @@ export default {
         this.show_message(event.data);
       }
       this.ws_socket.onopen = () => {
-        this.show_message('Connected to server!');
+        this.show_message('Connected to Robin!');
         this.reconnecting = true;
       };
       this.ws_socket.onclose = () => {
         if (this.reconnecting == true)
-          this.show_message('Lost connection.');
+          if ((this.messages[this.messages.length - 1] != undefined) && (this.messages[this.messages.length - 1].body == 'Lost connection.')) {
+            console.log('lost connection')
+          }
+          else this.show_message('Lost connection.');
+          //this.show_message("'"+this.messages[this.messages.length - 1].body+"'")
         this.reconnecting = true;
         setTimeout(() => { this.reconnect() }, 3000);
         document.getElementById("input").focus();
       };
     },
-    
+
     toggleDarkMode() {
       console.log('toggleDarkMode');
       if (document.documentElement.classList.contains("light")) {
@@ -119,7 +137,7 @@ export default {
           if (isDayTime)
             document.documentElement.classList.add("light")
           else
-          document.documentElement.classList.add("dark")
+            document.documentElement.classList.add("dark")
         }
       }
     }
@@ -135,70 +153,21 @@ export default {
 html {
   font-family: Helvetica;
   box-sizing: border-box;
-  position: absolute;
+  /* position: absolute;
   left: 50%;
-  transform: translate(-50%, 0);
+  transform: translate(-50%, 0); */
 
 }
 
 .message-out {
   color: white;
-  margin-left: 50%;
+  margin-left: 48%;
 }
 
 .message-in {
   background: #F1F0F0;
   color: black;
 }
-
-
-/* @media (prefers-color-scheme: dark) {
-  html {
-    color: #eee;
-    background: black;
-  }
-
-  #app {
-    
-    background: black;
-    border: 1px solid #2f4d1c;
-  }
-
-  .chat-area {
-    background: black;
-    border: 1px solid #2f4d1c;
-  }
-
-  .container {
-    background: black;
-  }
-
-  .message-out {
-    background: #121d0c;
-    color: black;
-  }
-
-  .message-in {
-    background: #2f4d1c;
-    color: black;
-  }
-
-  #input {
-    background: #122408;
-    border: 1px solid #122408;
-    forced-color-adjust: green;
-    color: grey;
-  }
-
-  #send_button {
-    background: #122408;
-    color: black;
-    focused-color: green;
-  }
-
-
-} */
-
 
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -228,7 +197,7 @@ html {
   min-width: 580px;
   margin-top: 10px;
   margin-bottom: 10px;
-  box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3)
+  /* box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3) */
 }
 
 .message {
@@ -252,16 +221,17 @@ html {
 }
 
 .form-control:focus {
-   border-color: green !important;
-   box-shadow: inherit !important;
+  border-color: green !important;
+  box-shadow: inherit !important;
 }
+
 /* COLORS
 ================================================================================= */
 /* automatic/manual light mode */
 :root,
 :root.light {
   --bg-color: white;
-  --border-color: grey;
+  --border-color: white;
   --my-messages-bg: #407FFF;
   --my-messages-color: white;
   --in-messages-bg: #F0DA62;
@@ -278,7 +248,7 @@ html {
 /* ❗️ keep the rules in sync with the automatic dark mode above! */
 :root.dark {
   --bg-color: black;
-  --border-color: darkgreen;
+  --border-color: black;
   --my-messages-bg: #121d0c;
   --in-messages-bg: #2e5d2a;
   --my-messages-color: grey;
@@ -299,7 +269,7 @@ html {
 
 .chat-area {
   background: var(--bg-color);
-  border: 1px solid var(--border-color);
+  /* border: 1px solid var(--border-color); */
 }
 
 .container {
@@ -316,7 +286,7 @@ html {
   color: var(--in-messages-color);
 }
 
-#input::placeholder{
+#input::placeholder {
   color: var(--my-messages-color);
   background: var(--my-messages-bg);
   /* border: 1px solid var(--border-color); */
@@ -325,7 +295,7 @@ html {
 #input {
   background: var(--my-messages-bg);
   /* border: 1px solid var(--border-color); */
-  
+
   color: var(--my-messages-color);
 }
 
