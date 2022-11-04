@@ -1,15 +1,13 @@
 # from nltk import word_tokenize
 # from nltk.corpus import stopwords
+import logging
 import re, os, sys, datetime
 import json
 sys.path.append(os.getcwd())
 import actions.default
 from pathlib import Path
 
-# intents = {}
-# intents[r"(hello|hey|hi|(good day))"] = "greetings"
-# intents[r"i planned day"] = "i_planned_day"
-# intents[r"(bye|exit|(quit))"] = "bye"
+log = logging.getLogger('pythonConfig')
 
 def recognize_intent(text):
     for intent in intents:
@@ -17,19 +15,6 @@ def recognize_intent(text):
         m = re.search(intent, text)
         if m is not None:
             return intents[intent]
-
-# story1 = ["greetings", 'say_hello', "i_planned_day", 'you_planned_day']
-# story2 = ["bye", 'say_bye']
-# stories = []
-# stories.append(story1)
-# stories.append(story2)
-
-# #TODO: load from file
-# with open('brains/default.stories', 'w') as f:
-#     json.dump(stories, f)
-
-# with open('brains/default.intents', 'w') as f:
-#     json.dump(intents, f)
 
 source_path = Path(__file__).resolve()
 source_dir = source_path.parent
@@ -76,6 +61,7 @@ class AICore:
         self.log = []
 
     def parse(self, text):
+        log.debug("Parsing with aicore")
         answer = f"Default answer on '{text}'"
         try:
             intent = recognize_intent(text)
@@ -90,6 +76,6 @@ class AICore:
                         answer = fn(self.modules)
                         self.log.append(fn_name)
                         break
-        except:
-            answer = "Error happened!"
+        except Exception as e:
+            answer = f"Error happened in ai_core.parse(): {e}"
         return answer

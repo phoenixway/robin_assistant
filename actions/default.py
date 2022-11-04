@@ -14,16 +14,23 @@ def you_planned_day2(modules):
     return "You make it!"
 
 def say_bye(modules):
-    log.debug('Exit starts..')
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-    if loop and loop.is_running():
-        t = loop.create_task(modules['messages'].say('Good bye, master'))
-        # t.add_done_callback(lambda t: print(f'{t} done!')) 
-    else:
-        asyncio.run(modules['messages'].say('Good bye, master'))
+    log.debug('say_bye lanched')
+    # try:
+    #     loop = asyncio.get_running_loop()
+    # except RuntimeError:
+    #     loop = None
+    # if loop and loop.is_running():
+    #     t = loop.create_task(modules['messages'].say_async('Good bye, master'))
+    #     # t.add_done_callback(lambda t: print(f'{t} done!')) 
+    # else:
+    #     if not loop:
+    #         loop = asyncio.new_event_loop()
+    #         asyncio.set_event_loop(loop)
+    #         t = loop.create_task(modules['messages'].say_async('Good bye, master'))
+    #         loop.run_until_complete(t)
+    #         loop.close()
+    #     else:
+    #         asyncio.run(modules['messages'].say_async('Good bye, master'))
     modules['events'].on_quit()
     return "Good bye, master"
 

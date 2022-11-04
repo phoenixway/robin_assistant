@@ -15,4 +15,4 @@ class Watcher:
             db = self.MODULES['db']
             if not db.get('dayplanned') or db.get('dayplanned') != dt:
                 m = "You did not plan your day!"
-                await messages.say(m)
+                await messages.say_async(m)
