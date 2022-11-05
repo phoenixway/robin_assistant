@@ -1,16 +1,21 @@
-[
-    [
-        "greetings",
-        "say_hello",
-        "i_planned_day",
-        "you_planned_day"
+{
+    "cursing": [
+        "<intent>cursing",
+        "<func>answer_cursing"
     ],
-    [
-        "bye",
-        "say_bye"
+    "goodbye": [
+        "<intent>bye",
+        "<func>say_bye"
     ],
-    [
-        "cursing",
-        "answer_cursing"
+    "greetings": [
+        "<intent>greetings",
+        "<func>say_hello",
+        "<intent>i_planned_day",
+        "You planned your day, congratulations!"
+    ],
+    "robin_asks": [
+        "Do u planned yr day?",
+        "Yes",
+        "Great, as expected!"
     ]
-]
+}

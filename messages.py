@@ -1,25 +1,13 @@
 #!/usr/bin/env python3
 import asyncio
 import nest_asyncio
-from datetime import datetime
 import websockets
-from colorlog import ColoredFormatter
 import asyncio
-from datetime import datetime
 import websockets
 import logging
 from tgclient import *
+
 nest_asyncio.apply()
-# LOGFORMAT = '%(log_color)s %(levelname)s [%(filename)s.%(funcName)s:%(lineno)d] %(message)s'
-# LOG_LEVEL = logging.DEBUG
-# logging.root.setLevel(LOG_LEVEL)
-# formatter = ColoredFormatter(LOGFORMAT)
-# stream = logging.StreamHandler()
-# stream.setLevel(LOG_LEVEL)
-# stream.setFormatter(formatter)
-# log = logging.getLogger('pythonConfig')
-# log.setLevel(LOG_LEVEL)
-# log.addHandler(stream)
 
 TELEGRAM_BOT_TOKEN = r"5700563667:AAG0Q-EK3f7hGo4EcwISGC87gIJ40morNTs"
 telegram_bot = TelegramBot(TELEGRAM_BOT_TOKEN)
@@ -32,7 +20,6 @@ class Messages:
         self.websocket = None
         self.MODULES = modules
         self.telegram_client_id = 612272249
-        self.is_stopping = False
         self.t = None
 
     async def say_async(self, message):
@@ -51,16 +38,16 @@ class Messages:
         except RuntimeError:
             loop = None
         if loop and loop.is_running():
-            t = loop.create_task(self.say_async('Good bye'))
+            t = loop.create_task(self.say_async(message))
             loop.run_until_complete(t)
         else:
-            asyncio.run(self.say_async('Good bye'))
+            asyncio.run(self.say_async(message))
     
     def stop(self):
         self.t.stop()
 
     async def ws_say(self, message):
-        if self.websocket and not self.is_stopping:
+        if self.websocket:
             try:
                 await self.websocket.send(message)
                 log.debug(f"Ws server sent: {message}")
@@ -72,8 +59,6 @@ class Messages:
         return self.MODULES['ai_core'].parse(message)
     
     def telegram_say(self, message):
-        if self.is_stopping:
-            return
         try:
           telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
           log.debug(f"Telegrambot sent: {message}")
@@ -83,10 +68,12 @@ class Messages:
     
     async def ws_process(self, websocket):
         self.websocket = websocket
+        self.is_started = True
         while True:
             input_text = await websocket.recv()
             log.debug(f"Ws server received: {input_text}")
             self.telegram_say(f"Ws server received: {input_text}")
+            self.MODULES['events'].emit('message_received', input_text)
             answer = self.get_answer(input_text)
             await self.say_async(answer)
 
@@ -122,5 +109,8 @@ class Messages:
         self.t=threading.Thread(target=self.run_telegram_bot)
         self.t.daemon = True
         self.t.start()
-        
+
+    async def serve(self):
+        asyncio.create_task(self.ws_serve())
+        asyncio.create_task(self.telegram_serve())
 
