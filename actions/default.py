@@ -15,7 +15,7 @@ def you_planned_day2(modules):
 
 def say_bye(modules):
     log.debug('say_bye lanched')
-    modules['events'].emit('quit')
+    modules['events'].emit('quit', None)
     return "Good bye, master"
 
 def answer_cursing(modules):

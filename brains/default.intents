@@ -2,5 +2,7 @@
     "(hello|hey|hi|(good day))": "greetings",
     "i planned day": "i_planned_day",
     "(bye|exit|(quit))": "bye",
-    "(fuck|shit|bitch)": "cursing"
+    "(fuck|shit|bitch)": "cursing",
+    "(yes|yeah|sure)": "yes",
+    "(no)": "no"
 }

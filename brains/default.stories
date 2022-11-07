@@ -15,7 +15,19 @@
     ],
     "robin_asks": [
         "Do u planned yr day?",
-        "Yes",
+        "<intent>yes",
         "Great, as expected!"
+    ],
+    "robin_asks2": [
+        "Do u planned yr day?",
+        "<intent>no",
+        "Pull yourself together. Be a man!"
+    ],
+    "trees": [
+        "Do u know yr main priorities for today?", {
+            "<intent>yes": "So go for it!",
+            "<intent>no": "Why don't you just stop doing whatever u doing and choose priorities for today?"
+        }
     ]
+
 }

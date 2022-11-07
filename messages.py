@@ -21,6 +21,7 @@ class Messages:
         self.MODULES = modules
         self.telegram_client_id = 612272249
         self.t = None
+        self.is_started = False
 
     async def say_async(self, message):
         try:
