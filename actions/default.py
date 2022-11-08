@@ -1,3 +1,4 @@
+import datetime
 import logging, asyncio
 from random import choice
 
@@ -17,6 +18,12 @@ def say_bye(modules):
     log.debug('say_bye lanched')
     modules['events'].emit('quit', None)
     return "Good bye, master"
+
+def timeis(modules):
+    return datetime.datetime.now().strftime("%H:%M:%S")
+
+def dateis(modules):
+    return datetime.datetime.now().strftime("%d.%m.%Y")
 
 def answer_cursing(modules):
     a = {"Don't curse", "U like that..", "Please, stop that", "Watch your language, please"}

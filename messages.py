@@ -113,5 +113,5 @@ class Messages:
 
     async def serve(self):
         asyncio.create_task(self.ws_serve())
-        asyncio.create_task(self.telegram_serve())
+        #asyncio.create_task(self.telegram_serve())
 

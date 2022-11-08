@@ -247,8 +247,15 @@ class AICore:
                     if is_active_story:
                         ##FIXME
                         next_answer = self.stories[story_id][pos]
-                        answer = next_answer
-                        self.log.append(next_answer)
+                        if next_answer.startswith('<func>'):
+                            fn_name = (self.stories[story_id][pos])[6:]
+                            fn = getattr(actions.default, fn_name)
+                            #TODO: get rid of sending modules each time fn calls
+                            answer = fn(self.modules)
+                            self.log.append(next_answer)
+                        else:
+                            answer = next_answer
+                            self.log.append(next_answer)
                         break
         except Exception as e:
             answer = f"Error happened in ai_core.parse(): {e}"

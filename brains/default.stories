@@ -25,9 +25,17 @@
     ],
     "trees": [
         "Do u know yr main priorities for today?", {
-            "<intent>yes": "So go for it!",
-            "<intent>no": ["Why don't you just stop doing whatever u doing and choose priorities for today?", {"i cannot": "bla1", "ok": "bla2"}]
+            "<intent>yes": ["So go for it! Are u doing what you have to?", {
+                "<intent>yes": "Great!",
+                "<intent>no": "U can walk round all day not even starting doing task of top priority. Drop not important stuff and start with most impact task now!"
+                }    
+            ],
+            "<intent>no": ["Why don't you just stop doing whatever u doing and choose priorities for today?", 
+                {"i cannot": 
+                    "What is stopping u?", 
+                "ok": "Pull yourself together!"}]
         }
-    ]
+    ],
+    "time": ["time", "<func>timeis", "date", "<func>dateis"]
 
 }

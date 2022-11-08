@@ -3,7 +3,7 @@
     <div class="container">
       <section ref="chatArea" class="chat-area">
         <p v-for="message in messages" v-bind:key="message.body" class="message"
-          :class="{ 'message-out': message.author === 'you', 'message-in': message.author !== 'you' }">
+          :class="{ 'message-out': message.author === 'you', 'message-in': message.author === 'robin', 'message-chat': message.author === 'chat' }">
           {{ message.body }}
         </p>
       </section>
@@ -52,19 +52,19 @@ export default {
         // //   console.log(this.messages)
         // }
         // else
-          this.messages.push({ body: mes, author: 'robin' })
-          console.log(this.messages)
+        this.messages.push({ body: mes, author: 'robin' })
+        console.log(this.messages)
 
-      } 
+      }
       else {
-        alert('something went wrong')
+        this.messages.push({ body: mes, author: 'chat' })
       }
       Vue.nextTick(() => {
-          console.log('vue next tick') 
-          // console.log(this.messages)
-          console.log(this.$refs)
-          let messageDisplay = this.$refs.chatArea
-          messageDisplay.scrollTop = messageDisplay.scrollHeight
+        console.log('vue next tick')
+        // console.log(this.messages)
+        console.log(this.$refs)
+        let messageDisplay = this.$refs.chatArea
+        messageDisplay.scrollTop = messageDisplay.scrollHeight
 
       })
     },
@@ -72,7 +72,7 @@ export default {
       this.messages = []
     },
     show_message(message) {
-      this.sendMessage('in', message)
+      this.sendMessage('chat', message)
     },
     send_message() {
       var input = document.getElementById("input");
@@ -99,10 +99,12 @@ export default {
       }
     },
     reconnect() {
+      console.log('reeeconnect')
       this.ws_socket = new WebSocket("ws://127.0.0.1:8765");
       this.ws_socket.onmessage = (event) => {
-        this.show_message(event.data);
-      }
+        this.sendMessage('in', event.data);
+      };
+
       this.ws_socket.onopen = () => {
         this.show_message('Connected to Robin!');
         this.reconnecting = true;
@@ -113,12 +115,12 @@ export default {
             console.log('lost connection')
           }
           else this.show_message('Lost connection.');
-          //this.show_message("'"+this.messages[this.messages.length - 1].body+"'")
         this.reconnecting = true;
         setTimeout(() => { this.reconnect() }, 3000);
         document.getElementById("input").focus();
       };
     },
+
 
     toggleDarkMode() {
       console.log('toggleDarkMode');
@@ -132,10 +134,13 @@ export default {
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
           document.documentElement.classList.add("dark")
         } else {
+          // this.sendMessage('out', 'darkmode')
           const hours = new Date().getHours()
           const isDayTime = hours > 6 && hours < 20
-          if (isDayTime)
+          if (isDayTime) {
             document.documentElement.classList.add("light")
+            // this.sendMessage('out', 'light')
+          }
           else
             document.documentElement.classList.add("dark")
         }
@@ -143,25 +148,30 @@ export default {
     }
   },
   created() {
+    console.log()
     this.toggleDarkMode();
     this.reconnect();
   }
 }
+
 </script>
 
 <style>
 html {
   font-family: Helvetica;
   box-sizing: border-box;
+  position: absolute;
+  left: 0px;
+  width: 100%;
   /* position: absolute;
   left: 50%;
-  transform: translate(-50%, 0); */
+  transform: translate(-50%, 0);  */
 
 }
 
 .message-out {
   color: white;
-  margin-left: 48%;
+  margin-left: 49%;
 }
 
 .message-in {
@@ -169,12 +179,17 @@ html {
   color: black;
 }
 
+.message-chat {
+  border: 1px solid;
+  color: grey;
+  border-color: grey;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  margin-top: 5px;
-  max-width: 600px;
+  width: 100%;
   text-align: center;
 }
 
@@ -193,11 +208,8 @@ html {
   height: 87%;
   padding: 1em;
   overflow: auto;
-  max-width: 580px;
-  min-width: 580px;
   margin-top: 10px;
   margin-bottom: 10px;
-  /* box-shadow: 2px 2px 5px 2px rgba(0, 0, 0, 0.3) */
 }
 
 .message {
