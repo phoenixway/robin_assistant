@@ -122,5 +122,5 @@ def test_parse():
     assert aicore is not None, 'aicore creation failed'
     assert aicore.stories is not None, 'stories creation failed'
     text = 'Hey'
-    res = aicore.parse(text)
+    res = aicore.respond(text)
     assert res is not None, 'parse exception'

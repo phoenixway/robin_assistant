@@ -43,7 +43,7 @@ async def quit_handler(data):
     exit(0)
 
 async def start_handler(data):
-    MODULES['messages'].say("Robin connected now!")
+    MODULES['messages'].say("Connected.")
     asyncio.create_task(MODULES['ai_core'].message_received_handler(None))
     log.debug("Start_handler called")
 

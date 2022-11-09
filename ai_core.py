@@ -181,6 +181,7 @@ class AICore:
         self.log = []
         if modules is not None:
             modules['events'].add_listener('message_received', self.message_received_handler)
+            modules['events'].add_listener('message_send', self.message_send_handler)
         self.silence_task = None
         self.is_started = True
         self.repeat_if_silence = False
@@ -194,30 +195,44 @@ class AICore:
             s = self.stories[key2[0]]
         return s 
 
+    def start_next_robin_story(self):
+        log.debug("start_next_robin_story")
+        if self.robins_stories:
+            s = self.robins_stories.pop(0)
+            if s is not None:
+                self.start_story(s)
 
-    async def wait_to_talk(self, s):
+    async def do_silence(self):
+        log.debug("Silence started")
         await asyncio.sleep(SILENCE_TIME)
-        self.start_story(s)
-        while self.repeat_if_silence:
-            await asyncio.sleep(SILENCE_TIME)
-            if self.robins_stories:
-                s = self.robins_stories.pop()
-                if s is not None:
-                    self.start_story(s)
+        a = self.respond('<silence>')
+        if a:
+            self.modules['messages'].say(a)
+        else:
+            self.start_next_robin_story()
+        
+
+    # async def wait_to_talk(self):
+    #     self.do_silence()
+    #     while self.repeat_if_silence:
+    #         self.do_silence()
 
     async def message_received_handler(self, data):
         log.debug('message received handler')
-        if self.robins_stories:
-            s = self.robins_stories.pop()
-            if s is not None:
-                if self.silence_task is not None:
-                    self.silence_task.cancel()
-                self.silence_task = asyncio.create_task(self.wait_to_talk(s))
-        # asyncio.run(self.silence_task)
+        if self.silence_task is not None:
+            self.silence_task.cancel()
+        # self.silence_task = asyncio.create_task(self.wait_to_talk())    
+        self.silence_task = asyncio.create_task(self.do_silence())    
+    
+    async def message_send_handler(self, data):
+        log.debug('message send handler')
+        if self.silence_task is not None:
+            self.silence_task.cancel()
+        self.silence_task = asyncio.create_task(self.do_silence())
 
-    def parse(self, text):
+    def respond(self, text):
         log.debug("Parsing with aicore")
-        answer = f"Default answer on '{text}'"
+        answer = None if text == '<silence>' else f"Default answer on '{text}'"
         try:
             intent = recognize_intent(text)
             if intent is not None:

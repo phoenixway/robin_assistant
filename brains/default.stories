@@ -33,7 +33,8 @@
             "<intent>no": ["Why don't you just stop doing whatever u doing and choose priorities for today?", 
                 {"i cannot": 
                     "What is stopping u?", 
-                "ok": "Pull yourself together!"}]
+                "ok": "Pull yourself together!"}],
+            "<silence>": ["Speak to me!", "yah", "Do what u must!"]
         }
     ],
     "time": ["time", "<func>timeis", "date", "<func>dateis"]

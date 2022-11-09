@@ -43,6 +43,7 @@ class Messages:
             loop.run_until_complete(t)
         else:
             asyncio.run(self.say_async(message))
+        self.MODULES['events'].emit('message_send', message)
     
     def stop(self):
         self.t.stop()
@@ -57,7 +58,7 @@ class Messages:
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
-        return self.MODULES['ai_core'].parse(message)
+        return self.MODULES['ai_core'].respond(message)
     
     def telegram_say(self, message):
         try:

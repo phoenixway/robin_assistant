@@ -16,7 +16,7 @@
             "name": "Python: app",
             "type": "python",
             "request": "launch",
-            "program": "/home/roman/Projects/robin_assistant/robin_server.py",
+            "program": "/home/roman/Projects/robin_assistant/robin.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
