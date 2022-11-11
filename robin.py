@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import asyncio, shelve, logging, nest_asyncio
+import asyncio
+import shelve
+import logging
+import nest_asyncio
 from colorlog import ColoredFormatter
 
 from robin_events import Robin_events
@@ -9,7 +12,7 @@ from ai_core import AICore
 
 nest_asyncio.apply()
 log = None
-MODULES = dict()
+MODULES = {}
 
 def init_logger():
     global log

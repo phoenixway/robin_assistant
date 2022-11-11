@@ -21,7 +21,11 @@
     "robin_asks2": [
         "Do u planned yr day?",
         "<intent>no",
-        "Pull yourself together. Be a man!"
+        "It is very important. 'Plan a success or it is a failure that'll be planned'. \r\nWhy don't you do that right now?",
+        {
+            "<intent>yes": "Great!",
+            "<intent>no":"U can walk round all day not even starting doing task of top priority. Drop not important stuff and start with most impact task now!"
+        }
     ],
     "trees": [
         "Do u know yr main priorities for today?", {

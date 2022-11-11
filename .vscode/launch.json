@@ -18,7 +18,9 @@
             "request": "launch",
             "program": "/home/roman/Projects/robin_assistant/robin.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": ["${PYTHONPATH:${}}${workspaceFolder}"]
+            
         }
     ]
 }

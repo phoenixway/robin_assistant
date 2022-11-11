@@ -185,7 +185,7 @@ class AICore:
         self.silence_task = None
         self.is_started = True
         self.repeat_if_silence = False
-        self.robins_stories = ['trees::0']
+        self.robins_stories = ['robin_asks2::0']
 
     def get_story(self, key):
         s = self.stories.get(key, None)

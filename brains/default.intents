@@ -3,6 +3,6 @@
     "(hello|hey|hi|(good day))": "greetings",
     "i planned day": "i_planned_day",
     "(bye|exit|(quit))": "bye",
-    "(yes|yeah|sure)": "yes",
+    "(yes|yeah|sure|ok)": "yes",
     "(no)": "no"
 }
