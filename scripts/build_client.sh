@@ -5,4 +5,4 @@ yarn build
 cd ..
 neu build
 cd /home/roman/Projects/robin_assistant || exit
-/home/roman/Projects/robin_assistant/ws_chat/dist/ws_chat//ws_chat-linux_x64
+/home/roman/Projects/robin_assistant/ws_chat/dist/ws_chat/ws_chat-linux_x64
