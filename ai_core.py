@@ -197,6 +197,7 @@ class AICore:
 
     def start_next_robin_story(self):
         log.debug("start_next_robin_story")
+        #TODO: get rid of it
         if self.robins_stories:
             s = self.robins_stories.pop(0)
             if s is not None:
