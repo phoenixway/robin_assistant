@@ -99,5 +99,5 @@ class Story:
 class AICore:
     def next_in_story(log, story):
         if str(story.first_node) not in log:
-            return False
-        return True
+            return None
+        return story.first_node.next
