@@ -58,70 +58,68 @@ def parse(lines):
         i = i + 1
     return result
 
-
 def test_create_from2():
-    source = """
-    story testname
-        < <intent>greetings
-        > Hey! Whats up?
-        <if input>
-            < all right => {
-                > Cool!1
-            }
-            < nothing => {
-                > Oh...
-            }
-        <if/>
-    story_ends
+    source1 = r"""
+    < <intent>greetings
+    > Hey! Whats up?
+    <if input>
+        all right => {
+            > Cool!
+        }
+        nothing => {
+            > Oh...
+        }
+    </if>
+    < fuck
     """
-    source1 = """
-        < <intent>greetings
-        > Hey! Whats up?
-        <if input>
-            all right => {
-                > Cool!1
-            }
-            nothing => {
-                > Oh...
-            }
-        </if>
-    """
-    # expr = (statement / emptyline)*
-    #     statement = (oneliner / if_statement )
-    #     if_statement = if_start
-    #     if_start = ~r'<if input>'
-    #     if_end = ~r'\</if\>'
-    #     if_variant = text ws* then_keyword ws* block
-    #     text = ~r"[-\w]+"
-    #     then_keyword = ~r"\=\>"
-    #     block = lbr ws* text* ws* rbr
-    #     ws = ~"\s*"
-    #     rbr = ~r"\}"
-    #     lbr = ~r"\{"
-    #     oneliner = ws* inout ws+ text
-    #     inout = ~r'[\<\>]+'
-    #     ws = ~"\s*"
-    #     emptyline = ws+
-    grammar = Grammar(r"""
-        expr = (statement / emptyline)*
-        statement = (oneliner / if_statement )
-        if_statement = ws1* if_start if_variant* if_end
+    source = r"""
+    < <intent>greetings
+    > Hey! Whats up?
+    <if input>
+        all right => {
+            > great! 
+            <if input>
+                ok => {
+                    > oki-oki
+                }
+                nothing => {
+                    > nothing...
+                }
+            </if>
+            < shit
+            
+            > fuck
+        }
+        nothing=>{
+            < test
+        }
+    </if>"""
+    grammar_block=Grammar(r"""
+        expr = (statement / block / newline)*
+        statement = (if_statement / oneliner)
+        if_statement = ws1* if_start ws1* if_variant* ws1* if_end ws1*
         if_start = ~r'<if input>'
-        if_end = ~r'\</if\>'
-        if_variant = text ws* then_keyword ws* block
-        text = ~r"[-\w]+"
-        then_keyword = ~r"\=\>"
-        block = lbr ws* text* ws* rbr
-        ws = ~"\s*"
+        if_end = ~r'</if>'
+        if_variant = text ws1* then_keyword ws1* block
+        then_keyword = ~r"=>"
+        block = lbr ws1* statement* ws1* rbr
         rbr = ~r"\}"
         lbr = ~r"\{"
-        oneliner = ws* inout
-        inout = ~r'[/>/<]{1} (/w/s)+'
-        ws = ~"\s*"
-        ws1 = ~"\s"
-        emptyline = ws+
+        oneliner = ws1* inout ws1+ text
+        inout = ~r"[<>]"
+        text = intent* raw_text
+        raw_text = ~r"[-\w\s\?\!\.]+"
+        ws1 = ~r"\s"
+        newline = ~r"\n\r(\s)*"
+        intent = ~r"<intent>"
     """)
-    res = grammar.parse("""<if input>""")
+    res = grammar_block.parse(source)
+    res = grammar_block.parse(r"""{
+        > test test
+    }""")
+    res = grammar_block.parse(r"""< test test""")
+    res = grammar_block.parse(source1)
+    
     #res = parse(source1.splitlines())
     st = RSParser.create_from_text(source)
     assert st is not None, "StoryFactory.create_from_text error"
