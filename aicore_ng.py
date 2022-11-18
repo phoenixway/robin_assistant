@@ -3,7 +3,6 @@
 import string
 import random 
 import re
-import string
 
 
 class AstNode:
@@ -21,7 +20,7 @@ class AstNode:
         return str(self) == str(other)
 
 
-class StringAstNode(AstNode):
+class StringNode(AstNode):
     def __init__(self, text):
         self.text = text
         super().__init__()
@@ -33,17 +32,35 @@ class StringAstNode(AstNode):
         return f'{self.__class__.__name__}: "{self.text}"'
 
 
+class MessageInNode(StringNode):
+    def __init__(self, text):
+        super().__init__(text)
+
+    def validate(message):
+        return message[0:2] == "< "
+
+
+class MessageOutNode(StringNode):
+    def __init__(self, message):
+        super().__init__(message)
+
+    def validate(message):
+        return message[0:2] == "> "
+
+
+class NodeFactory:
+    def createNode(text):
+        if MessageInNode.validate(text):
+            return MessageInNode(text)
+        elif MessageOutNode.validate(text):
+            return MessageOutNode(text)
+        else:
+            return StringNode(text)
+
+
 class RSParser:
     def create_from_text(text):
-        # m = re.match(r"^(\s*)story(\s+)(\w+)(\s*)(\{.*\})$", text)
-        # t = """
-        # {
-        #     bla
-        # }
-        # """
-        # rg = re.compile(r"\{}.*", flags=re.MULTILINE)
-        # m = rg.search(t)
-        rg = re.compile(r"(story\s+(\w+)\s*\{((\n|.)*?)\})", re.MULTILINE)
+        rg = re.compile(r"(story\s+(\w+)\s*((\n|.)*?)story_ends)", re.MULTILINE)  # noqa: E501
         m = rg.search(text)
         if m is None:
             return None
@@ -56,12 +73,12 @@ class RSParser:
             first = None
             while i < len(body) - 1:
                 if body[i + 1] is not None:
-                    ast = StringAstNode(body[i])
-                    if i == 0: 
-                        first = ast
-                    ast1 = StringAstNode(body[i + 1])
-                    ast.next = ast1
-                    ast1.parent = ast
+                    n = NodeFactory.createNode(body[i])
+                    if i == 0:
+                        first = n
+                    n1 = NodeFactory.createNode(body[i + 1])
+                    n.next = n1
+                    n1.parent = n
                 i = i + 1
 
             st = Story(name=story_name)
