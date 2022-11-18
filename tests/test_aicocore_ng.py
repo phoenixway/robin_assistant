@@ -2,6 +2,7 @@
 
 import re
 from parsimonious.grammar import Grammar
+from parsimonious.nodes import NodeVisitor
 from ..aicore_ng import RSParser, Story, MessageInNode  # noqa: F403, F401
 from ..aicore_ng import MessageOutNode, AICore  # noqa: F403
 
@@ -58,6 +59,99 @@ def parse(lines):
         i = i + 1
     return result
 
+
+class IniVisitor(NodeVisitor):
+    def visit_exprs(self, node, visited_children):
+        output = []
+        for child in visited_children:
+            if len(child) > 0:
+                output.append(child)
+        return output
+
+    def visit_expr(self, node, visited_children):
+        return visited_children[0]
+
+    def visit_statement(self, node, visited_children):
+        return visited_children[0]
+
+    def visit_oneliner(self, node, visited_children):
+        output = []
+        for child in visited_children:
+            if child == "ws*":
+                continue
+            if len(child) > 0:
+                output.append(child)
+        return output
+
+    def visit_if_statement(self, node, visited_children):
+        return "if_statement"
+
+    def visit_ws(self, node, visited_children):
+        return "ws"
+
+    def visit_maybe_ws(self, node, visited_children):
+        return "ws*"
+
+    def visit_ws_must(self, node, visited_children):
+        return "ws*"
+    
+    def visit_inout(self, node, visited_children):
+        return node.text
+
+    def visit_intent(self, node, visited_children):
+        return "intent"
+
+    def visit_maybe_intent(self, node, visited_children):
+        return "intent*"
+
+    def visit_maybe_statements(self, node, visited_children):
+        return "maybe_statements"
+
+    def visit_if_variant_must(self, node, visited_children):
+        return "if_variant_must"
+
+    def visit_raw_text(self, node, visited_children):
+        return "raw_text"
+
+    def visit_text(self, node, visited_children):
+        return node.text
+
+    def visit_block(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_newline(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_if_start(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_if_end(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_then_keyword(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_lbr(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_rbr(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    def visit_if_variant(self, node, visited_children):
+        """ Returns the overall output. """
+        return "statement"
+
+    # def generic_visit(self, node, visited_children):
+    #     return ""
+
+
 def test_create_from2():
     source1 = r"""
     < <intent>greetings
@@ -95,30 +189,35 @@ def test_create_from2():
         }
     </if>"""
     grammar_block=Grammar(r"""
-        expr = (statement / block / newline)*
+        exprs = (expr)*
+        expr = statement / newline
         statement = (if_statement / oneliner)
-        if_statement = ws1* if_start ws1* if_variant* ws1* if_end ws1*
+        if_statement = maybe_ws if_start maybe_ws if_variant_must maybe_ws if_end maybe_ws
         if_start = ~r'<if input>'
         if_end = ~r'</if>'
-        if_variant = text ws1* then_keyword ws1* block
+        if_variant = text maybe_ws then_keyword maybe_ws block
         then_keyword = ~r"=>"
-        block = lbr ws1* statement* ws1* rbr
+        block = lbr maybe_ws maybe_statements maybe_ws rbr
         rbr = ~r"\}"
         lbr = ~r"\{"
-        oneliner = ws1* inout ws1+ text
+        oneliner = maybe_ws inout ws_must text
         inout = ~r"[<>]"
-        text = intent* raw_text
+        text = maybe_intent raw_text
         raw_text = ~r"[-\w\s\?\!\.]+"
-        ws1 = ~r"\s"
+        ws = ~r"\s"
         newline = ~r"\n\r(\s)*"
         intent = ~r"<intent>"
+        maybe_ws = ws*
+        ws_must = ws+
+        maybe_intent = intent*
+        maybe_statements = statement*
+        if_variant_must = if_variant+
     """)
     res = grammar_block.parse(source)
-    res = grammar_block.parse(r"""{
-        > test test
-    }""")
     res = grammar_block.parse(r"""< test test""")
     res = grammar_block.parse(source1)
+    iv = IniVisitor()
+    output = iv.visit(res)
     
     #res = parse(source1.splitlines())
     st = RSParser.create_from_text(source)
