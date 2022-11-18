@@ -19,7 +19,8 @@
             "program": "/home/roman/Projects/robin_assistant/robin.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args": ["${PYTHONPATH:${}}${workspaceFolder}"]
+            "args": ["${PYTHONPATH:${}}${workspaceFolder}"],
+            "env": {"PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}"}
             
         }
     ]
