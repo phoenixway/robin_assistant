@@ -50,6 +50,21 @@ class MessageOutNode(StringNode):
         return message[0:2] == "> "
 
 
+class IfNode(AstNode):
+    def __init__(self):
+        self.variants = {}
+        super().__init__()
+
+    def __str__(self):
+        return f'{self.variants}'
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}: "{self.variants}"'
+
+    def validate(message):
+        return False
+
+
 class NodeFactory:
     def createNode(text):
         if MessageInNode.validate(text):
@@ -63,18 +78,15 @@ class NodeFactory:
 class RSVisitor(NodeVisitor):
     def visit_story(self, node, visited_children):
         story_name = ""
+        block = []
         for child in visited_children:
             if isinstance(child, dict):
                 story_name = child['story_name']
-
+            elif isinstance(child, AstNode):
+                block = child
         s = Story(story_name)
+        s.first_node = block 
         return s
-
-    def visit_story_start_keyword(self, node, visited_children):
-        return "not_important"
-
-    def visit_story_ends_keyword(self, node, visited_children):
-        return "not_important"
 
     def visit_story_name(self, node, visited_children):
         return {'story_name': node.text}
@@ -93,51 +105,59 @@ class RSVisitor(NodeVisitor):
         return visited_children[0]
 
     def visit_oneliner(self, node, visited_children):
-        output = []
+        l = []
         for child in visited_children:
             if child == "not_important":
                 continue
             if len(child) > 0:
-                output.append(child.strip())
-        return output
+                l.append(child.strip())
+        s = " ".join(l)
+        n = MessageOutNode(s) if s[:2] == "> " else MessageInNode(s)
+        return n
 
     def visit_if_statement(self, node, visited_children):
+        # TODO: при заповненні ifnode якщо існує ifnode.next цей next має бути і в next полі самих останніх вкладених statements if`a
+        n = IfNode()
         for child in visited_children:
-            if hasattr(child, "expr_name") == "if_variant":
-                pass
-        pass
-        return "if_statement"
+            if child != "not_important":
+                for d in child:
+                    param = tuple(d.keys())[0]
+                    node = d[param]
+                    n.variants[param] = node
+        return n
+
+    def visit_if_variant_must(self, node, visited_children):
+        return visited_children
 
     def visit_if_variant(self, node, visited_children):
         param = ""
-        block = []
+        n = []
         for child in visited_children:
-            if isinstance(child, list):
-                block = child
-            elif child != "not_important":
+            if isinstance(child, AstNode):
+                n = child
+            elif child != "not_important" and not isinstance(child, AstNode):
                 param = child.strip()
-        return {param: block}
+        return {param: n}
 
     def visit_parameter(self, node, visited_children):
         pass
         return visited_children[0]
 
     def visit_block(self, node, visited_children):
-        block = []
+        n = None
+        n1 = None
         for child in visited_children:
             if child != "not_important":
-                block.append(child)
-        return block
+                for node in child:
+                    if n is not None:
+                        n.next = node
+                        n.next.parent = n
+                        n = node
+                    else:
+                        n = node
+                        n1 = node
+        return n1
 
-    def visit_ws(self, node, visited_children):
-        return "not_important"
-
-    def visit_maybe_ws(self, node, visited_children):
-        return "not_important"
-
-    def visit_ws_must(self, node, visited_children):
-        return "not_important"
-    
     def visit_inout(self, node, visited_children):
         return node.text
 
@@ -173,41 +193,21 @@ class RSVisitor(NodeVisitor):
     def visit_maybe_intent_keyword(self, node, visited_children):
         return "intent"
 
-
-    def visit_if_variant_must(self, node, visited_children):
-        return "if_variant_must"
-
     def visit_raw_text(self, node, visited_children):
         return node.text
 
     def visit_text(self, node, visited_children):
         return node.text
 
-    def visit_newline(self, node, visited_children):
-        return "newline"
-
-    def visit_if_start(self, node, visited_children):
-        return "if_start"
-
-    def visit_if_end(self, node, visited_children):
-        return "if_end"
-
-    def visit_then_keyword(self, node, visited_children):
+    def generic_visit(self, node, visited_children):
+        pass
         return "not_important"
-
-    def visit_lbr(self, node, visited_children):
-        return "not_important"
-
-    def visit_rbr(self, node, visited_children):
-        return "not_important"
-
-    # def generic_visit(self, node, visited_children):
-    #     return ""
 
 
 class RSParser:
+    # TODO: прибрати зайве
     rs_grammar = Grammar(r"""
-        story = maybe_ws story_start_keyword maybe_ws story_name maybe_ws lbr maybe_ws exprs maybe_ws rbr maybe_ws 
+        story = maybe_ws story_start_keyword maybe_ws story_name maybe_ws block maybe_ws 
         exprs = (expr)*
         story_start_keyword = ~r"story"
         story_ends_keyword = ~r"story_ends"
@@ -222,7 +222,7 @@ class RSParser:
         block = lbr maybe_ws maybe_statements maybe_ws rbr
         rbr = ~r"\}"
         lbr = ~r"\{"
-        oneliner = maybe_ws inout ws_must text
+        oneliner = inout ws_must text
         inout = ~r"[<>]"
         text = (intent_text / simple_text)
         intent_text = maybe_intent_keyword raw_text
@@ -303,6 +303,19 @@ class Story:
 
 class AICore:
     def next_in_story(log, story):
-        if str(story.first_node) not in log:
-            return None
-        return story.first_node.next
+        n1 = story.first_node
+        n = n1
+        i1 = log.index(str(n1))
+        i = i1
+        while i < len(log) and n is not None:
+            if isinstance(n, StringNode):
+                if log[i] != n.text:
+                    return None
+                n = n.next
+            elif isinstance(n, IfNode):
+                if log[i][2:] not in n.variants:
+                    return None
+                else:
+                    n = n.variants[log[i][2:]]
+            i = i + 1
+        return n
