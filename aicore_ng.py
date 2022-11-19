@@ -61,6 +61,24 @@ class NodeFactory:
 
 
 class RSVisitor(NodeVisitor):
+    def visit_story(self, node, visited_children):
+        story_name = ""
+        for child in visited_children:
+            if isinstance(child, dict):
+                story_name = child['story_name']
+
+        s = Story(story_name)
+        return s
+
+    def visit_story_start_keyword(self, node, visited_children):
+        return "not_important"
+
+    def visit_story_ends_keyword(self, node, visited_children):
+        return "not_important"
+
+    def visit_story_name(self, node, visited_children):
+        return {'story_name': node.text}
+
     def visit_exprs(self, node, visited_children):
         output = []
         for child in visited_children:
@@ -77,7 +95,7 @@ class RSVisitor(NodeVisitor):
     def visit_oneliner(self, node, visited_children):
         output = []
         for child in visited_children:
-            if child == "ws*":
+            if child == "not_important":
                 continue
             if len(child) > 0:
                 output.append(child.strip())
@@ -85,28 +103,40 @@ class RSVisitor(NodeVisitor):
 
     def visit_if_statement(self, node, visited_children):
         for child in visited_children:
-            #if child.expr_type == "if_variant":
-            pass
+            if hasattr(child, "expr_name") == "if_variant":
+                pass
         pass
         return "if_statement"
 
     def visit_if_variant(self, node, visited_children):
-        pass
-        return "if_variant"
+        param = ""
+        block = []
+        for child in visited_children:
+            if isinstance(child, list):
+                block = child
+            elif child != "not_important":
+                param = child.strip()
+        return {param: block}
 
     def visit_parameter(self, node, visited_children):
-        if visited_children[0].expr_name=="raw_text":
-            return {"parameter": visited_children[0]["raw_text"]}
-        return "parameter"
+        pass
+        return visited_children[0]
+
+    def visit_block(self, node, visited_children):
+        block = []
+        for child in visited_children:
+            if child != "not_important":
+                block.append(child)
+        return block
 
     def visit_ws(self, node, visited_children):
-        return "ws"
+        return "not_important"
 
     def visit_maybe_ws(self, node, visited_children):
-        return ""
+        return "not_important"
 
     def visit_ws_must(self, node, visited_children):
-        return "ws*"
+        return "not_important"
     
     def visit_inout(self, node, visited_children):
         return node.text
@@ -137,7 +167,8 @@ class RSVisitor(NodeVisitor):
         return "intent_parameter"
 
     def visit_maybe_statements(self, node, visited_children):
-        return "maybe_statements"
+        pass
+        return visited_children
 
     def visit_maybe_intent_keyword(self, node, visited_children):
         return "intent"
@@ -147,13 +178,10 @@ class RSVisitor(NodeVisitor):
         return "if_variant_must"
 
     def visit_raw_text(self, node, visited_children):
-        return {"raw_text": node.text}
+        return node.text
 
     def visit_text(self, node, visited_children):
         return node.text
-
-    def visit_block(self, node, visited_children):
-        return "block"
 
     def visit_newline(self, node, visited_children):
         return "newline"
@@ -162,18 +190,16 @@ class RSVisitor(NodeVisitor):
         return "if_start"
 
     def visit_if_end(self, node, visited_children):
-        """ Returns the overall output. """
         return "if_end"
 
     def visit_then_keyword(self, node, visited_children):
-        return "then_theme"
+        return "not_important"
 
     def visit_lbr(self, node, visited_children):
-        """ Returns the overall output. """
-        return "lbr"
+        return "not_important"
 
     def visit_rbr(self, node, visited_children):
-        return "rbr"
+        return "not_important"
 
     # def generic_visit(self, node, visited_children):
     #     return ""
@@ -181,7 +207,11 @@ class RSVisitor(NodeVisitor):
 
 class RSParser:
     rs_grammar = Grammar(r"""
+        story = maybe_ws story_start_keyword maybe_ws story_name maybe_ws lbr maybe_ws exprs maybe_ws rbr maybe_ws 
         exprs = (expr)*
+        story_start_keyword = ~r"story"
+        story_ends_keyword = ~r"story_ends"
+        story_name = ~r"\w+"
         expr = statement / newline
         statement = (if_statement / oneliner)
         if_statement = maybe_ws if_start maybe_ws if_variant_must maybe_ws if_end maybe_ws
@@ -212,6 +242,12 @@ class RSParser:
     """)
 
     def create_from_text(text):
+        res = RSParser.rs_grammar.parse(text)
+        v = RSVisitor()
+        ret = v.visit(res)
+        return ret
+
+    def create_from_text1(text):
         rg = re.compile(r"(story\s+(\w+)\s*((\n|.)*?)story_ends)", re.MULTILINE)  # noqa: E501
         m = rg.search(text)
         if m is None:

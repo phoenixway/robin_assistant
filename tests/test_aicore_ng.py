@@ -6,11 +6,17 @@ from ..aicore_ng import MessageOutNode, AICore  # noqa: F403
 
 
 def test_create_from1():
+    # source = """
+    # story testname
+    #     < <intent>greetings
+    #     > Hey!
+    # story_ends
+    # """
     source = """
-    story testname
-        < <intent>greetings
-        > Hey!
-    story_ends
+        story testname { 
+            < <intent>greetings
+            > Hey!
+        }
     """
     st = RSParser.create_from_text(source)
     assert st is not None, "StoryFactory.create_from_text error"
@@ -61,14 +67,10 @@ def test_create_from2():
         }
     </if>"""
     
+    res = RSParser.create_from_text(source)
     res = RSParser.rs_grammar.parse(source)
-    res = RSParser.rs_grammar.parse(r"""< test test""")
-    res = RSParser.rs_grammar.parse(source1)
-    iv = RSVisitor()
-    output = iv.visit(res)
-    
-    #res = parse(source1.splitlines())
-    st = RSParser.create_from_text(source)
+    res = RSParser.create_from_text(r"""< test test""")
+    res = RSParser.create_from_text(source1)
     assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
     assert st.name == "testname", "st.name must be testname"
