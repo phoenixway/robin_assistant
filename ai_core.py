@@ -15,13 +15,6 @@ source_dir = source_path.parent
 stories_ = {}
 intents = []
 
-def recognize_intent(text):
-    for intent in intents:
-        text = text.lower()
-        m = re.match(intent, text)
-        if m is not None:
-            return intents[intent]
-
 def create_default_stories():
     s = {}
     s['greetings'] = ("<intent>greetings", "<func>say_hello", "<intent>i_planned_day", "You planned your day, congratulations!")

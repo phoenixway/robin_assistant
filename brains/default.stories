@@ -1,46 +1,27 @@
-{
-    "cursing": [
-        "<intent>cursing",
-        "<func>answer_cursing"
-    ],
-    "goodbye": [
-        "<intent>bye",
-        "<func>say_bye"
-    ],
-    "greetings": [
-        "<intent>greetings",
-        "<func>say_hello",
-        "<intent>i_planned_day",
-        "You planned your day, congratulations!"
-    ],
-    "robin_asks": [
-        "Do u planned yr day?",
-        "<intent>yes",
-        "Great, as expected!"
-    ],
-    "robin_asks2": [
-        "Do u planned yr day?",
-        "<intent>no",
-        "It is very important. 'Plan a success or it is a failure that'll be planned'. \r\nWhy don't you do that right now?",
-        {
-            "<intent>yes": "Great!",
-            "<intent>no":"Is it more important what u're doing right now than day planning?"
-        }
-    ],
-    "trees": [
-        "Do u know yr main priorities for today?", {
-            "<intent>yes": ["So go for it! Are u doing what you have to?", {
-                "<intent>yes": "Great!",
-                "<intent>no": "U can walk round all day not even starting doing task of top priority. Drop not important stuff and start with most impact task now!"
-                }    
-            ],
-            "<intent>no": ["Why don't you just stop doing whatever u doing and choose priorities for today?", 
-                {"i cannot": 
-                    "What is stopping u?", 
-                "ok": "Pull yourself together!"}],
-            "<silence>": ["Speak to me!", "yah", "Do what u must!"]
-        }
-    ],
-    "time": ["time", "<func>timeis", "date", "<func>dateis"]
-
-}
+    story testname {
+        < <intent>greetings
+        > Hey! Whats up?
+        <if input>
+            all right => {
+                > Cool!
+                < what cool?
+                > everything
+            }
+            nothing => {
+                > Oh...
+            }
+        </if>
+        < fuck
+    }
+    story testname1 {
+        < <intent>cursing
+        > fuck
+        <if input>
+            <intent>cursing => {
+                > Dont curse
+            }
+            great => {
+                > Cool!
+            }
+        </if>
+    }
