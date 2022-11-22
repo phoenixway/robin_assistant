@@ -111,6 +111,13 @@ def test_aicore1():
     assert next.text == "> fuck", "AICore.next_in_story error"
 
 
+def test_aicore2():
+    aicore = AICore(None)
+    aicore.log = ["< <intent>greetings", "> Hey! Whats up?", "< nothing"]  # noqa: E501
+    next = AICore.next_in_story(aicore.log, aicore.stories[0])
+    assert next is not None, "next is None"
+    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
+    assert next.text == "> Oh...", "AICore.next_in_story error"
 # def test_create_from3():
 #     source = r"""
 #     story test2 {
@@ -136,3 +143,23 @@ def test_aicore1():
 #         </if>
 #     }
 #     """
+
+def test_rs_parser():
+    raw_stories = r"""
+       story testname {
+        < <intent>greetings
+        > Hey! Whats up?
+        <if input>
+            all right => {
+                > Cool!
+                < what cool?
+                > everything
+            }
+            <intent>greetings => {
+                > Oh...
+            }
+        </if>
+        < fuck
+    }"""
+    try
+    stories = RSParser.create_from_text(raw_stories)

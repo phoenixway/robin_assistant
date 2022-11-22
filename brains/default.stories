@@ -7,7 +7,7 @@
                 < what cool?
                 > everything
             }
-            nothing => {
+            <intent>greetings => {
                 > Oh...
             }
         </if>
