@@ -29,6 +29,7 @@ from abc import ABC, abstractmethod
 from typing import Dict
 
 import websockets
+from termcolor import colored
 
 
 class WebsocketThread(ABC, threading.Thread):
@@ -195,7 +196,9 @@ class PrintWebsocket(WebsocketThread):
     """ Websocket client that prints messages it receives """
 
     async def handle_message(self, message):
-        print(f'Robin> {message}\nYou>', end="")
+        m = colored('Robin>', "yellow")
+        m1 = colored('You>', 'blue')
+        print(f"{m} {message}\n{m1} ", end="")
 
 
 if __name__ == '__main__':
@@ -203,7 +206,7 @@ if __name__ == '__main__':
     try:
         with PrintWebsocket(url) as thread:
             print('Connected to', url)
-            print("You>", end="")
+            # print("You>", end="")
             while True:
                 text = input("")
                 if text == 'kill':
