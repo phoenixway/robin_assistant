@@ -50,22 +50,22 @@ class Messages:
 
     async def ws_say(self, message):
         if self.websocket:
-            try:
-                await self.websocket.send(message)
-                log.debug(f"Ws server sent: {message}")
-            except websockets.exceptions.ConnectionClosedOK:
-                log.error('ConnectionClosedOK')
+            # try:
+            await self.websocket.send(message)
+            log.debug(f"Ws server sent: {message}")
+            # except websockets.exceptions.ConnectionClosedOK:
+            #     log.error('ConnectionClosedOK')
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
         return self.MODULES['ai_core'].respond(message)
     
     def telegram_say(self, message):
-        try:
-          telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
-          log.debug(f"Telegrambot sent: {message}")
-        except:
-          print("telegram_say error")
+        # try:
+        # telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
+        log.debug(f"Telegrambot sent: {message}")
+        # except:
+        #   print("telegram_say error")
         
     
     async def ws_process(self, websocket):

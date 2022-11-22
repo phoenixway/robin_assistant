@@ -43,6 +43,11 @@ class MessageOutNode(StringNode):
         return message[0:2] == "> "
 
 
+class FnNode(AstNode):
+    def __init__(self, fn_body):
+        self.fn_body = fn_body
+
+
 class IfNode(AstNode):
     def __init__(self):
         self.variants = {}

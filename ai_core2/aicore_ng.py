@@ -6,20 +6,32 @@ import logging
 import os
 import sys
 import json
+import nest_asyncio
+# from py_mini_racer import py_mini_racer
+# from quickjs import Function
+import js2py
+# import lupa
+# from lupa import LuaRuntime
 import actions.default
 from pathlib import Path
-
-from rs_parser import RSParser
-from ast_nodes import IfNode, StringNode  # noqa: E501
+from .rs_parser import RSParser
+from .ast_nodes import IfNode, StringNode, FnNode  # noqa: E501
 
 sys.path.append(os.getcwd())
+nest_asyncio.apply()
+
+# racer = py_mini_racer.MiniRacer()
+# lua = LuaRuntime(unpack_returned_tuples=True)
 
 log = logging.getLogger('pythonConfig')
 source_path = Path(__file__).resolve()
-source_dir = source_path.parent
+source_dir = source_path.parent.parent
 stories_ = {}
 intents = []
 SILENCE_TIME = 10
+
+# s = os.path.dirname(os.path.abspath(__file__))
+# sys.path.insert(0, s)
 
 with open(source_dir/'brains/default.intents', 'r') as f:
     intents = json.load(f)
@@ -49,6 +61,7 @@ class AICore:
         self.silence_task = None
         self.is_started = True
         self.repeat_if_silence = False
+        self.use_silence = False
         self.robins_stories = ['robin_asks2::0']
 
     def next_in_story(log, story):
@@ -92,36 +105,47 @@ class AICore:
 
     async def message_received_handler(self, data):
         log.debug('message received handler')
-        # if self.silence_task is not None:
-        #     self.silence_task.cancel()
-        # self.silence_task = asyncio.create_task(self.do_silence())
+        if self.use_silence:
+            if self.silence_task is not None:
+                self.silence_task.cancel()
+            self.silence_task = asyncio.create_task(self.do_silence())
 
     async def message_send_handler(self, data):
         log.debug('message send handler')
-        # if self.silence_task is not None:
-        #     self.silence_task.cancel()
-        # self.silence_task = asyncio.create_task(self.do_silence())
+        if self.use_silence:
+            if self.silence_task is not None:
+                self.silence_task.cancel()
+            self.silence_task = asyncio.create_task(self.do_silence())
 
     def respond(self, text):
         log.debug("Parsing with aicore")
         answer = None if text == '<silence>' else f"Default answer on '{text}'"
-        try:
-            intent = recognize_intent(text)
-            if intent is not None:
-                self.log.append(f"< <intent>{intent}")
-            else:
-                self.log.append("< " + text)
-            # FIXME: take any input
-            for story in self.stories:
-                next = AICore.next_in_story(self.log, story)
-                if next:
+        # try:
+        intent = recognize_intent(text)
+        if intent is not None:
+            self.log.append(f"< <intent>{intent}")
+        else:
+            self.log.append("< " + text)
+        # FIXME: take any input
+        for story in self.stories:
+            next = AICore.next_in_story(self.log, story)
+            if next:
+                if isinstance(next, FnNode):
+                    self.log.append(answer)
+                    # answer = lua.eval(next.fn_body.rstrip())
+                    # answer = racer.eval(next.fn_body.rstrip())
+                    # loop = asyncio.get_event_loop()
+                    # loop.run_until_complete(js2py.eval_js(next.fn_body.rstrip()))
+                    answer = js2py.eval_js(next.fn_body.rstrip())
+                    pass
+                else:
                     answer = next.text
                     self.log.append(answer)
                     if "> " in answer or "< " in answer:
                         answer = answer[2:]
-                    break
-        except Exception as e:
-            answer = f"Error happened in ai_core.parse(): {e}"
+                break
+        # except Exception as e:
+            # answer = f"Error happened in ai_core.parse(): {e}"
         return answer
 
     def start_story(self, story_id):

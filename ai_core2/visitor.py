@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 from parsimonious.nodes import NodeVisitor
-from ast_nodes import IfNode, AstNode, MessageInNode, MessageOutNode  # noqa: E501
-from story import Story
+from .ast_nodes import IfNode, AstNode, MessageInNode, MessageOutNode, FnNode  # noqa: E501
+from .story import Story
 
 
 class RSVisitor(NodeVisitor):
@@ -69,8 +69,14 @@ class RSVisitor(NodeVisitor):
         return visited_children[0]
 
     def visit_fn_statement(self, node, visited_children):
-        pass
-        return ""
+        fn = None
+        for child in visited_children:
+            if child != "not_important":
+                fn = FnNode(child)
+        return fn
+
+    def visit_code(self, node, visited_children):
+        return node.text
 
     def visit_block(self, node, visited_children):
         n = None
@@ -108,33 +114,12 @@ class RSVisitor(NodeVisitor):
     def visit_inout(self, node, visited_children):
         return node.text
 
-    def visit_intent(self, node, visited_children):
-        return "intent"
-
-    def visit_intent_keyword(self, node, visited_children):
-        return "intent"
-
-    def visit_intent_text(self, node, visited_children):
-        return "intent"
-
-    def visit_simple_text(self, node, visited_children):
-        return "intent"
-
-    def visit_maybe_intent(self, node, visited_children):
-        return "<intent>"
-
-    def visit_simple_parameter(self, node, visited_children):
-        return "simple_parameter"
-
     def visit_intent_parameter(self, node, visited_children):
         pass
         return f"{node.text.strip()}"
 
     def visit_maybe_statements(self, node, visited_children):
         return visited_children
-
-    def visit_maybe_intent_keyword(self, node, visited_children):
-        return "intent"
 
     def visit_raw_text(self, node, visited_children):
         return node.text

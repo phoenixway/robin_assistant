@@ -25,3 +25,13 @@
             }
         </if>
     }
+    story hellofn {
+        < time
+        <fn>
+            new Date().toLocaleString();
+        </fn>
+    }
+    story dayplaying {
+        < dont plan a day
+        > Why dont u do that now?
+    }
