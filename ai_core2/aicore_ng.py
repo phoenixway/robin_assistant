@@ -61,8 +61,8 @@ class AICore:
         self.silence_task = None
         self.is_started = True
         self.repeat_if_silence = False
-        self.use_silence = False
-        self.robins_stories = ['robin_asks2::0']
+        self.handle_silence = True
+        self.robins_story_ids = ['robin_asks']
 
     def next_in_story(log, story):
         n1 = story.first_node
@@ -95,8 +95,8 @@ class AICore:
     def start_next_robin_story(self):
         log.debug("start_next_robin_story")
         # TODO: get rid of it
-        if self.robins_stories:
-            s = self.robins_stories.pop(0)
+        if self.robins_story_ids:
+            s = self.robins_story_ids.pop(0)
             if s is not None:
                 self.start_story(s)
 
@@ -111,21 +111,24 @@ class AICore:
 
     async def message_received_handler(self, data):
         log.debug('message received handler')
-        if self.use_silence:
+        if self.handle_silence:
             if self.silence_task is not None:
                 self.silence_task.cancel()
             self.silence_task = asyncio.create_task(self.do_silence())
 
     async def message_send_handler(self, data):
         log.debug('message send handler')
-        if self.use_silence:
+        if self.handle_silence:
             if self.silence_task is not None:
                 self.silence_task.cancel()
             self.silence_task = asyncio.create_task(self.do_silence())
 
     def respond(self, text):
         log.debug("Parsing with aicore")
-        answer = None if text == '<silence>' else f"Default answer on '{text}'"
+        if text == '<silence>':
+            return None
+        else:
+            answer = f"Default answer on '{text}'"
         # try:
         intent = recognize_intent(text)
         if intent is not None:
@@ -157,15 +160,16 @@ class AICore:
     def start_story(self, story_id):
         # FIXME:whole func
         log.debug("Make story start by Robin's will")
-        if story_id in self.stories and len(self.stories[story_id]) > 0:
-            next_answer = self.stories[story_id][0]
-            if next_answer.startswith('<func>'):
-                fn_name = (self.stories[story_id][0])[6:]
-                fn = getattr(actions.default, fn_name)
-                # TODO: get rid of sending modules each time fn calls
-                answer = fn(self.modules)
-                self.log.append(next_answer)
-            else:
-                answer = next_answer
-                self.log.append(next_answer)
-            self.modules['messages'].say(answer)
+        st = [i for i in self.stories if i.name == story_id][0]
+        if story_id and st:
+            next_answer = st.first_node.text
+            # if next_answer.startswith('<func>'):
+            #     # fn_name = (self.stories[story_id][0])[6:]
+            #     # fn = getattr(actions.default, fn_name)
+            #     # # TODO: get rid of sending modules each time fn calls
+            #     # answer = fn(self.modules)
+            #     # self.log.append(next_answer)
+            # else:
+            answer = next_answer
+            self.log.append(next_answer)
+            self.modules['messages'].say(answer[2:])

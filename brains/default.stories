@@ -13,6 +13,41 @@
         </if>
         < fuck
     }
+    story robin_asks {
+        > Are u doing the currently most important task now?
+        <if input>
+            <intent>yes => {
+                > Great, as espected!
+            }
+            <intent>no => {
+                > Why dont u do that right now?
+                <if input>
+                    <intent>yes => {
+                        > Do ur best!
+                    }
+                    <intent>no => {
+                        > Think about what prevents u from that? Do u realize consenquests of skipping? Do u accept own responsibility for not doing most important task?
+                        <if input>
+                            <intent>yes => {
+                                > Why dont at least stop doing not important things right now?
+                            }
+                            <intent>no => {
+                                > Think about it. Pull yourself together!
+                                <if input>
+                                    <intent>yes => {
+                                        > Please, be the best version of yourself!
+                                    }
+                                    <intent>no => {
+                                        > U will get all consenquests.
+                                    }
+                                </if>
+                            }
+                        </if>
+                    }
+                </if>
+            }
+        </if>
+    }
     story testname1 {
         < <intent>cursing
         > fuck

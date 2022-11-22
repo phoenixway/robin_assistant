@@ -4,5 +4,5 @@
     "i planned day": "i_planned_day",
     "(bye|exit|(quit))": "bye",
     "(yes|yeah|sure|ok)": "yes",
-    "(no)": "no"
+    "(no|nope)": "no"
 }

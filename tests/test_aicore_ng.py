@@ -18,6 +18,7 @@ def test_create_from1():
         }
     """
     st = RSParser.create_from_text(source)
+    st = st[0]
     assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
     assert st.name == "testname", "st.name must be testname"
@@ -102,7 +103,7 @@ def test_create_from2():
     assert next.text == "< fuck", "AICore.next_in_story error"
 
 
-def test_aicore1():
+def next_in_story():
     aicore = AICore(None)
     st = aicore.stories[1]
     log = ["< <intent>cursing", "> fuck", "< <intent>cursing", "Dont curse", "< <intent>cursing"]  # noqa: E501
@@ -112,38 +113,28 @@ def test_aicore1():
     assert next.text == "> fuck", "AICore.next_in_story error"
 
 
-def test_aicore2():
+def test_next_in_story2():
+    aicore = AICore(None)
+    st = aicore.stories[1]
+    log = ["> Are u doing the currently most important task now?", "<intent>no"]  # noqa: E501
+    next = AICore.next_in_story(log, st)
+    assert next is not None, "next is None"
+    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
+    assert next.text == "> Why dont u do that right now?", "AICore.next_in_story error"
+    log = ["> Are u doing the currently most important task now?", "<intent>no", "> Why dont u do that right now?", "< ok"]  # noqa: E501
+    next = AICore.next_in_story(log, st)
+    assert next is not None, "next is None"
+    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
+    assert next.text == "> Good", "AICore.next_in_story error"
+
+
+def test_next_in_story1():
     aicore = AICore(None)
     aicore.log = ["< <intent>greetings", "> Hey! Whats up?", "<intent>no"]  # noqa: E501
     next = AICore.next_in_story(aicore.log, aicore.stories[0])
     assert next is not None, "next is None"
     assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
     assert next.text == "> Oh...", "AICore.next_in_story error"
-# def test_create_from3():
-#     source = r"""
-#     story test2 {
-#         < <intent>greetings
-#         > Hey! Whats up?
-#         <if input>
-#             all right => {
-#                 > great!
-#                 <if input>
-#                     ok => {
-#                         > oki-oki
-#                     }
-#                     nothing => {
-#                         > nothing...
-#                     }
-#                 </if>
-#                 < shit
-#                 > fuck
-#             }
-#             nothing=>{
-#                 < test
-#             }
-#         </if>
-#     }
-#     """
 
 
 def test_grammar():
