@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from parsimonious.grammar import Grammar
 
 from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
 from ..ai_core2.ast_nodes import IfNode, MessageOutNode, MessageInNode  # noqa: E501
@@ -113,7 +114,7 @@ def test_aicore1():
 
 def test_aicore2():
     aicore = AICore(None)
-    aicore.log = ["< <intent>greetings", "> Hey! Whats up?", "< nothing"]  # noqa: E501
+    aicore.log = ["< <intent>greetings", "> Hey! Whats up?", "<intent>no"]  # noqa: E501
     next = AICore.next_in_story(aicore.log, aicore.stories[0])
     assert next is not None, "next is None"
     assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
@@ -144,6 +145,48 @@ def test_aicore2():
 #     }
 #     """
 
+
+def test_grammar():
+    raw_gr = r"""
+        if_variant_must = if_variant+
+        if_variant = maybe_ws parameter maybe_ws then_keyword maybe_ws
+        then_keyword = ~r"=>"
+        oneliner = inout ws_must text
+        inout = ~r"[<>]"
+        text = (intent_text / simple_text)
+        intent_text = maybe_intent_keyword raw_text
+        simple_text = raw_text
+        parameter = (intent_parameter / simple_parameter)
+        simple_parameter = raw_text
+        intent_parameter = maybe_intent_keyword
+        raw_text = ~r"[-\w\s\?\!\.]+"
+        ws = ~r"\s"
+        intent_keyword = ~r"<intent>"
+        maybe_ws = ws*
+        ws_must = ws+
+        maybe_intent_keyword = intent_keyword+
+        maybe_statements = statement*
+        statement = (oneliner)
+        """
+    # raw_stories = r"""
+    #     <if input>
+    #         all right => {
+    #             > Cool!
+    #             < what cool?
+    #             > everything
+    #         }
+    #         <intent>greetings => {
+    #             > Oh...
+    #         }
+    #     </if>
+    # }"""
+    raw_stories = r"""
+        <intent> => """
+    gr = Grammar(raw_gr)
+    stories = gr.parse(raw_stories)
+    assert stories is not None, "stories is None"
+
+
 def test_rs_parser():
     raw_stories = r"""
        story testname {
@@ -161,5 +204,8 @@ def test_rs_parser():
         </if>
         < fuck
     }"""
-    try
-    stories = RSParser.create_from_text(raw_stories)
+    try:
+        stories = RSParser.create_from_text(raw_stories)
+    except:
+        assert False, "Exception raised"
+    assert stories is not None, "stories is None"

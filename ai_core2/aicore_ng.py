@@ -79,10 +79,16 @@ class AICore:
                     return None
                 n = n.next
             elif isinstance(n, IfNode):
-                if log[i][2:] not in n.variants:
-                    return None
+                if (log[i].startswith("< ") or log[i].startswith("> ")):
+                    if log[i][2:] not in n.variants:
+                        return None
+                    else:
+                        n = n.variants[log[i][2:]]
                 else:
-                    n = n.variants[log[i][2:]]
+                    if log[i] not in n.variants:
+                        return None
+                    else:
+                        n = n.variants[log[i]]
             i = i + 1
         return n
 
