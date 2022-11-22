@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import sys
 import shelve
 import logging
 import nest_asyncio
@@ -18,7 +19,10 @@ MODULES = {}
 def init_logger():
     global log
     log = logging.getLogger('pythonConfig')
-    log.setLevel(logging.DEBUG)
+    if len(sys.argv) > 1:
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
     LOGFORMAT = "%(log_color)s%(levelname)-6s%(reset)s %(message)-40s %(reset)s %(log_color)s%(filename)s:%(lineno)s <- %(funcName)s() %(reset)s"  # noqa: E501
