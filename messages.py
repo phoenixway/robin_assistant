@@ -42,6 +42,7 @@ class Messages:
             # t.add_done_callback(background_tasks.remove(t))
             loop.run_until_complete(t)
         else:
+            asyncio.set_event_loop(asyncio.new_event_loop())
             asyncio.run(self.say_async(message))
         self.MODULES['events'].emit('message_send', message)
 
@@ -61,22 +62,26 @@ class Messages:
         return self.MODULES['ai_core'].respond(message)
 
     def telegram_say(self, message):
-        # try:
-        # telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
-        log.debug(f"Telegrambot sent: {message}")
-        # except:
-        #   print("telegram_say error")
+        try:
+            telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
+            log.debug(f"Telegrambot sent: {message}")
+        except:
+            print("telegram_say error")
 
     async def ws_process(self, websocket):
         self.websocket = websocket
         self.is_started = True
         while True:
-            input_text = await websocket.recv()
-            log.debug(f"Ws server received: {input_text}")
-            self.telegram_say(f"Ws server received: {input_text}")
-            self.MODULES['events'].emit('message_received', input_text)
-            answer = self.get_answer(input_text)
-            await self.say_async(answer)
+            try:
+                input_text = await websocket.recv()
+                log.debug(f"Ws server received: {input_text}")
+                self.telegram_say(f"Ws server received: {input_text}")
+                self.MODULES['events'].emit('message_received', input_text)
+                answer = self.get_answer(input_text)
+                await self.say_async(answer)
+            except websockets.exceptions.ConnectionClosedOK:
+                #log.error('ConnectionClosedOK')
+                pass
 
     async def ws_serve(self):
         while True:
@@ -84,9 +89,10 @@ class Messages:
                 log.debug("Ws server started.")
                 await websockets.serve(self.ws_process, "localhost", 8765)
                 await asyncio.Future()
-            # except:
-            except websockets.exceptions.ConnectionClosedOK:
-                log.error('ConnectionClosedOK')
+            except:
+                log.error("Ws server exception")
+            # except websockets.exceptions.ConnectionClosedOK:
+            #     log.error('ConnectionClosedOK')
 
     def run_telegram_bot(self):
         log.debug('Telegram bot started.')
@@ -117,4 +123,6 @@ class Messages:
         t = asyncio.create_task(self.ws_serve())
         background_tasks.add(t)
         # t.add_done_callback(background_tasks.remove(t))
-        # asyncio.create_task(self.telegram_serve())
+        t1 = asyncio.create_task(self.telegram_serve())
+        background_tasks.add(t1)
+
