@@ -4,8 +4,6 @@
         <if input>
             all right => {
                 > Cool!
-                < what cool?
-                > everything
             }
             <intent>no => {
                 > Oh...
@@ -48,17 +46,9 @@
             }
         </if>
     }
-    story testname1 {
+    story curse {
         < <intent>cursing
-        > fuck
-        <if input>
-            <intent>cursing => {
-                > Dont curse
-            }
-            great => {
-                > Cool!
-            }
-        </if>
+        > Dont curse
     }
     story hellofn {
         < time
@@ -66,7 +56,13 @@
             new Date().toLocaleString();
         </fn>
     }
-    story dayplaying {
-        < dont plan a day
-        > Why dont u do that now?
+    story thx {
+        < <intent>thanku
+        <fn>
+            a = ["u welcome", "im here to serve"]
+            max = 1
+            min = 0
+            i = Math.floor(Math.random() * (max - min + 1)) + min;
+            a[i]
+        </fn>
     }

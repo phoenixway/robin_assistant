@@ -89,6 +89,13 @@ class AICore:
                         return None
                     else:
                         n = n.variants[log[i]]
+            elif isinstance(n, FnNode):
+                answer = js2py.eval_js(n.fn_body.rstrip())
+                if log[i] != answer:
+                    return None
+                n = n.next
+            else:
+                return None
             i = i + 1
         return n
 
