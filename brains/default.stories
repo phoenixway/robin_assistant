@@ -23,6 +23,9 @@
                     <intent>yes => {
                         > Do ur best!
                     }
+                    dont want => {
+                        > What about Levi's method?
+                    }
                     <intent>no => {
                         > Think about what prevents u from that? Do u realize consenquests of skipping? Do u accept own responsibility for not doing most important task?
                         <if input>
@@ -50,7 +53,7 @@
         < <intent>cursing
         > Dont curse
     }
-    story hellofn {
+    story time {
         < time
         <fn>
             new Date().toLocaleString();
@@ -65,4 +68,8 @@
             i = Math.floor(Math.random() * (max - min + 1)) + min;
             a[i]
         </fn>
+    }
+    story about {
+        < <intent>about
+        > I`m your battle machine - Robin.
     }

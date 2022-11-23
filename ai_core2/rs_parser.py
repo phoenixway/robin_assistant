@@ -35,7 +35,7 @@ class RSParser:
         parameter = (intent_parameter / simple_parameter)
         simple_parameter = raw_text
         intent_parameter = maybe_intent_keyword raw_text
-        raw_text = ~r"[-\w\s\?\!\.\,\d]+"
+        raw_text = ~r"[-\w\s\?\!\.\,\d\'\`]+"
         ws = ~r"\s"
         intent_keyword = ~r"<intent>"
         maybe_ws = ws*
