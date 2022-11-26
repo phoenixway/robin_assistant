@@ -23,7 +23,18 @@ nest_asyncio.apply()
 
 # racer = py_mini_racer.MiniRacer()
 lua = LuaRuntime(unpack_returned_tuples=True)
-fn_engine = lua.execute
+
+
+def lua_execute(code):
+    res = None
+    try:
+        res = lua.execute(code)
+    except Exception as e:
+        print(e)
+    return res
+
+
+fn_engine = lua_execute
 
 log = logging.getLogger('pythonConfig')
 source_path = Path(__file__).resolve()

@@ -11,19 +11,12 @@
 # asyncio.run(hello())
 
 #!/usr/bin/env python
-"""
-    WebsocketThread client abstract class
 
-    Can be used to create a asynchronous websocket client in a separate thread.
-    Once implemented, the thread can handle received messages and allows
-    for sending of messages from synchronous Python code.
-
-    See the WebsocketThread docstring for an example implementation and use.
-"""
+import sys
+import os
 import asyncio
 import queue
 import ssl
-import sys
 import threading
 from abc import ABC, abstractmethod
 from typing import Dict
@@ -141,16 +134,24 @@ class WebsocketThread(ABC, threading.Thread):
 
     async def listen(self):
         """ Listen to the websocket and local outgoing queue """
-        async with websockets.connect(self.url,
-                                      extra_headers=self.headers) as socket:
-            task1 = self.listen_socket(socket)
-            task2 = self.listen_queue(socket)
-            await asyncio.gather(task1, task2)
+        try:
+            async with websockets.connect(self.url,
+                                        extra_headers=self.headers) as socket:
+                task1 = self.listen_socket(socket)
+                task2 = self.listen_queue(socket)
+                await asyncio.gather(task1, task2)
+        except:
+            print("\nBye")
+            os._exit(1)
 
     async def listen_socket(self, socket):
         """ Listen for messages on the socket, schedule tasks to handle """
-        async for msg in socket:
-            asyncio.create_task(self.handle_message(msg))
+        try:
+            async for msg in socket:
+                asyncio.create_task(self.handle_message(msg))
+        except:
+            print("\nBye")
+            os._exit(1)
 
     async def listen_queue(self, socket):
         """ Poll the outgoing queue for messages, send them to websocket """
