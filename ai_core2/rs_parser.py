@@ -8,9 +8,10 @@ class RSParser:
     # TODO: прибрати зайве
     rs_grammar = Grammar(r"""
         stories = story+
-        story = maybe_ws story_start_keyword maybe_ws story_name maybe_ws block maybe_ws  # noqa: E501
+        story = maybe_ws story_start_keyword maybe_ws maybe_story_name maybe_ws block maybe_ws  # noqa: E501
         story_start_keyword = ~r"story"
         story_ends_keyword = ~r"story_ends"
+        maybe_story_name = story_name*
         story_name = ~r"[\w_\d]+"
         statement = (if_statement / oneliner / fn_statement)
         if_statement = maybe_ws if_start maybe_ws if_variant_must maybe_ws if_end maybe_ws

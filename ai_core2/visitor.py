@@ -24,6 +24,10 @@ class RSVisitor(NodeVisitor):
     def visit_story_name(self, node, visited_children):
         return {'story_name': node.text}
 
+    def visit_maybe_story_name(self, node, visited_children):
+        res = visited_children[0] if len(visited_children) > 0 else None
+        return res
+
     def visit_statement(self, node, visited_children):
         return visited_children[0]
 

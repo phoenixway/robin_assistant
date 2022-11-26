@@ -97,5 +97,7 @@ finally:
         asyncio.run(quit_handler(None))
     except asyncio.exceptions.CancelledError:
         pass
+    except KeyboardInterrupt:
+        pass
     finally:
         log.info('Bye')

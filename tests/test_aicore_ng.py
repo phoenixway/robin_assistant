@@ -121,11 +121,11 @@ def test_next_in_story2():
     assert next is not None, "next is None"
     assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
     assert next.text == "> Why dont u do that right now?", "AICore.next_in_story error"
-    log = ["> Are u doing the currently most important task now?", "<intent>no", "> Why dont u do that right now?", "< ok"]  # noqa: E501
+    log = ["> Are u doing the currently most important task now?", "<intent>no", "> Why dont u do that right now?", "< <intent>yes"]  # noqa: E501
     next = AICore.next_in_story(log, st)
     assert next is not None, "next is None"
     assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Good", "AICore.next_in_story error"
+    assert next.text == "> Do ur best!", "AICore.next_in_story error"
 
 
 def test_next_in_story1():
