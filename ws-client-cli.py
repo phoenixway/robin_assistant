@@ -80,11 +80,6 @@ class WebsocketThread(ABC, threading.Thread):
 
     @abstractmethod
     async def handle_message(self, message: str):
-        """ Override this method to handle messages from the websocket
-
-        Args:
-            message: String from the websocket.
-        """
         pass
 
     def __enter__(self):
@@ -125,11 +120,6 @@ class WebsocketThread(ABC, threading.Thread):
         self.loop.run_forever()
 
     def send(self, message: str):
-        """ Send a message to the websocket from client
-
-        Args:
-            message: The string message to send over the socket.
-        """
         self.outgoing.put(message)
 
     async def listen(self):
@@ -194,8 +184,6 @@ class WebsocketThread(ABC, threading.Thread):
 
 
 class PrintWebsocket(WebsocketThread):
-    """ Websocket client that prints messages it receives """
-
     async def handle_message(self, message):
         m = colored('Robin>', "yellow")
         m1 = colored('You>', 'blue')
@@ -215,4 +203,5 @@ if __name__ == '__main__':
                     break
                 thread.send(text)
     except:
+        thread.kill()
         print("\nBye")

@@ -22,14 +22,11 @@ class Messages:
         self.is_started = False
 
     async def say_async(self, message):
-        try:
-            await self.ws_say(message)
-        except:
-            print('An exception wsserver')
+        await self.ws_say(message)
         try:
             self.telegram_say(message)
         except:
-            print('An exception telegram b')       
+            log.error('An exception telegram bot when sending message.')       
 
     def say(self, message):
         try:
@@ -51,11 +48,13 @@ class Messages:
 
     async def ws_say(self, message):
         if self.websocket:
-            # try:
-            await self.websocket.send(message)
-            log.debug(f"Ws server sent: {message}")
-            # except websockets.exceptions.ConnectionClosedOK:
-            #     log.error('ConnectionClosedOK')
+            try:
+                await self.websocket.send(message)
+                log.debug(f"Ws server sent: {message}")
+            except websockets.exceptions.ConnectionClosedOK:
+                log.error("Ws server can't send a message because client closed the connection.")
+            except websockets.exceptions.ConnectionClosedError:
+                log.error("Ws server can't send a message because of incorrectly closed connection.")
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
@@ -71,17 +70,26 @@ class Messages:
     async def ws_process(self, websocket):
         self.websocket = websocket
         self.is_started = True
+        error = False
         while True:
             try:
                 input_text = await websocket.recv()
+                error = False
                 log.debug(f"Ws server received: {input_text}")
                 self.telegram_say(f"Ws server received: {input_text}")
                 self.MODULES['events'].emit('message_received', input_text)
                 answer = self.get_answer(input_text)
                 await self.say_async(answer)
             except websockets.exceptions.ConnectionClosedOK:
-                #log.error('ConnectionClosedOK')
-                pass
+                if not error:
+                    log.info('Ws connection is closed by client.')
+                    error = True
+            except websockets.exceptions.ConnectionClosedError:
+                if not error:
+                    log.info("Ws connection error.")
+                    error = True
+            except KeyboardInterrupt:
+                log.info("Keyboard interrupts.")
 
     async def ws_serve(self):
         while True:
