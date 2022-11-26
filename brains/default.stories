@@ -62,14 +62,17 @@
     story thx {
         < <intent>thanku
         <fn>
-            a = ["u welcome", "im here to serve"]
-            max = 1
-            min = 0
-            i = Math.floor(Math.random() * (max - min + 1)) + min;
-            a[i]
+            local a = {'u welcome', 'im here to serve'}
+            return a[ math.random( #a ) ]            
         </fn>
     }
     story about {
         < <intent>about
         > I`m your battle machine - Robin.
+    }
+    story opentasks {
+        < open tasks
+        <fn>
+            os.execute('gedit &')
+        </fn>
     }

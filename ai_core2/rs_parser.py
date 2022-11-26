@@ -29,7 +29,7 @@ class RSParser:
         fn_statement = maybe_ws fn_start code fn_end maybe_ws
         fn_start = ~r'<fn>'
         fn_end = ~r'</fn>'
-        code = ~r"[\w\s\d\(\)\{\}\[\]\;\,\.\"\'\~\?\n\!\=\/+\-/*]+"
+        code = ~r"[\w\s\d\(\)\{\}\[\]\;\,\.\"\'\~\?\n\!\=/\+\-\*\:_\&#]+"
         intent_text = maybe_intent_keyword raw_text
         simple_text = raw_text
         parameter = (intent_parameter / simple_parameter)

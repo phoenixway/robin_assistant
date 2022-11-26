@@ -7,11 +7,12 @@ import os
 import sys
 import json
 import nest_asyncio
-# from py_mini_racer import py_mini_racer
+from py_mini_racer import py_mini_racer
 # from quickjs import Function
 import js2py
-# import lupa
-# from lupa import LuaRuntime
+from js2py import require
+import lupa
+from lupa import LuaRuntime
 import actions.default
 from pathlib import Path
 from .rs_parser import RSParser
@@ -21,7 +22,8 @@ sys.path.append(os.getcwd())
 nest_asyncio.apply()
 
 # racer = py_mini_racer.MiniRacer()
-# lua = LuaRuntime(unpack_returned_tuples=True)
+lua = LuaRuntime(unpack_returned_tuples=True)
+fn_engine = lua.execute
 
 log = logging.getLogger('pythonConfig')
 source_path = Path(__file__).resolve()
@@ -63,6 +65,7 @@ class AICore:
         self.repeat_if_silence = False
         self.handle_silence = True
         self.robins_story_ids = ['robin_asks']
+        
 
     def next_in_story(log, story):
         n1 = story.first_node
@@ -90,7 +93,7 @@ class AICore:
                     else:
                         n = n.variants[log[i]]
             elif isinstance(n, FnNode):
-                answer = js2py.eval_js(n.fn_body.rstrip())
+                answer = fn_engine(n.fn_body.rstrip())
                 if log[i] != answer:
                     return None
                 n = n.next
@@ -148,11 +151,17 @@ class AICore:
             if next:
                 if isinstance(next, FnNode):
                     self.log.append(answer)
-                    # answer = lua.eval(next.fn_body.rstrip())
+                    answer = fn_engine(next.fn_body.rstrip())
+                    if answer == (True, 'exit', 0):
+                        answer = "Done."
                     # answer = racer.eval(next.fn_body.rstrip())
                     # loop = asyncio.get_event_loop()
                     # loop.run_until_complete(js2py.eval_js(next.fn_body.rstrip()))
-                    answer = js2py.eval_js(next.fn_body.rstrip())
+                    # open = require('sys');
+                    # context = js2py.EvalJs(enable_require=True);
+                    # answer = context.execute(next.fn_body.rstrip())
+                    # answer = js2py.eval_js(next.fn_body.rstrip())
+                    # answer = js2py.eval_js(next.fn_body.rstrip(), async_modeTrue)
                     pass
                 else:
                     answer = next.text

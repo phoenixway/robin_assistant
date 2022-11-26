@@ -44,13 +44,19 @@ async def quit_handler(data):
     log.debug("quit_handler launched")
     m = MODULES['messages']
     m.say("Good bye, master!")
-    loop = asyncio.get_running_loop()
-    pending = asyncio.all_tasks()
-    for task in pending:
-        task.cancel()
-    loop.stop()
+    try:
+        loop = asyncio.get_running_loop()
+        pending = asyncio.all_tasks()
+        for task in pending:
+            task.cancel()
+        loop.stop()
+        exit(0)
+    except:
+        pass
+    # m.t.join()    # wait for the thread to finish what it's doing
+    # m.t.close()   
     # m.t.stop()
-    exit(0)
+    
 
 
 async def start_handler(data):
@@ -84,8 +90,12 @@ except KeyboardInterrupt:
     pass
 except RuntimeError:
     pass
+except asyncio.exceptions.CancelledError:
+    pass
 finally:
     try:
         asyncio.run(quit_handler(None))
+    except asyncio.exceptions.CancelledError:
+        pass
     finally:
         log.info('Bye')
