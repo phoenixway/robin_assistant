@@ -76,7 +76,6 @@ class AICore:
         self.repeat_if_silence = False
         self.handle_silence = True
         self.robins_story_ids = ['robin_asks']
-        
 
     def next_in_story(log, story):
         n1 = story.first_node
@@ -115,7 +114,6 @@ class AICore:
 
     def start_next_robin_story(self):
         log.debug("start_next_robin_story")
-        # TODO: get rid of it
         if self.robins_story_ids:
             s = self.robins_story_ids.pop(0)
             if s is not None:
@@ -146,11 +144,11 @@ class AICore:
 
     def respond(self, text):
         log.debug("Parsing with aicore")
+        text = text.lstrip()
         if text == '<silence>':
             return None
         else:
             answer = f"Default answer on '{text}'"
-        # try:
         intent = recognize_intent(text)
         if intent is not None:
             self.log.append(f"< <intent>{intent}")
@@ -165,6 +163,7 @@ class AICore:
                     answer = fn_engine(next.fn_body.rstrip())
                     if answer == (True, 'exit', 0):
                         answer = "Done."
+                    # TODO: Different engines
                     # answer = racer.eval(next.fn_body.rstrip())
                     # loop = asyncio.get_event_loop()
                     # loop.run_until_complete(js2py.eval_js(next.fn_body.rstrip()))
@@ -189,6 +188,7 @@ class AICore:
         log.debug("Make story start by Robin's will")
         st = [i for i in self.stories if i.name == story_id][0]
         if story_id and st:
+            # TODO: parse any nodes
             next_answer = st.first_node.text
             # if next_answer.startswith('<func>'):
             #     # fn_name = (self.stories[story_id][0])[6:]

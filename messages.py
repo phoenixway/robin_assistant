@@ -20,6 +20,7 @@ class Messages:
         self.telegram_client_id = 612272249
         self.t = None
         self.is_started = False
+        self.ws_stop = asyncio.Future() 
 
     async def say_async(self, message):
         await self.ws_say(message)
@@ -44,6 +45,7 @@ class Messages:
         self.MODULES['events'].emit('message_send', message)
 
     def stop(self):
+        self.ws_stop.set_result(None)
         self.t.stop()
 
     async def ws_say(self, message):
@@ -78,27 +80,31 @@ class Messages:
                 log.debug(f"Ws server received: {input_text}")
                 self.telegram_say(f"Ws server received: {input_text}")
                 self.MODULES['events'].emit('message_received', input_text)
+                # TODO: find answer from within event handler in aicore
                 answer = self.get_answer(input_text)
                 await self.say_async(answer)
             except websockets.exceptions.ConnectionClosedOK:
                 if not error:
                     log.info('Ws connection is closed by client.')
                     error = True
+                    break
             except websockets.exceptions.ConnectionClosedError:
                 if not error:
                     log.info("Ws connection error.")
                     error = True
+                    break
             except KeyboardInterrupt:
                 log.info("Keyboard interrupts.")
+                break
 
     async def ws_serve(self):
         while True:
-            try:
-                log.debug("Ws server started.")
-                await websockets.serve(self.ws_process, "localhost", 8765)
-                await asyncio.Future()
-            except:
-                log.error("Ws server exception")
+            # try:
+            log.debug("Ws server started.")
+            async with websockets.serve(self.ws_process, "localhost", 8765, ping_interval=None):
+                await self.ws_stop
+            # except:
+            #     log.error("Ws server exception")
             # except websockets.exceptions.ConnectionClosedOK:
             #     log.error('ConnectionClosedOK')
 

@@ -36,7 +36,7 @@ def init_modules():
     MODULES['events'] = Robin_events()
     MODULES['watcher'] = Watcher(MODULES)
     MODULES['messages'] = Messages(MODULES)
-    MODULES['db'] = shelve.open('spam')
+    MODULES['db'] = shelve.open('memory')
     MODULES['ai_core'] = AICore(MODULES)
 
 
@@ -45,6 +45,7 @@ async def quit_handler(data):
     m = MODULES['messages']
     m.say("Good bye, master!")
     try:
+        m.stop()
         loop = asyncio.get_running_loop()
         pending = asyncio.all_tasks()
         for task in pending:

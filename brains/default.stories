@@ -1,4 +1,4 @@
-    story testname {
+    story {
         < <intent>greetings
         > Hey! Whats up?
         <if input>
@@ -15,7 +15,7 @@
         > Are u doing the currently most important task now?
         <if input>
             <intent>yes => {
-                > Great, as espected!
+                > Great, as expected!
             }
             <intent>no => {
                 > Why dont u do that right now?
@@ -49,11 +49,11 @@
             }
         </if>
     }
-    story curse {
+    story {
         < <intent>cursing
         > Dont curse
     }
-    story time {
+    story {
         < time
         <fn>
             local date_table = os.date("*t")
@@ -65,18 +65,18 @@
             return string.format("%d-%d-%d %d:%d:%d:%s", year, month, day, hour, minute, second, ms)
         </fn>
     }
-    story thx {
+    story {
         < <intent>thanku
         <fn>
             local a = {'u welcome', 'im here to serve'}
             return a[ math.random( #a ) ]            
         </fn>
     }
-    story about {
+    story {
         < <intent>about
         > I`m your battle machine - Robin.
     }
-    story opentasks {
+    story {
         < open tasks
         <fn>
             os.execute('gedit &')

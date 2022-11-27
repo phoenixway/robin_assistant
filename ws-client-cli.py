@@ -123,7 +123,6 @@ class WebsocketThread(ABC, threading.Thread):
         self.outgoing.put(message)
 
     async def listen(self):
-        """ Listen to the websocket and local outgoing queue """
         try:
             async with websockets.connect(self.url,
                                         extra_headers=self.headers) as socket:
@@ -135,7 +134,6 @@ class WebsocketThread(ABC, threading.Thread):
             os._exit(1)
 
     async def listen_socket(self, socket):
-        """ Listen for messages on the socket, schedule tasks to handle """
         try:
             async for msg in socket:
                 asyncio.create_task(self.handle_message(msg))
@@ -144,7 +142,6 @@ class WebsocketThread(ABC, threading.Thread):
             os._exit(1)
 
     async def listen_queue(self, socket):
-        """ Poll the outgoing queue for messages, send them to websocket """
         while True:
             if self.outgoing.empty():
                 await asyncio.sleep(0.5)
@@ -156,7 +153,6 @@ class WebsocketThread(ABC, threading.Thread):
                     continue
 
     def ignore_aiohttp_ssl_error(self):
-        """ Ignore aiohttp #3535 / cpython #13548 issue with SSL close. """
         if sys.version_info >= (3, 7, 4):
             return
 
