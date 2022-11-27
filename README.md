@@ -10,6 +10,8 @@ Robin AI is artifical personal assistant. Project is in intersection of two doma
 
 ## What's next?
 * Features freeze until they will be stable enough.
+* Real if statement
+* Plugin system
 
 ## Author
 Roman Kozak (Pylypchuk)
