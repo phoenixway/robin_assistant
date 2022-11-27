@@ -42,7 +42,7 @@ class RSVisitor(NodeVisitor):
         n = MessageOutNode(s) if s[:2] == "> " else MessageInNode(s)
         return n
 
-    def visit_if_statement(self, node, visited_children):
+    def visit_if_in_statement(self, node, visited_children):
         # TODO: при заповненні ifnode якщо існує ifnode.next цей next має бути  і в next полі самих останніх вкладених statements if`a  # noqa: E501
         n = IfNode()
         for child in visited_children:
@@ -54,10 +54,10 @@ class RSVisitor(NodeVisitor):
                     n.last_statements[param] = n2
         return n
 
-    def visit_if_variant_must(self, node, visited_children):
+    def visit_if_in_variant_must(self, node, visited_children):
         return visited_children
 
-    def visit_if_variant(self, node, visited_children):
+    def visit_if_in_variant(self, node, visited_children):
         param = ""
         n1 = []
         n2 = []
@@ -100,7 +100,7 @@ class RSVisitor(NodeVisitor):
                         n1 = node
         return n1
 
-    def visit_if_variant_block(self, node, visited_children):
+    def visit_if_in_variant_block(self, node, visited_children):
         n = None
         n1 = None
         for child in visited_children:
@@ -133,3 +133,4 @@ class RSVisitor(NodeVisitor):
 
     def generic_visit(self, node, visited_children):
         return "not_important"
+        
