@@ -1,7 +1,7 @@
     story {
         < <intent>greetings
         > Hey! Whats up?
-        <if input>
+        <if in>
             all right => {
                 > Cool!
             }
@@ -13,13 +13,13 @@
     }
     story robin_asks {
         > Are u doing the currently most important task now?
-        <if input>
+        <if in>
             <intent>yes => {
                 > Great, as expected!
             }
             <intent>no => {
                 > Why dont u do that right now?
-                <if input>
+                <if in>
                     <intent>yes => {
                         > Do ur best!
                     }
@@ -28,13 +28,13 @@
                     }
                     <intent>no => {
                         > Think about what prevents u from that? Do u realize consenquests of skipping? Do u accept own responsibility for not doing most important task?
-                        <if input>
+                        <if in>
                             <intent>yes => {
                                 > Why dont at least stop doing not important things right now?
                             }
                             <intent>no => {
                                 > Think about it. Pull yourself together!
-                                <if input>
+                                <if in>
                                     <intent>yes => {
                                         > Please, be the best version of yourself!
                                     }
