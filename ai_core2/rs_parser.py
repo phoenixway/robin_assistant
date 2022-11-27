@@ -13,7 +13,7 @@ class RSParser:
         story_ends_keyword = ~r"story_ends"
         maybe_story_name = story_name*
         story_name = ~r"[\w_\d]+"
-        statement = (if_in_statement / oneliner / fn_statement)
+        statement = (if_statement / if_in_statement / oneliner / fn_statement)
         if_in_statement = maybe_ws if_in_start maybe_ws if_in_variant_must maybe_ws if_end maybe_ws
         if_in_start = ~r'<if in>'
         if_end = ~r'</if>'
@@ -22,6 +22,15 @@ class RSParser:
         then_keyword = ~r"=>"
         block = lbr maybe_ws maybe_statements maybe_ws rbr
         if_in_variant_block = lbr maybe_ws maybe_statements maybe_ws rbr
+        if_statement = maybe_ws if_start maybe_ws if_block maybe_ws maybe_else_part maybe_ws if_end maybe_ws
+        if_start = if_start_keyword ws_must if_condition maybe_ws if_start_end_keyword
+        if_start_keyword = ~r'<if'
+        if_start_end_keyword = ~r'>'
+        if_condition = raw_text
+        maybe_else_part = else_part?
+        else_part = else_keyword maybe_ws if_block
+        else_keyword = ~r'<else>'
+        if_block = statement+
         rbr = ~r"\}"
         lbr = ~r"\{"
         oneliner = inout ws_must text

@@ -16,7 +16,7 @@ from lupa import LuaRuntime
 import actions.default
 from pathlib import Path
 from .rs_parser import RSParser
-from .ast_nodes import IfNode, StringNode, FnNode  # noqa: E501
+from .ast_nodes import IfInNode, StringNode, FnNode  # noqa: E501
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -92,7 +92,7 @@ class AICore:
                 if log[i] != n.text:
                     return None
                 n = n.next
-            elif isinstance(n, IfNode):
+            elif isinstance(n, IfInNode):
                 if (log[i].startswith("< ") or log[i].startswith("> ")):
                     if log[i][2:] not in n.variants:
                         return None

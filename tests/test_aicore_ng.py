@@ -2,7 +2,7 @@
 from parsimonious.grammar import Grammar
 
 from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
-from ..ai_core2.ast_nodes import IfNode, MessageOutNode, MessageInNode  # noqa: E501
+from ..ai_core2.ast_nodes import IfInNode, MessageOutNode, MessageInNode  # noqa: E501
 from ..ai_core2.story import Story
 from ..ai_core2.aicore_ng import AICore
 
@@ -78,7 +78,7 @@ def test_create_from2():
     log.append(next.text)
     next = AICore.next_in_story(log, st)
     assert next is not None, "next is None"
-    assert isinstance(next, IfNode), "next must be IfNode"
+    assert isinstance(next, IfInNode), "next must be IfNode"
     # TODO: check variants
     # assert next.text == "> Hey! Whats up?", "AICore.next_in_story error"
     log.append('< all right')
@@ -103,7 +103,38 @@ def test_create_from2():
     assert next.text == "< fuck", "AICore.next_in_story error"
 
 
-def next_in_story():
+def test_if_statement():
+    source = """
+        story {
+            < <intent>greetings
+            <if True>
+                    > Good to see u again, boss.
+                    < Really?
+                    > Nope.
+            <else>
+                > Oh no..
+                < What?
+                > Forget.
+            </if>
+            < fuck you
+            > u welcome
+
+        }
+    """
+    st = RSParser.create_from_text(source)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.name == "testname", "st.name must be testname"
+    assert st.contains("< <intent>greetings"), "st.contains must work"
+    log = ["< <intent>greetings"]
+    next = AICore.next_in_story(log, st)
+    assert next is not None, "next is None"
+    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
+    assert next.text == "> Hey!", "AICore.next_in_story error"
+
+
+def test_next_in_story():
     aicore = AICore(None)
     st = aicore.stories[1]
     log = ["< <intent>cursing", "> fuck", "< <intent>cursing", "Dont curse", "< <intent>cursing"]  # noqa: E501

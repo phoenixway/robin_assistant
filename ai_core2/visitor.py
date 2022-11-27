@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from parsimonious.nodes import NodeVisitor
-from .ast_nodes import IfNode, AstNode, MessageInNode, MessageOutNode, FnNode  # noqa: E501
+from .ast_nodes import IfInNode, IfNode, AstNode, MessageInNode, MessageOutNode, FnNode  # noqa: E501
 from .story import Story
 
 
@@ -44,7 +44,7 @@ class RSVisitor(NodeVisitor):
 
     def visit_if_in_statement(self, node, visited_children):
         # TODO: при заповненні ifnode якщо існує ifnode.next цей next має бути  і в next полі самих останніх вкладених statements if`a  # noqa: E501
-        n = IfNode()
+        n = IfInNode()
         for child in visited_children:
             if child != "not_important":
                 for d in child:
@@ -68,6 +68,51 @@ class RSVisitor(NodeVisitor):
                 param = child.strip()
         return {param: (n1, n2)}
 
+    def make_nodes_chain(lst):
+        i = 0
+        while i < len(lst):
+            if i + 1 < len(lst):
+                lst[i].next = lst[i + 1]
+            if i - 1 >= 0:
+                lst[i].parent = lst[i - 1]
+            i += 1
+        return lst[0], lst[-1]
+
+    def visit_if_statement(self, node, visited_children):
+        n = IfNode()
+        last = None
+        last_else = None
+        for child in visited_children:
+            if child != "not_important":
+                if isinstance(child, dict) and "condition" in child:
+                    n.condition = child["condition"]
+                elif isinstance(child, dict) and "else_part" in child:
+                    n.first_in_else_block, last_else = RSVisitor.make_nodes_chain(child["else_part"])
+                elif isinstance(child, list):
+                    n.first_in_if_block, last = RSVisitor.make_nodes_chain(child)
+        n.last4block = last
+        n.last4else_block = last_else
+        return n
+
+    def visit_if_start(self, node, visited_children):
+        d = {"condition": child for child in visited_children if child != "not_important"}
+        return d
+
+    def visit_if_condition(self, node, visited_children):
+        pass
+
+    def visit_else_part(self, node, visited_children):
+        lst = [child for child in visited_children if child != "not_important"]
+        lst = lst[0]
+        return {"else_part": lst}
+
+    def visit_maybe_else_part(self, node, visited_children):
+        lst = [child for child in visited_children if child != "not_important"]
+        return lst[0]
+
+    def visit_if_block(self, node, visited_children):
+        return visited_children
+
     def visit_parameter(self, node, visited_children):
         pass
         return visited_children[0]
@@ -89,7 +134,7 @@ class RSVisitor(NodeVisitor):
             if child != "not_important":
                 for node in child:
                     if n is not None:
-                        if isinstance(n, IfNode):
+                        if isinstance(n, IfInNode):
                             for keys in n.last_statements:
                                 n.last_statements[keys].next = node
                         n.next = node
