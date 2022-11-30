@@ -3,6 +3,7 @@
 import re
 import asyncio
 import logging
+# import pdb
 import os
 import sys
 import json
@@ -15,8 +16,8 @@ import lupa
 from lupa import LuaRuntime
 import actions.default
 from pathlib import Path
-from .rs_parser import RSParser
-from .ast_nodes import IfInNode, StringNode, FnNode  # noqa: E501
+from ai_core2.rs_parser import RSParser
+from ai_core2.ast_nodes import IfInNode, IfNode, StringNode, FnNode  # noqa: E501
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -76,12 +77,55 @@ class AICore:
         self.repeat_if_silence = False
         self.handle_silence = True
         self.robins_story_ids = ['robin_asks']
+    
+    def get_next_node(n, l, i):
+        # pdb.set_trace()
+        if isinstance(n, StringNode) or isinstance(n, FnNode):
+            return n.next
+        elif isinstance(n, IfNode):
+            r = eval(n.condition)
+            if r:
+                return n.first_in_if_block
+            else:
+                return n.first_in_else_block
+        elif isinstance(n, IfInNode):
+            if (l[i].startswith("< ") or l[i].startswith("> ")):
+                if l[i][2:] not in n.variants:
+                    return None
+                else:
+                    return n.variants[l[i][2:]]
+            else:
+                if l[i] not in n.variants:
+                    return None
+                else:
+                    return n.variants[l[i]]
+        else:
+            return None
+                    
+    def next_in_story(log, s):
+        # pdb.set_trace()
+        # node to process
+        n = s.first_node
+        if str(n) not in log:
+            return None
+        # index in log
+        il = len(log) - log[::-1].index(str(n)) - 1
+        while (il < len(log)) and (n != None) and (log[il] == n.log_form()):
+            il = il + 1
+            n = AICore.get_next_node(n, log, il)
+        # if story is not actual one
+        if il <= len(log) - 1 and log[il] != n.log_form():
+            return None
+        else:
+            return n
+            
         
-
-    def next_in_story(log, story):
+    def next_in_story_old(log, story):
+        
         n1 = story.first_node
         n = n1
         s = str(n1)
+        # TODO: fix it
         if s not in log:
             return None
         i1 = len(log) - log[::-1].index(s) - 1
@@ -103,7 +147,12 @@ class AICore:
                         return None
                     else:
                         n = n.variants[log[i]]
+            elif isinstance(n, IfNode):
+                # FIXME: see below
+                c = eval(n.condition)
+                pass
             elif isinstance(n, FnNode):
+                # FIXME: add this fnnode to aicore.log
                 answer = fn_engine(n.fn_body.rstrip())
                 if log[i] != answer:
                     return None
@@ -145,43 +194,30 @@ class AICore:
             self.silence_task = asyncio.create_task(self.do_silence())
 
     def respond(self, text):
+        # pdb.set_trace()
         log.debug("Parsing with aicore")
         if text == '<silence>':
             return None
         else:
             answer = f"Default answer on '{text}'"
-        # try:
         intent = recognize_intent(text)
         if intent is not None:
             self.log.append(f"< <intent>{intent}")
         else:
             self.log.append("< " + text)
-        # FIXME: take any input
+
         for story in self.stories:
             next = AICore.next_in_story(self.log, story)
             if next:
                 if isinstance(next, FnNode):
-                    self.log.append(answer)
-                    answer = fn_engine(next.fn_body.rstrip())
-                    if answer == (True, 'exit', 0):
-                        answer = "Done."
-                    # answer = racer.eval(next.fn_body.rstrip())
-                    # loop = asyncio.get_event_loop()
-                    # loop.run_until_complete(js2py.eval_js(next.fn_body.rstrip()))
-                    # open = require('sys');
-                    # context = js2py.EvalJs(enable_require=True);
-                    # answer = context.execute(next.fn_body.rstrip())
-                    # answer = js2py.eval_js(next.fn_body.rstrip())
-                    # answer = js2py.eval_js(next.fn_body.rstrip(), async_modeTrue)
-                    pass
+                    self.log.append(str(next))
+                    answer = fn_engine(n.fn_body.rstrip())
                 else:
                     answer = next.text
                     self.log.append(answer)
                     if "> " in answer or "< " in answer:
                         answer = answer[2:]
                 break
-        # except Exception as e:
-            # answer = f"Error happened in ai_core.parse(): {e}"
         return answer
 
     def start_story(self, story_id):
@@ -190,13 +226,6 @@ class AICore:
         st = [i for i in self.stories if i.name == story_id][0]
         if story_id and st:
             next_answer = st.first_node.text
-            # if next_answer.startswith('<func>'):
-            #     # fn_name = (self.stories[story_id][0])[6:]
-            #     # fn = getattr(actions.default, fn_name)
-            #     # # TODO: get rid of sending modules each time fn calls
-            #     # answer = fn(self.modules)
-            #     # self.log.append(next_answer)
-            # else:
             answer = next_answer
             self.log.append(next_answer)
             self.modules['messages'].say(answer[2:])

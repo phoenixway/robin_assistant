@@ -11,8 +11,11 @@ class AstNode:
     def __repr__(self):
         return f'{self.__class__.__name__}'
 
-    def equals(self, other):
-        return str(self) == str(other)
+    def log_form(self):
+        return str(self)
+    
+    def equals(self, item):
+        raise Exception("Not implemented yet")
 
 
 class StringNode(AstNode):
@@ -25,6 +28,9 @@ class StringNode(AstNode):
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.text}"'
+        
+    def equals(self, item):
+        return self.text == item.text
 
 
 class MessageInNode(StringNode):
@@ -46,6 +52,9 @@ class MessageOutNode(StringNode):
 class FnNode(AstNode):
     def __init__(self, fn_body):
         self.fn_body = fn_body
+    
+    def __str__(self):
+        raise Exception("Not implemented")
 
 
 class IfInNode(AstNode):
@@ -55,8 +64,8 @@ class IfInNode(AstNode):
         super().__init__()
 
     def __str__(self):
-        return f'{self.variants}'
-
+        return f'{id(self)}'
+        
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.variants}"'
 
@@ -74,7 +83,7 @@ class IfNode(AstNode):
         super().__init__()
 
     def __str__(self):
-        return f'{self.condition}'
+        return f'{id(self)}'
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.condition}"'
