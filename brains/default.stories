@@ -1,4 +1,4 @@
-    story testname {
+    story greet {
         < <intent>greetings
         > Hey! Whats up?
         <if in>

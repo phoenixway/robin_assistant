@@ -21,6 +21,12 @@ class Story:
         self._name = name
         self.first_node = None
 
+    def __str__(self):
+        return f"Story: {self.name}"
+
+    def __repr__(self):
+        return f"Story: {self.name}"
+
     @property
     def name(self):
         if not self._name and not self.first_node:
