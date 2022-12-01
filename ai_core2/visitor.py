@@ -47,26 +47,37 @@ class RSVisitor(NodeVisitor):
         n = IfInNode()
         for child in visited_children:
             if child != "not_important":
-                for d in child:
-                    param = tuple(d.keys())[0]
-                    n1, n2 = d[param]
-                    n.variants[param] = n1
-                    n.last_statements[param] = n2
+                n.variants = []
+                n.last_statements = []
+                for item in child:
+                    n.variants.append(item[0])
+                    n.last_statements.append(item[1])
+                # for d in child:
+                #     param = tuple(d.keys())[0]
+                #     n1, n2 = d[param]
+                #     n.variants[param] = n1
+                #     n.last_statements[param] = n2
         return n
 
     def visit_if_in_variant_must(self, node, visited_children):
         return visited_children
 
     def visit_if_in_variant(self, node, visited_children):
-        param = ""
+        message = ""
+        # 1st node (without trigger input node) in nodes chain of this variant
         n1 = []
-        n2 = []
+        # last node in nodes chain of this variant
+        last = []
         for child in visited_children:
             if isinstance(child, tuple):
-                n1, n2 = child
+                n1, last = child
             elif child != "not_important" and not isinstance(child, AstNode):
-                param = child.strip()
-        return {param: (n1, n2)}
+                message = child.strip()
+        # trigger input node of this variant
+        inp = MessageOutNode(message)
+        # and other following nodes
+        inp.next = n1
+        return inp, last
 
     def make_nodes_chain(lst):
         i = 0
@@ -135,8 +146,10 @@ class RSVisitor(NodeVisitor):
                 for node in child:
                     if n is not None:
                         if isinstance(n, IfInNode):
-                            for keys in n.last_statements:
-                                n.last_statements[keys].next = node
+                            for st in n.last_statements:
+                                st.next = node
+                            # for keys in n.last_statements:
+                            #     n.last_statements[keys].next = node
                         n.next = node
                         n.next.parent = n
                         n = node
