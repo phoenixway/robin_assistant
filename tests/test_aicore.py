@@ -4,11 +4,18 @@ from parsimonious.grammar import Grammar
 from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
 from ..ai_core2.ast_nodes import IfInNode, MessageOutNode, MessageInNode  # noqa: E501
 from ..ai_core2.story import Story
-from ..ai_core2.aicore_ng import AICore
+from ..ai_core2.ai_core import AICore
 
 
-def test_create_from1():
-    source = """
+def check_next(log, st, goal):
+    next = AICore.next_in_story(log, st)
+    assert next is not None, "next is None"
+    assert isinstance(next, MessageOutNode), "next must be MessageInNode"
+    assert next.text == goal, f"AICore.next_in_story: must be {goal}"
+
+
+def test_next_in_story1():
+    source = r"""
         story testname {
             < <intent>greetings
             > Hey!
@@ -30,12 +37,12 @@ def test_create_from1():
     assert next.text == "> Hey!", "AICore.next_in_story error"
 
 
-def test_create_from2():
+def test_next_in_story2():
     source = r"""
     story testname {
         < <intent>greetings
         > Hey! Whats up?
-        <if input>
+        <if in>
             all right => {
                 > Cool!
                 < what cool?
@@ -50,17 +57,18 @@ def test_create_from2():
     story testname1 {
         < <intent>greetings1
         > Hey! Whats up?
-        <if input>
+        <if in>
             all right => {
                 > Cool!
                 < what cool?
-                > everything1
+                > everything
             }
             nothing => {
                 > Oh...
             }
         </if>
         < fuck1
+        > dont curse
     }
 
     """
@@ -71,36 +79,16 @@ def test_create_from2():
     assert st.name == "testname", "st.name must be testname"
     assert st.contains("< <intent>greetings"), "st.contains must work"
     log = ["< <intent>greetings"]
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Hey! Whats up?", "AICore.next_in_story error"
-    log.append(next.text)
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, IfInNode), "next must be IfNode"
-    # TODO: check variants
-    # assert next.text == "> Hey! Whats up?", "AICore.next_in_story error"
+    check_next(log, st, "> Hey! Whats up?")
+    log.append("> Hey! Whats up?")
     log.append('< all right')
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Cool!", "AICore.next_in_story error"
-    log.append(next.text)
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageInNode), "next must be MessageInNode"
-    assert next.text == "< what cool?", "AICore.next_in_story error"
-    log.append(next.text)
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> everything", "AICore.next_in_story error"
-    log.append(next.text)
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageInNode), "next must be MessageInNode"
-    assert next.text == "< fuck", "AICore.next_in_story error"
+    check_next(log, st, "> Cool!")
+    log.append("> Cool!")
+    log.append(r"< what cool?")
+    check_next(log, st, "> everything")
+    log.append("> everything")
+    log.append("< fuck")
+    check_next(log, st, "> dont curse")
 
 
 def test_if_statement():
@@ -134,7 +122,7 @@ def test_if_statement():
     assert next.text == "> Hey!", "AICore.next_in_story error"
 
 
-def test_next_in_story():
+def test_next_in_story3():
     aicore = AICore(None)
     st = aicore.stories[1]
     log = ["< <intent>cursing", "> fuck", "< <intent>cursing", "Dont curse", "< <intent>cursing"]  # noqa: E501
@@ -144,7 +132,7 @@ def test_next_in_story():
     assert next.text == "> fuck", "AICore.next_in_story error"
 
 
-def test_next_in_story2():
+def test_next_in_story4():
     aicore = AICore(None)
     st = aicore.stories[1]
     log = ["> Are u doing the currently most important task now?", "<intent>no"]  # noqa: E501
@@ -159,7 +147,7 @@ def test_next_in_story2():
     assert next.text == "> Do ur best!", "AICore.next_in_story error"
 
 
-def test_next_in_story1():
+def test_next_in_story5():
     aicore = AICore(None)
     aicore.log = ["< <intent>greetings", "> Hey! Whats up?", "<intent>no"]  # noqa: E501
     next = AICore.next_in_story(aicore.log, aicore.stories[0])
@@ -214,7 +202,7 @@ def test_rs_parser():
        story testname {
         < <intent>greetings
         > Hey! Whats up?
-        <if input>
+        <if in>
             all right => {
                 > Cool!
                 < what cool?

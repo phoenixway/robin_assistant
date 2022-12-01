@@ -30,7 +30,7 @@ class StringNode(AstNode):
         return f'{self.__class__.__name__}: "{self.text}"'
         
     def equals(self, item):
-        return self.text == item.text
+        return self.text == item
 
 
 class MessageInNode(StringNode):
