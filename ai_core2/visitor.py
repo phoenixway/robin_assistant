@@ -148,8 +148,9 @@ class RSVisitor(NodeVisitor):
                         if isinstance(n, IfInNode):
                             for st in n.last_statements:
                                 st.next = node
-                            # for keys in n.last_statements:
-                            #     n.last_statements[keys].next = node
+                        if isinstance(n, IfNode):
+                            n.last4block.next = node
+                            n.last4else_block.next = node
                         n.next = node
                         n.next.parent = n
                         n = node

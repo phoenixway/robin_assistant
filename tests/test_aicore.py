@@ -113,47 +113,15 @@ def test_if_statement():
     st = st[0]
     assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
-    assert st.name == "testname", "st.name must be testname"
     assert st.contains("< <intent>greetings"), "st.contains must work"
-    log = ["< <intent>greetings"]
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Hey!", "AICore.next_in_story error"
-
-
-def test_next_in_story3():
-    aicore = AICore(None)
-    st = aicore.stories[1]
-    log = ["< <intent>cursing", "> fuck", "< <intent>cursing", "Dont curse", "< <intent>cursing"]  # noqa: E501
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> fuck", "AICore.next_in_story error"
-
-
-def test_next_in_story4():
-    aicore = AICore(None)
-    st = aicore.stories[1]
-    log = ["> Are u doing the currently most important task now?", "<intent>no"]  # noqa: E501
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Why dont u do that right now?", "AICore.next_in_story error"
-    log = ["> Are u doing the currently most important task now?", "<intent>no", "> Why dont u do that right now?", "< <intent>yes"]  # noqa: E501
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Do ur best!", "AICore.next_in_story error"
-
-
-def test_next_in_story5():
-    aicore = AICore(None)
-    aicore.log = ["< <intent>greetings", "> Hey! Whats up?", "<intent>no"]  # noqa: E501
-    next = AICore.next_in_story(aicore.log, aicore.stories[0])
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Oh...", "AICore.next_in_story error"
+    l = ["< <intent>greetings"]
+    check_next(l, st, "> Good to see u again, boss.")
+    l.append("> Good to see u again, boss.")
+    l.append("< Really?")
+    check_next(l, st, "> Nope.")
+    l.append("> Nope.")
+    l.append("< fuck you")
+    check_next(l, st, "> u welcome")
 
 
 def test_grammar():
