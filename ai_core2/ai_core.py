@@ -93,16 +93,17 @@ class AICore:
             else:
                 res = n.first_in_else_block
         elif isinstance(n, IfInNode):
-            if (l[i].startswith("< ") or l[i].startswith("> ")):
-                if l[i][2:] not in n.variants:
-                    res = None
-                else:
-                    res = n.variants[l[i][2:]]
-            else:
-                if l[i] not in n.variants:
-                    res = None
-                else:
-                    res = n.variants[l[i]]
+            res = [it for it in n.variants if str(it) == l[i]][0]
+            # if (l[i].startswith("< ") or l[i].startswith("> ")):
+            #     if l[i][2:] not in n.variants:
+            #         res = None
+            #     else:
+            #         res = n.variants[l[i][2:]]
+            # else:
+            #     if l[i] not in n.variants:
+            #         res = None
+            #     else:
+            #         res = n.variants[l[i]]
         else:
             res = None
         if res is not None:
@@ -123,7 +124,7 @@ class AICore:
         while True:
             il = il + 1
             n = AICore.next_str_node(n, log, il)
-            if (il >= len(log) - 1) or (n is None) or (log[il] != n.log_form()):
+            if (il >= len(log)) or (n is None) or (log[il] != n.log_form()):
                 break
         # if story is not actual one
         # log is over, n has correct next node, il is last correct index of log plus

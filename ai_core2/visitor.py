@@ -74,7 +74,7 @@ class RSVisitor(NodeVisitor):
             elif child != "not_important" and not isinstance(child, AstNode):
                 message = child.strip()
         # trigger input node of this variant
-        inp = MessageOutNode(message)
+        inp = MessageInNode("< " + message)
         # and other following nodes
         inp.next = n1
         return inp, last

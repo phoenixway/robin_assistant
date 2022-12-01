@@ -9,8 +9,8 @@ from ..ai_core2.ai_core import AICore
 
 def check_next(log, st, goal):
     next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageInNode"
+    assert next is not None, f"next is None, must be Node:{goal}"
+    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
     assert next.text == goal, f"AICore.next_in_story: must be {goal}"
 
 
@@ -55,7 +55,7 @@ def test_next_in_story2():
         < fuck
     }
     story testname1 {
-        < <intent>greetings1
+        < <intent>greetings
         > Hey! Whats up?
         <if in>
             all right => {
@@ -67,16 +67,16 @@ def test_next_in_story2():
                 > Oh...
             }
         </if>
-        < fuck1
+        < fuck
         > dont curse
     }
 
     """
     sts = RSParser.create_from_text(source)
-    st = sts[0]
+    st = sts[1]
     assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
-    assert st.name == "testname", "st.name must be testname"
+    assert st.name == "testname1", "st.name must be testname"
     assert st.contains("< <intent>greetings"), "st.contains must work"
     log = ["< <intent>greetings"]
     check_next(log, st, "> Hey! Whats up?")
