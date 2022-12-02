@@ -1,4 +1,4 @@
-    story {
+    story greet {
         < <intent>greetings
         > Hey! Whats up?
         <if in>
@@ -81,4 +81,10 @@
         <fn>
             os.execute('gedit &')
         </fn>
+    }
+    story {
+        < if
+        <if True>
+            > True is true
+        </if>
     }

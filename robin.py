@@ -9,7 +9,7 @@ from colorlog import ColoredFormatter
 from robin_events import Robin_events
 from messages import Messages
 from watcher import Watcher
-from ai_core2.aicore_ng import AICore
+from ai_core2.ai_core import AICore
 
 nest_asyncio.apply()
 log = None

@@ -3,6 +3,7 @@
 import re
 import asyncio
 import logging
+# import pdb
 import os
 import sys
 import json
@@ -15,8 +16,11 @@ import lupa
 from lupa import LuaRuntime
 import actions.default
 from pathlib import Path
-from .rs_parser import RSParser
-from .ast_nodes import IfNode, StringNode, FnNode  # noqa: E501
+from ai_core2.rs_parser import RSParser
+from ai_core2.ast_nodes import IfInNode, IfNode
+from ai_core2.ast_nodes import StringNode
+from ai_core2.ast_nodes import MessageInNode
+from ai_core2.ast_nodes import MessageOutNode, FnNode
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -30,7 +34,7 @@ def lua_execute(code):
     try:
         res = lua.execute(code)
     except Exception as e:
-        print(e)
+        log.error(e)
     return res
 
 
@@ -77,10 +81,95 @@ class AICore:
         self.handle_silence = True
         self.robins_story_ids = ['robin_asks']
 
-    def next_in_story(log, story):
+    def run(self, expr):
+        return eval(expr)
+
+    def next_str_node(self, n, l, i):
+        # pdb.set_trace()
+        res = None
+        if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or isinstance(n, FnNode):
+            res = n.next
+        elif isinstance(n, IfNode):
+            r = self.run(n.condition)
+            if r:
+                res = n.first_in_if_block
+            else:
+                res = n.first_in_else_block
+        elif isinstance(n, IfInNode):
+            lst = [it for it in n.variants if str(it) == l[i]]
+            if lst:
+                res = lst[0]
+            else:
+                res = None
+        else:
+            res = None
+        if res is not None:
+            if isinstance(res, IfNode) or isinstance(res, IfInNode):
+                res = self.next_str_node(res, l, i)
+        return res
+
+    def next_in_story(self, log, s):
+        # pdb.set_trace()
+        # node to process
+        n = s.first_node
+        if (n is None) or (str(n) not in log):
+            return None
+        # index in log
+        il = len(log) - log[::-1].index(str(n)) - 1
+        # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
+        # TODO: what to do when n is control statement?
+        while True:
+            il = il + 1
+            n = self.next_str_node(n, log, il)
+            if (il >= len(log)) or (n is None) or (log[il] != n.log_form()):
+                break
+        # if story is not actual one
+        # log is over, n has correct next node, il is last correct index of log plus
+        # if il == len(log):
+        #     return n
+        # if il != len(log) and n is not None:
+        #     return None
+        # else:
+        if il < len(log) and log[il] != n.log_form():
+            return None
+        else:
+            return n
+        # if il <= len(log) - 1 and log[il] != n.log_form():
+        #     return None
+        # else:
+
+    def respond(self, text):
+        # pdb.set_trace()
+        log.debug("Parsing with aicore")
+        if text == '<silence>':
+            return None
+        else:
+            answer = f"Default answer on '{text}'"
+        intent = recognize_intent(text)
+        if intent is not None:
+            self.log.append(f"< <intent>{intent}")
+        else:
+            self.log.append("< " + text)
+
+        for story in self.stories:
+            next = self.next_in_story(self.log, story)
+            if next:
+                if isinstance(next, FnNode):
+                    # self.log.append(str(next))
+                    answer = fn_engine(next.fn_body.rstrip())
+                else:
+                    answer = next.text
+                    self.log.append(answer)
+                    if "> " in answer or "< " in answer:
+                        answer = answer[2:]
+                break
+        return answer
+
+    def next_in_story_old(log, story):
         n1 = story.first_node
         n = n1
         s = str(n1)
+        # TODO: fix it
         if s not in log:
             return None
         i1 = len(log) - log[::-1].index(s) - 1
@@ -91,7 +180,7 @@ class AICore:
                 if log[i] != n.text:
                     return None
                 n = n.next
-            elif isinstance(n, IfNode):
+            elif isinstance(n, IfInNode):
                 if (log[i].startswith("< ") or log[i].startswith("> ")):
                     if log[i][2:] not in n.variants:
                         return None
@@ -102,7 +191,12 @@ class AICore:
                         return None
                     else:
                         n = n.variants[log[i]]
+            elif isinstance(n, IfNode):
+                # FIXME: see below
+                c = eval(n.condition)
+                pass
             elif isinstance(n, FnNode):
+                # FIXME: add this fnnode to aicore.log
                 answer = fn_engine(n.fn_body.rstrip())
                 if log[i] != answer:
                     return None
@@ -142,6 +236,7 @@ class AICore:
                 self.silence_task.cancel()
             self.silence_task = asyncio.create_task(self.do_silence())
 
+<<<<<<< HEAD:ai_core2/aicore_ng.py
     def respond(self, text):
         log.debug("Parsing with aicore")
         text = text.lstrip()
@@ -183,6 +278,8 @@ class AICore:
             # answer = f"Error happened in ai_core.parse(): {e}"
         return answer
 
+=======
+>>>>>>> if_statement:ai_core2/ai_core.py
     def start_story(self, story_id):
         # FIXME:whole func
         log.debug("Make story start by Robin's will")
@@ -190,13 +287,6 @@ class AICore:
         if story_id and st:
             # TODO: parse any nodes
             next_answer = st.first_node.text
-            # if next_answer.startswith('<func>'):
-            #     # fn_name = (self.stories[story_id][0])[6:]
-            #     # fn = getattr(actions.default, fn_name)
-            #     # # TODO: get rid of sending modules each time fn calls
-            #     # answer = fn(self.modules)
-            #     # self.log.append(next_answer)
-            # else:
             answer = next_answer
             self.log.append(next_answer)
             self.modules['messages'].say(answer[2:])

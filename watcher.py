@@ -23,7 +23,7 @@ class Watcher:
         # ai_core = self.MODULES['ai_core']
         # while True:
         #     await asyncio.sleep(4)
-        schedule.every(10).minutes.do(self.helper)
+        schedule.every(1).minutes.do(self.helper)
         loop = asyncio.get_event_loop()
         while True:
             loop.run_until_complete(schedule.run_pending())

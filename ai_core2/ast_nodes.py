@@ -11,8 +11,11 @@ class AstNode:
     def __repr__(self):
         return f'{self.__class__.__name__}'
 
-    def equals(self, other):
-        return str(self) == str(other)
+    def log_form(self):
+        return str(self)
+    
+    def equals(self, item):
+        raise Exception("Not implemented yet")
 
 
 class StringNode(AstNode):
@@ -25,6 +28,9 @@ class StringNode(AstNode):
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.text}"'
+        
+    def equals(self, item):
+        return self.text == item
 
 
 class MessageInNode(StringNode):
@@ -46,17 +52,20 @@ class MessageOutNode(StringNode):
 class FnNode(AstNode):
     def __init__(self, fn_body):
         self.fn_body = fn_body
+    
+    def __str__(self):
+        raise Exception("Not implemented")
 
 
-class IfNode(AstNode):
+class IfInNode(AstNode):
     def __init__(self):
         self.variants = {}
         self.last_statements = {}
         super().__init__()
 
     def __str__(self):
-        return f'{self.variants}'
-
+        return f'{id(self)}'
+        
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.variants}"'
 
@@ -64,8 +73,27 @@ class IfNode(AstNode):
         return False
 
 
+class IfNode(AstNode):
+    def __init__(self):
+        self.condition = None
+        self.first_in_if_block = None
+        self.first_in_else_block = None
+        self.last4block = None
+        self.last4else_block = None
+        super().__init__()
+
+    def __str__(self):
+        return f'{id(self)}'
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}: "{self.condition}"'
+
+    def validate(message):
+        return False        
+
+
 class NodeFactory:
-    def createNode(text):
+    def create_node(text):
         if MessageInNode.validate(text):
             return MessageInNode(text)
         elif MessageOutNode.validate(text):
