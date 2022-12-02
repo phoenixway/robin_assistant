@@ -119,7 +119,10 @@ class RSVisitor(NodeVisitor):
 
     def visit_maybe_else_part(self, node, visited_children):
         lst = [child for child in visited_children if child != "not_important"]
-        return lst[0]
+        if lst:
+            return lst[0]
+        else:
+            return None
 
     def visit_if_block(self, node, visited_children):
         return visited_children

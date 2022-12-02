@@ -82,3 +82,9 @@
             os.execute('gedit &')
         </fn>
     }
+    story {
+        < if
+        <if True>
+            > True is true
+        </if>
+    }

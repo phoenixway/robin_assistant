@@ -8,7 +8,8 @@ from ..ai_core2.ai_core import AICore
 
 
 def check_next(log, st, goal):
-    next = AICore.next_in_story(log, st)
+    ac = AICore(None)
+    next = ac.next_in_story(log, st)
     assert next is not None, f"next is None, must be Node:{goal}"
     assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
     assert next.text == goal, f"AICore.next_in_story: must be {goal}"
@@ -31,10 +32,7 @@ def test_next_in_story1():
     assert st.name == "testname", "st.name must be testname"
     assert st.contains("< <intent>greetings"), "st.contains must work"
     log = ["< <intent>greetings"]
-    next = AICore.next_in_story(log, st)
-    assert next is not None, "next is None"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
-    assert next.text == "> Hey!", "AICore.next_in_story error"
+    check_next(log, st, "> Hey!")
 
 
 def test_next_in_story2():
@@ -146,18 +144,7 @@ def test_grammar():
         maybe_statements = statement*
         statement = (oneliner)
         """
-    # raw_stories = r"""
-    #     <if input>
-    #         all right => {
-    #             > Cool!
-    #             < what cool?
-    #             > everything
-    #         }
-    #         <intent>greetings => {
-    #             > Oh...
-    #         }
-    #     </if>
-    # }"""
+
     raw_stories = r"""
         <intent> => """
     gr = Grammar(raw_gr)

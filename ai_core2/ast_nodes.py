@@ -93,7 +93,7 @@ class IfNode(AstNode):
 
 
 class NodeFactory:
-    def createNode(text):
+    def create_node(text):
         if MessageInNode.validate(text):
             return MessageInNode(text)
         elif MessageOutNode.validate(text):

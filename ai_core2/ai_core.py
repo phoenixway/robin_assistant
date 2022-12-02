@@ -81,19 +81,26 @@ class AICore:
         self.handle_silence = True
         self.robins_story_ids = ['robin_asks']
 
-    def next_str_node(n, l, i):
+    def run(self, expr):
+        return eval(expr)
+
+    def next_str_node(self, n, l, i):
         # pdb.set_trace()
         res = None
         if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or isinstance(n, FnNode):
             res = n.next
         elif isinstance(n, IfNode):
-            r = eval(n.condition)
+            r = self.run(n.condition)
             if r:
                 res = n.first_in_if_block
             else:
                 res = n.first_in_else_block
         elif isinstance(n, IfInNode):
-            res = [it for it in n.variants if str(it) == l[i]][0]
+            lst = [it for it in n.variants if str(it) == l[i]]
+            if lst:
+                res = lst[0]
+            else:
+                res = None
             # if (l[i].startswith("< ") or l[i].startswith("> ")):
             #     if l[i][2:] not in n.variants:
             #         res = None
@@ -108,10 +115,10 @@ class AICore:
             res = None
         if res is not None:
             if isinstance(res, IfNode) or isinstance(res, IfInNode):
-                res = AICore.next_str_node(res, l, i)
+                res = self.next_str_node(res, l, i)
         return res
 
-    def next_in_story(log, s):
+    def next_in_story(self, log, s):
         # pdb.set_trace()
         # node to process
         n = s.first_node
@@ -123,7 +130,7 @@ class AICore:
         # TODO: what to do when n is control statement?
         while True:
             il = il + 1
-            n = AICore.next_str_node(n, log, il)
+            n = self.next_str_node(n, log, il)
             if (il >= len(log)) or (n is None) or (log[il] != n.log_form()):
                 break
         # if story is not actual one
@@ -152,7 +159,7 @@ class AICore:
             self.log.append("< " + text)
 
         for story in self.stories:
-            next = AICore.next_in_story(self.log, story)
+            next = self.next_in_story(self.log, story)
             if next:
                 if isinstance(next, FnNode):
                     # self.log.append(str(next))
