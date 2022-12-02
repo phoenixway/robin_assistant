@@ -5,18 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
             "name": "Python: app",
             "type": "python",
             "request": "launch",
-            "program": "/home/roman/Projects/robin_assistant/robin.py",
+            "program": "/home/roman/studio/public/it/robin_assistant/robin.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["${PYTHONPATH:${}}${workspaceFolder}"],

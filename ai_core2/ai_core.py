@@ -16,11 +16,11 @@ import lupa
 from lupa import LuaRuntime
 import actions.default
 from pathlib import Path
-from .rs_parser import RSParser
-from .ast_nodes import IfInNode, IfNode
-from .ast_nodes import StringNode
-from .ast_nodes import MessageInNode
-from .ast_nodes import MessageOutNode, FnNode
+from ai_core2.rs_parser import RSParser
+from ai_core2.ast_nodes import IfInNode, IfNode
+from ai_core2.ast_nodes import StringNode
+from ai_core2.ast_nodes import MessageInNode
+from ai_core2.ast_nodes import MessageOutNode, FnNode
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -34,7 +34,7 @@ def lua_execute(code):
     try:
         res = lua.execute(code)
     except Exception as e:
-        print(e)
+        log.error(e)
     return res
 
 
@@ -101,16 +101,6 @@ class AICore:
                 res = lst[0]
             else:
                 res = None
-            # if (l[i].startswith("< ") or l[i].startswith("> ")):
-            #     if l[i][2:] not in n.variants:
-            #         res = None
-            #     else:
-            #         res = n.variants[l[i][2:]]
-            # else:
-            #     if l[i] not in n.variants:
-            #         res = None
-            #     else:
-            #         res = n.variants[l[i]]
         else:
             res = None
         if res is not None:
@@ -135,12 +125,15 @@ class AICore:
                 break
         # if story is not actual one
         # log is over, n has correct next node, il is last correct index of log plus
-        if il == len(log):
-            return n
+        # if il == len(log):
+        #     return n
         # if il != len(log) and n is not None:
         #     return None
         # else:
-        return n
+        if il < len(log) and log[il] != n.log_form():
+            return None
+        else:
+            return n
         # if il <= len(log) - 1 and log[il] != n.log_form():
         #     return None
         # else:
