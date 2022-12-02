@@ -236,50 +236,6 @@ class AICore:
                 self.silence_task.cancel()
             self.silence_task = asyncio.create_task(self.do_silence())
 
-<<<<<<< HEAD:ai_core2/aicore_ng.py
-    def respond(self, text):
-        log.debug("Parsing with aicore")
-        text = text.lstrip()
-        if text == '<silence>':
-            return None
-        else:
-            answer = f"Default answer on '{text}'"
-        intent = recognize_intent(text)
-        if intent is not None:
-            self.log.append(f"< <intent>{intent}")
-        else:
-            self.log.append("< " + text)
-        # FIXME: take any input
-        for story in self.stories:
-            next = AICore.next_in_story(self.log, story)
-            if next:
-                if isinstance(next, FnNode):
-                    self.log.append(answer)
-                    answer = fn_engine(next.fn_body.rstrip())
-                    if answer == (True, 'exit', 0):
-                        answer = "Done."
-                    # TODO: Different engines
-                    # answer = racer.eval(next.fn_body.rstrip())
-                    # loop = asyncio.get_event_loop()
-                    # loop.run_until_complete(js2py.eval_js(next.fn_body.rstrip()))
-                    # open = require('sys');
-                    # context = js2py.EvalJs(enable_require=True);
-                    # answer = context.execute(next.fn_body.rstrip())
-                    # answer = js2py.eval_js(next.fn_body.rstrip())
-                    # answer = js2py.eval_js(next.fn_body.rstrip(), async_modeTrue)
-                    pass
-                else:
-                    answer = next.text
-                    self.log.append(answer)
-                    if "> " in answer or "< " in answer:
-                        answer = answer[2:]
-                break
-        # except Exception as e:
-            # answer = f"Error happened in ai_core.parse(): {e}"
-        return answer
-
-=======
->>>>>>> if_statement:ai_core2/ai_core.py
     def start_story(self, story_id):
         # FIXME:whole func
         log.debug("Make story start by Robin's will")
