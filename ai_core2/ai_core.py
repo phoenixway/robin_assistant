@@ -130,7 +130,7 @@ class AICore:
         # if il != len(log) and n is not None:
         #     return None
         # else:
-        if il < len(log) and log[il] != n.log_form():
+        if il < len(log) and n is not None and log[il] != n.log_form():
             return None
         else:
             return n

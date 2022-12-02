@@ -54,7 +54,8 @@ class FnNode(AstNode):
         self.fn_body = fn_body
     
     def __str__(self):
-        raise Exception("Not implemented")
+        return f'{self.fn_body}'
+        # raise Exception("Not implemented")
 
 
 class IfInNode(AstNode):

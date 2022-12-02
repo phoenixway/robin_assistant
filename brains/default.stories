@@ -25,6 +25,16 @@
                     }
                     dont want => {
                         > What about Levi's method?
+                        < dont want
+                        > Are u realize the consequences? Do you accept them? Responsibility for them?
+                        <if in>
+                            <intent>yes => {
+                                > Then let's them be. 
+                            }
+                            <intent>no => {
+                                > Think of them!
+                            }
+                        </if>
                     }
                     <intent>no => {
                         > Think about what prevents u from that? Do u realize consenquests of skipping? Do u accept own responsibility for not doing most important task?
