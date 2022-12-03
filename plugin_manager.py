@@ -14,7 +14,7 @@ class Plugins:
         self.MODULES = modules
 
     async def activate(self):
-        log.debug("I'm plugin manager!")
+        log.debug("Plugin manager started.")
         global tsks
         simplePluginManager = PluginManager()
         simplePluginManager.setPluginPlaces(["plugins"])

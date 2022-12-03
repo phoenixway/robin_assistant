@@ -34,7 +34,7 @@ def init_logger():
 def init_modules():
     global MODULES
     MODULES['events'] = Robin_events()
-    MODULES['watcher'] = Plugins(MODULES)
+    MODULES['plugins'] = Plugins(MODULES)
     MODULES['messages'] = Messages(MODULES)
     MODULES['db'] = shelve.open('memory')
     MODULES['ai_core'] = AICore(MODULES)
@@ -56,14 +56,14 @@ async def quit_handler(data):
     # except:
     #     pass
     # m.t.join()    # wait for the thread to finish what it's doing
-    # m.t.close()   
+    # m.t.close()
     # m.t.stop()
 
 
 async def start_handler(data):
+    log.debug("Start_handler called")
     MODULES['messages'].say("Connected.")
     asyncio.create_task(MODULES['ai_core'].message_received_handler(None))
-    log.debug("Start_handler called")
 
 
 async def startup_finisher():
@@ -78,8 +78,7 @@ async def async_modules():
     loop = asyncio.get_event_loop()
     loop.create_task(MODULES['messages'].serve())
     loop.create_task(startup_finisher())
-    loop.create_task(MODULES['watcher'].activate())
-    # asyncio.gather(MODULES['messages'].serve(), MODULES['watcher'].watch(), startup_finisher())  # noqa: E501
+    loop.create_task(MODULES['plugins'].activate())
     loop.run_forever()
     log.debug("async modules finished")
 

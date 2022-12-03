@@ -3,7 +3,6 @@
 import re
 import asyncio
 import logging
-# import pdb
 import os
 import sys
 import json
@@ -16,7 +15,6 @@ from lupa import LuaRuntime
 from pathlib import Path
 from ai_core2.rs_parser import RSParser
 from ai_core2.ast_nodes import IfInNode, IfNode
-from ai_core2.ast_nodes import StringNode
 from ai_core2.ast_nodes import MessageInNode
 from ai_core2.ast_nodes import MessageOutNode, FnNode
 
@@ -44,9 +42,6 @@ source_dir = source_path.parent.parent
 stories_ = {}
 intents = []
 SILENCE_TIME = 10
-
-# s = os.path.dirname(os.path.abspath(__file__))
-# sys.path.insert(0, s)
 
 with open(source_dir/'brains/default.intents', 'r') as f:
     intents = json.load(f)
@@ -77,12 +72,13 @@ class AICore:
         self.is_started = True
         self.repeat_if_silence = False
         self.handle_silence = True
-        self.robins_story_ids = ['robin_asks']
+        self.robins_story_ids = []
 
     def run(self, expr):
-        return eval(expr)
+        m = self.modules
+        return eval(expr, locals=[m])
 
-    def next_str_node(self, n, l, i):
+    def next_str_node(self, n, log, i):
         # pdb.set_trace()
         res = None
         if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or \
@@ -95,7 +91,7 @@ class AICore:
             else:
                 res = n.first_in_else_block
         elif isinstance(n, IfInNode):
-            lst = [it for it in n.variants if str(it) == l[i]]
+            lst = [it for it in n.variants if str(it) == log[i]]
             if lst:
                 res = lst[0]
             else:
@@ -104,7 +100,7 @@ class AICore:
             res = None
         if res is not None:
             if isinstance(res, IfNode) or isinstance(res, IfInNode):
-                res = self.next_str_node(res, l, i)
+                res = self.next_str_node(res, log, i)
         return res
 
     def next_in_story(self, log, s):
@@ -166,47 +162,6 @@ class AICore:
                 break
         return answer
 
-    def next_in_story_old(log, story):
-        n1 = story.first_node
-        n = n1
-        s = str(n1)
-        # TODO: fix it
-        if s not in log:
-            return None
-        i1 = len(log) - log[::-1].index(s) - 1
-        # i1 = log.index(s)
-        i = i1
-        while i < len(log) and n is not None:
-            if isinstance(n, StringNode):
-                if log[i] != n.text:
-                    return None
-                n = n.next
-            elif isinstance(n, IfInNode):
-                if (log[i].startswith("< ") or log[i].startswith("> ")):
-                    if log[i][2:] not in n.variants:
-                        return None
-                    else:
-                        n = n.variants[log[i][2:]]
-                else:
-                    if log[i] not in n.variants:
-                        return None
-                    else:
-                        n = n.variants[log[i]]
-            elif isinstance(n, IfNode):
-                # FIXME: see below
-                c = eval(n.condition)
-                pass
-            elif isinstance(n, FnNode):
-                # FIXME: add this fnnode to aicore.log
-                answer = fn_engine(n.fn_body.rstrip())
-                if log[i] != answer:
-                    return None
-                n = n.next
-            else:
-                return None
-            i = i + 1
-        return n
-
     def start_next_robin_story(self):
         log.debug("start_next_robin_story")
         if self.robins_story_ids:
@@ -215,6 +170,8 @@ class AICore:
                 self.start_story(s)
 
     async def do_silence(self):
+        if not self.modules['messages'].websockets:
+            return
         log.debug("Silence started")
         await asyncio.sleep(SILENCE_TIME)
         a = self.respond('<silence>')

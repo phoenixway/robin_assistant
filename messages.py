@@ -3,7 +3,7 @@ import asyncio
 import nest_asyncio
 import websockets
 import logging
-from tgclient import *
+from tgclient import TelegramBot
 
 nest_asyncio.apply()
 background_tasks = set()
@@ -16,20 +16,25 @@ class Messages:
 
     def __init__(self, modules):
         self.websocket = None
+        self.websockets = []
+        self.telegram_works = False
         self.MODULES = modules
         self.telegram_client_id = 612272249
         self.t = None
         self.is_started = False
-        self.ws_stop = asyncio.Future() 
+        self.ws_stop = asyncio.Future()
 
     async def say_async(self, message):
         await self.ws_say(message)
-        try:
+        # try:
+        if self.telegram_works:
             self.telegram_say(message)
-        except:
-            log.error('An exception telegram bot when sending message.')       
+        # except:
+        # log.error('An exception telegram bot when sending message.')
 
     def say(self, message):
+        if not self.websockets:
+            return
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -46,7 +51,8 @@ class Messages:
 
     def stop(self):
         self.ws_stop.set_result(None)
-        self.t.stop()
+        if self.t:
+            self.t.stop()
 
     async def ws_say(self, message):
         if self.websocket:
@@ -54,24 +60,27 @@ class Messages:
                 await self.websocket.send(message)
                 log.debug(f"Ws server sent: {message}")
             except websockets.exceptions.ConnectionClosedOK:
-                log.error("Ws server can't send a message because client closed the connection.")
+                log.error("Ws server can't send a message because client \
+                           closed the connection.")
             except websockets.exceptions.ConnectionClosedError:
-                log.error("Ws server can't send a message because of incorrectly closed connection.")
+                log.error("Ws server can't send a message because of \
+                           incorrectly closed connection.")
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
         return self.MODULES['ai_core'].respond(message)
 
     def telegram_say(self, message):
-        try:
-            telegram_bot.sendMessage(chat_id=self.telegram_client_id, text=message)
-            log.debug(f"Telegrambot sent: {message}")
-        except:
-            print("telegram_say error")
+        # try:
+        telegram_bot.sendMessage(chat_id=self.telegram_client_id,
+                                 text=message)
+        log.debug(f"Telegrambot sent: {message}")
+        # except:
+        # print("telegram_say error")
 
     async def ws_process(self, websocket):
+        self.websockets.append(websocket)
         self.websocket = websocket
-        self.is_started = True
         error = False
         while True:
             try:
@@ -96,12 +105,16 @@ class Messages:
             except KeyboardInterrupt:
                 log.info("Keyboard interrupts.")
                 break
+            finally:
+                self.websockets.remove(websocket)
 
     async def ws_serve(self):
         while True:
             # try:
+            self.is_started = True
             log.debug("Ws server started.")
-            async with websockets.serve(self.ws_process, "localhost", 8765, ping_interval=None):
+            async with websockets.serve(self.ws_process, "localhost", 8765,
+                                        ping_interval=None):
                 await self.ws_stop
             # except:
             #     log.error("Ws server exception")
@@ -110,11 +123,13 @@ class Messages:
 
     def run_telegram_bot(self):
         log.debug('Telegram bot started.')
+
         @telegram_bot.message("text")
         def text(message):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            t = loop.create_task(self.ws_say(f"TelegramBot received: {message['text']}"))
+            t = loop.create_task(self.ws_say(
+                f"TelegramBot received: {message['text']}"))
             background_tasks.add(t)
             # t.add_done_callback(background_tasks.remove(t))
             loop.run_until_complete(t)
@@ -137,6 +152,5 @@ class Messages:
         t = asyncio.create_task(self.ws_serve())
         background_tasks.add(t)
         # t.add_done_callback(background_tasks.remove(t))
-        t1 = asyncio.create_task(self.telegram_serve())
-        background_tasks.add(t1)
-
+        # t1 = asyncio.create_task(self.telegram_serve())
+        # background_tasks.add(t1)
