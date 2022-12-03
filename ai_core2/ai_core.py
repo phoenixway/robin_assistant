@@ -8,13 +8,11 @@ import os
 import sys
 import json
 import nest_asyncio
-from py_mini_racer import py_mini_racer
+# from py_mini_racer import py_mini_racer
 # from quickjs import Function
-import js2py
-from js2py import require
-import lupa
+# import js2py
+# from js2py import require
 from lupa import LuaRuntime
-import actions.default
 from pathlib import Path
 from ai_core2.rs_parser import RSParser
 from ai_core2.ast_nodes import IfInNode, IfNode
@@ -87,7 +85,8 @@ class AICore:
     def next_str_node(self, n, l, i):
         # pdb.set_trace()
         res = None
-        if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or isinstance(n, FnNode):
+        if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or \
+           isinstance(n, FnNode):
             res = n.next
         elif isinstance(n, IfNode):
             r = self.run(n.condition)
@@ -116,7 +115,8 @@ class AICore:
             return None
         # index in log
         il = len(log) - log[::-1].index(str(n)) - 1
-        # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
+        # TODO: how to handle ifinnode as n and one of its variants's key as
+        # log[il]?
         # TODO: what to do when n is control statement?
         while True:
             il = il + 1
@@ -124,7 +124,8 @@ class AICore:
             if (il >= len(log)) or (n is None) or (log[il] != n.log_form()):
                 break
         # if story is not actual one
-        # log is over, n has correct next node, il is last correct index of log plus
+        # log is over, n has correct next node, il is last correct index of
+        # log plus
         # if il == len(log):
         #     return n
         # if il != len(log) and n is not None:
