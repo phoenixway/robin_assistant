@@ -48,6 +48,7 @@ async def quit_handler(data):
         m.stop()
         loop = asyncio.get_running_loop()
         pending = asyncio.all_tasks()
+        MODULES['db'].close()
         for task in pending:
             task.cancel()
         loop.stop()
@@ -75,8 +76,13 @@ async def startup_finisher():
 
 
 async def async_modules():
-    results = await asyncio.gather(MODULES['messages'].serve(), MODULES['watcher'].watch(), startup_finisher())  # noqa: E501
-    log.debug(results)
+    loop = asyncio.get_event_loop()
+    loop.create_task(MODULES['messages'].serve())
+    loop.create_task(startup_finisher())
+    loop.create_task(MODULES['watcher'].watch())
+    # asyncio.gather(MODULES['messages'].serve(), MODULES['watcher'].watch(), startup_finisher())  # noqa: E501
+    loop.run_forever()
+    log.debug("async modules finished")
 
 
 init_logger()

@@ -8,7 +8,7 @@
             "name": "Python: app",
             "type": "python",
             "request": "launch",
-            "program": "/home/roman/studio/public/it/robin_assistant/robin.py",
+            "program": "/home/roman/studio_luisa/public/it/robin_assistant/robin.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["${PYTHONPATH:${}}${workspaceFolder}"],
