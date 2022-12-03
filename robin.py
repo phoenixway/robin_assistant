@@ -8,7 +8,7 @@ from colorlog import ColoredFormatter
 
 from robin_events import Robin_events
 from messages import Messages
-from watcher import Watcher
+from plugin_manager import Plugins
 from ai_core2.ai_core import AICore
 
 nest_asyncio.apply()
@@ -34,7 +34,7 @@ def init_logger():
 def init_modules():
     global MODULES
     MODULES['events'] = Robin_events()
-    MODULES['watcher'] = Watcher(MODULES)
+    MODULES['watcher'] = Plugins(MODULES)
     MODULES['messages'] = Messages(MODULES)
     MODULES['db'] = shelve.open('memory')
     MODULES['ai_core'] = AICore(MODULES)
@@ -44,21 +44,20 @@ async def quit_handler(data):
     log.debug("quit_handler launched")
     m = MODULES['messages']
     m.say("Good bye, master!")
-    try:
-        m.stop()
-        loop = asyncio.get_running_loop()
-        pending = asyncio.all_tasks()
-        MODULES['db'].close()
-        for task in pending:
-            task.cancel()
-        loop.stop()
-        exit(0)
-    except:
-        pass
+    # try:
+    m.stop()
+    loop = asyncio.get_running_loop()
+    pending = asyncio.all_tasks()
+    MODULES['db'].close()
+    for task in pending:
+        task.cancel()
+    loop.stop()
+    exit(0)
+    # except:
+    #     pass
     # m.t.join()    # wait for the thread to finish what it's doing
     # m.t.close()   
     # m.t.stop()
-    
 
 
 async def start_handler(data):
@@ -79,7 +78,7 @@ async def async_modules():
     loop = asyncio.get_event_loop()
     loop.create_task(MODULES['messages'].serve())
     loop.create_task(startup_finisher())
-    loop.create_task(MODULES['watcher'].watch())
+    loop.create_task(MODULES['watcher'].activate())
     # asyncio.gather(MODULES['messages'].serve(), MODULES['watcher'].watch(), startup_finisher())  # noqa: E501
     loop.run_forever()
     log.debug("async modules finished")
