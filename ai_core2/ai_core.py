@@ -10,9 +10,9 @@ import nest_asyncio
 from lupa import LuaRuntime
 from pathlib import Path
 from ai_core2.rs_parser import RSParser
-from ai_core2.ast_nodes import IfInNode, IfNode
-from ai_core2.ast_nodes import MessageInNode
-from ai_core2.ast_nodes import MessageOutNode, FnNode
+from .ast_nodes import IfInNode, IfNode
+from .ast_nodes import MessageInNode
+from .ast_nodes import MessageOutNode, FnNode
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -28,7 +28,18 @@ def lua_execute(code):
     return res
 
 
-fn_engine = lua_execute
+def python_execute(code):
+    lines = code.splitlines()
+    whitespaces = re.compile(r"\s+")
+
+    for line in lines:
+        m = whitespaces.search(line)
+        line = whitespaces.sub(" ", line)
+    
+    return exec(code)
+
+
+fn_engine = python_execute
 
 log = logging.getLogger('pythonConfig')
 source_path = Path(__file__).resolve()
@@ -73,7 +84,6 @@ class AICore:
         return eval(expr, locals=[m])
 
     def next_str_node(self, n, log, i):
-        # pdb.set_trace()
         res = None
         if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or \
            isinstance(n, FnNode):

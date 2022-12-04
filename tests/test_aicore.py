@@ -3,15 +3,16 @@ from parsimonious.grammar import Grammar
 
 from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
 from ..ai_core2.ast_nodes import IfInNode, MessageOutNode, MessageInNode  # noqa: E501
+from ..ai_core2.ast_nodes import FnNode
 from ..ai_core2.story import Story
 from ..ai_core2.ai_core import AICore
 
 
-def check_next(log, st, goal):
+def check_next(log, st, goal, result_class=MessageOutNode):
     ac = AICore(None)
     next = ac.next_in_story(log, st)
     assert next is not None, f"next is None, must be Node:{goal}"
-    assert isinstance(next, MessageOutNode), "next must be MessageOutNode"
+    assert isinstance(next, result_class), f"next must be {result_class.name}"
     assert next.text == goal, f"AICore.next_in_story: must be {goal}"
 
 
@@ -174,3 +175,23 @@ def test_rs_parser():
     except:
         assert False, "Exception raised"
     assert stories is not None, "stories is None"
+
+
+def test_func():
+    raw_story = r"""
+        story testname {
+            < func
+            <fn>
+                s = "Hello, world!"
+                print(s)
+                return s
+            </fn>
+        }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains("< func"), "st.contains must work"
+    lst = ["< func"]
+    check_next(lst, st, "Hello, world!", result_class=FnNode)
