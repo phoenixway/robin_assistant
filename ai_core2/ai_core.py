@@ -7,7 +7,6 @@ import os
 import sys
 import json
 import nest_asyncio
-from lupa import LuaRuntime
 from pathlib import Path
 from ai_core2.rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
@@ -16,16 +15,6 @@ from .ast_nodes import MessageOutNode, FnNode
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
-lua = LuaRuntime(unpack_returned_tuples=True)
-
-
-def lua_execute(code):
-    res = None
-    try:
-        res = lua.execute(code)
-    except Exception as e:
-        log.error(e)
-    return res
 
 
 def python_execute(code):
@@ -48,6 +37,7 @@ def python_execute(code):
 
 
 fn_engine = python_execute
+
 
 log = logging.getLogger('pythonConfig')
 source_path = Path(__file__).resolve()
@@ -75,6 +65,7 @@ class AICore:
         with open(source_dir/'brains/default.stories', 'r') as f:
             s = f.read()
             self.stories = RSParser.create_from_text(s)
+        self.story_ids = [s.name for s in self.stories]
         self.modules = modules
         self.active_story = None
         self.log = []
@@ -87,7 +78,7 @@ class AICore:
         self.handle_silence = True
         self.robins_story_ids = []
 
-    def run(self, expr):
+    def run_expr(self, expr):
         m = self.modules
         return eval(expr, locals=[m])
 
@@ -97,7 +88,7 @@ class AICore:
            isinstance(n, FnNode):
             res = n.next
         elif isinstance(n, IfNode):
-            r = self.run(n.condition)
+            r = self.run_expr(n.condition)
             if r:
                 res = n.first_in_if_block
             else:
@@ -116,7 +107,6 @@ class AICore:
         return res
 
     def next_in_story(self, log, s):
-        # pdb.set_trace()
         # node to process
         n = s.first_node
         if (n is None) or (str(n) not in log):
@@ -163,20 +153,29 @@ class AICore:
                 break
         return answer
 
-    def start_next_robin_story(self):
+    def add_own_will_story_id(self, story_id):
+        self.robins_story_ids.add(story_id)
+
+    def add_story_by_source(self, source):
+        new_stories = RSParser.create_from_text(source)
+        for s in new_stories:
+            if s.name in 
+
+        self.stories.extend()
+    def force_own_will_story(self):
         log.debug("start_next_robin_story")
         if self.robins_story_ids:
             s = self.robins_story_ids.pop(0)
             if s is not None:
-                self.start_story(s)
+                self.force_story(s)
 
-    async def do_silence(self):
+    async def fire_silence(self):
         if not self.modules['messages'].websockets:
             return
         log.debug("Silence detected")
         await asyncio.sleep(SILENCE_TIME)
         if self.robins_story_ids:
-            self.start_next_robin_story()
+            self.force_own_will_story()
         # a = self.respond('<silence>')
         # if a:
         #     self.modules['messages'].say(a)
@@ -188,20 +187,20 @@ class AICore:
         if self.handle_silence:
             if self.silence_task is not None:
                 self.silence_task.cancel()
-            self.silence_task = asyncio.create_task(self.do_silence())
+            self.silence_task = asyncio.create_task(self.fire_silence())
 
     async def message_send_handler(self, data):
         log.debug('message send handler')
         if self.handle_silence:
             if self.silence_task is not None:
                 self.silence_task.cancel()
-            self.silence_task = asyncio.create_task(self.do_silence())
+            self.silence_task = asyncio.create_task(self.fire_silence())
 
-    def start_story(self, story_id):
+    def force_story(self, story_id):
         # FIXME:whole func
         if not self.modules['messages'].websockets:
             return
-        log.debug("Make story start by Robin's will")
+        log.debug("Make story start")
         st = [i for i in self.stories if i.name == story_id][0]
         if story_id and st:
             # TODO: parse any nodes
