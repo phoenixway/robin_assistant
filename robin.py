@@ -10,6 +10,7 @@ from robin_events import Robin_events
 from messages import Messages
 from plugin_manager import Plugins
 from ai_core2.ai_core import AICore
+from os import _exit
 
 nest_asyncio.apply()
 log = None
@@ -52,7 +53,11 @@ async def quit_handler(data):
     for task in pending:
         task.cancel()
     loop.stop()
-    exit(0)
+    try:
+        sys.exit(0)
+    except SystemExit:
+        log.info('Bye')
+        _exit(0)
     # except:
     #     pass
     # m.t.join()    # wait for the thread to finish what it's doing
@@ -62,7 +67,7 @@ async def quit_handler(data):
 
 async def start_handler(data):
     log.debug("Start_handler called")
-    MODULES['messages'].say("Connected.")
+    # MODULES['messages'].say("Connected.")
     asyncio.create_task(MODULES['ai_core'].message_received_handler(None))
 
 
@@ -79,8 +84,12 @@ async def async_modules():
     loop.create_task(MODULES['messages'].serve())
     loop.create_task(startup_finisher())
     loop.create_task(MODULES['plugins'].activate())
-    loop.run_forever()
-    log.debug("async modules finished")
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        log.debug("async modules finished")
 
 
 init_logger()
@@ -98,11 +107,4 @@ except RuntimeError:
 except asyncio.exceptions.CancelledError:
     pass
 finally:
-    try:
-        asyncio.run(quit_handler(None))
-    except asyncio.exceptions.CancelledError:
-        pass
-    except KeyboardInterrupt:
-        pass
-    finally:
-        log.info('Bye')
+    asyncio.run(quit_handler(None))

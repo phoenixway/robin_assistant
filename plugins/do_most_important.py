@@ -14,7 +14,7 @@ class PluginOne(IPlugin):
         log.debug("Doing work")
         PluginOne.modules['ai_core'].start_story('robin_asks')
 
-    def startup_handler(self):
+    async def user_connect_handler(self, event):
         db = PluginOne.modules['db']
         today = datetime.today() \
             .strftime('%Y-%m-%d')
@@ -28,7 +28,8 @@ class PluginOne(IPlugin):
         PluginOne.modules = modules
         log.debug("Activating plugin for doing most important task..")
         # FIXME: new event - userconnected
-        modules['events'].addListener('startup', self.startup_handler)
+        modules['events'].add_listener('user_connected',
+                                       self.user_connect_handler)
         scheduler = AsyncIOScheduler()
         scheduler.add_job(self.do_work, 'interval', minutes=1,
                           id="do_most_important_id")

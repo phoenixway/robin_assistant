@@ -7,10 +7,6 @@ import os
 import sys
 import json
 import nest_asyncio
-# from py_mini_racer import py_mini_racer
-# from quickjs import Function
-# import js2py
-# from js2py import require
 from lupa import LuaRuntime
 from pathlib import Path
 from ai_core2.rs_parser import RSParser
@@ -20,8 +16,6 @@ from ai_core2.ast_nodes import MessageOutNode, FnNode
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
-
-# racer = py_mini_racer.MiniRacer()
 lua = LuaRuntime(unpack_returned_tuples=True)
 
 
@@ -119,21 +113,10 @@ class AICore:
             n = self.next_str_node(n, log, il)
             if (il >= len(log)) or (n is None) or (log[il] != n.log_form()):
                 break
-        # if story is not actual one
-        # log is over, n has correct next node, il is last correct index of
-        # log plus
-        # if il == len(log):
-        #     return n
-        # if il != len(log) and n is not None:
-        #     return None
-        # else:
         if il < len(log) and n is not None and log[il] != n.log_form():
             return None
         else:
             return n
-        # if il <= len(log) - 1 and log[il] != n.log_form():
-        #     return None
-        # else:
 
     def respond(self, text):
         # pdb.set_trace()
@@ -172,13 +155,15 @@ class AICore:
     async def do_silence(self):
         if not self.modules['messages'].websockets:
             return
-        log.debug("Silence started")
+        log.debug("Silence detected")
         await asyncio.sleep(SILENCE_TIME)
-        a = self.respond('<silence>')
-        if a:
-            self.modules['messages'].say(a)
-        else:
+        if self.robins_story_ids:
             self.start_next_robin_story()
+        # a = self.respond('<silence>')
+        # if a:
+        #     self.modules['messages'].say(a)
+        # else:
+        #     self.start_next_robin_story()
 
     async def message_received_handler(self, data):
         log.debug('message received handler')
@@ -196,6 +181,8 @@ class AICore:
 
     def start_story(self, story_id):
         # FIXME:whole func
+        if not self.modules['messages'].websockets:
+            return
         log.debug("Make story start by Robin's will")
         st = [i for i in self.stories if i.name == story_id][0]
         if story_id and st:

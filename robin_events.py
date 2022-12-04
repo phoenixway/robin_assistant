@@ -4,7 +4,8 @@
 
 import asyncio
 background_tasks = set()
-# got at https://github.com/joeltok/py-event-bus/blob/main/event_bus/EventBus.py
+# got at
+# https://github.com/joeltok/py-event-bus/blob/main/event_bus/EventBus.py
 
 
 class Robin_events():

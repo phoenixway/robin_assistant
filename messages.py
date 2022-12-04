@@ -80,6 +80,7 @@ class Messages:
 
     async def ws_process(self, websocket):
         self.websockets.append(websocket)
+        self.MODULES['events'].emit('user_connected', None)
         self.websocket = websocket
         error = False
         while True:
@@ -95,18 +96,19 @@ class Messages:
             except websockets.exceptions.ConnectionClosedOK:
                 if not error:
                     log.info('Ws connection is closed by client.')
+                    self.websockets.remove(websocket)
                     error = True
                     break
             except websockets.exceptions.ConnectionClosedError:
                 if not error:
                     log.info("Ws connection error.")
+                    self.websockets.remove(websocket)
                     error = True
                     break
             except KeyboardInterrupt:
                 log.info("Keyboard interrupts.")
-                break
-            finally:
                 self.websockets.remove(websocket)
+                break
 
     async def ws_serve(self):
         while True:
