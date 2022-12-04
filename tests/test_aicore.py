@@ -184,7 +184,7 @@ def test_func():
             <fn>
                 s = "Hello, world!"
                 print(s)
-                return s
+                ret = s
             </fn>
         }
     """
@@ -195,8 +195,36 @@ def test_func():
     assert st.contains("< func"), "st.contains must work"
     lst = ["< func"]
     ac = AICore(None)
+    ac.stories.append(st)
     next = ac.next_in_story(lst, st)
     assert next is not None, f"next is None, must be Node:{FnNode}"
     assert isinstance(next, FnNode), f"next must be {FnNode.name}"
-    answer = ac.respond("< func")
-    assert answer == "Hello, World!", "answer is not hello word"
+    answer = ac.respond("func")
+    assert answer == "Hello, world!", "answer is not hello word"
+
+
+def test_func1():
+    raw_story = r"""
+        story testname1 {
+            < func
+            <fn>
+                if True:
+                    ret = "if works!"
+                else:
+                    ret = "else works!"
+            </fn>
+        }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains("< func"), "st.contains must work"
+    lst = ["< func"]
+    ac = AICore(None)
+    ac.stories.append(st)
+    next = ac.next_in_story(lst, st)
+    assert next is not None, f"next is None, must be Node:{FnNode}"
+    assert isinstance(next, FnNode), f"next must be {FnNode.name}"
+    answer = ac.respond("func")
+    assert answer == "if works!", "answer is not hello word"

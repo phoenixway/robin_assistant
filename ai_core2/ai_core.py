@@ -30,13 +30,21 @@ def lua_execute(code):
 
 def python_execute(code):
     lines = code.splitlines()
-    whitespaces = re.compile(r"\s+")
-
+    if len(lines[0]) == 0:
+        lines.pop(0)
+    m = re.search(r"(^\s+)", lines[0])
+    zero_indent = len(m.group(1))
+    newlines = []
     for line in lines:
-        m = whitespaces.search(line)
-        line = whitespaces.sub(" ", line)
-    
-    return exec(code)
+        line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
+        newlines.append(line)
+    new_code = "\n".join(newlines)
+    loc = {}
+    exec(new_code, globals(), loc)
+    if 'ret' in loc:
+        return loc['ret']
+    else:
+        return None
 
 
 fn_engine = python_execute
@@ -129,7 +137,6 @@ class AICore:
             return n
 
     def respond(self, text):
-        # pdb.set_trace()
         log.debug("Parsing with aicore")
         if text == '<silence>':
             return None
@@ -147,6 +154,7 @@ class AICore:
                 if isinstance(next, FnNode):
                     # self.log.append(str(next))
                     answer = fn_engine(next.fn_body.rstrip())
+                    self.log.append("> " + answer)                    
                 else:
                     answer = next.text
                     self.log.append(answer)
