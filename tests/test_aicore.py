@@ -5,7 +5,7 @@ from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
 from ..ai_core2.ast_nodes import IfInNode, MessageOutNode, MessageInNode  # noqa: E501
 from ..ai_core2.ast_nodes import FnNode
 from ..ai_core2.story import Story
-from ..ai_core2.ai_core import AICore
+from ..ai_core2.ai_core import AICore, python_execute
 
 
 def check_next(log, st, goal, result_class=MessageOutNode):
@@ -194,4 +194,9 @@ def test_func():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< func"), "st.contains must work"
     lst = ["< func"]
-    check_next(lst, st, "Hello, world!", result_class=FnNode)
+    ac = AICore(None)
+    next = ac.next_in_story(lst, st)
+    assert next is not None, f"next is None, must be Node:{FnNode}"
+    assert isinstance(next, FnNode), f"next must be {FnNode.name}"
+    answer = ac.respond("< func")
+    assert answer == "Hello, World!", "answer is not hello word"
