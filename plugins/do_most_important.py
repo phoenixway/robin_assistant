@@ -12,7 +12,13 @@ class PluginOne(IPlugin):
 
     async def do_work(self):
         log.debug("Doing work")
-        PluginOne.modules['ai_core'].start_story('robin_asks')
+        a = PluginOne.modules['ai_core']
+        lst = [i for i in a.stories
+               if i.name == "robin_asks"]
+        if lst:
+            first_question = lst[0].first_node.text
+            if a.log[-1] != first_question:
+                a.start_story("robin_asks")
 
     async def user_connect_handler(self, event):
         db = PluginOne.modules['db']
