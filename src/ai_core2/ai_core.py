@@ -154,14 +154,14 @@ class AICore:
         return answer
 
     def add_own_will_story(self, story_id):
-        self.robins_story_ids.add(story_id)
+        self.robins_story_ids.append(story_id)
 
     def add_story_by_source(self, source):
         new_stories = RSParser.create_from_text(source)
         # TODO: handle dublicates
         # for s in new_stories:
         #     if s.name in 
-        self.stories.extend(self.stories.extend(new_stories))
+        self.stories.extend(new_stories)
 
     def force_own_will_story(self):
         log.debug("force_own_will_story")
@@ -173,8 +173,8 @@ class AICore:
     async def fire_silence(self):
         if not self.modules['messages'].websockets:
             return
-        log.debug("Silence detected")
         await asyncio.sleep(SILENCE_TIME)
+        log.debug("Silence detected")
         if self.robins_story_ids:
             self.force_own_will_story()
         # a = self.respond('<silence>')

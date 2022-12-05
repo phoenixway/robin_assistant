@@ -17,7 +17,8 @@ class PArtOfLiving(IPlugin):
                if i.name == "do_most_important"]
         if lst:
             first_question = lst[0].first_node.text
-            if ai.log[-1] != first_question:
+            if len(ai.log) == 0 or (len(ai.log) > 0 and ai.log[-1] !=
+                                    first_question):
                 ai.add_own_will_story("do_most_important")
                 ai.force_own_will_story()
 
@@ -35,6 +36,8 @@ class PArtOfLiving(IPlugin):
         log.debug("Activating plugin for doing most important task..")
         PArtOfLiving.modules = modules
         ai = modules['ai_core']
+        modules['events'].add_listener('user_connected',
+                                       self.user_connect_handler)
         # TODO: дві історії, одна щодо планування дня
         ai.add_story_by_source("""
             story do_most_important {
@@ -93,8 +96,6 @@ class PArtOfLiving(IPlugin):
             }
         """)
         # FIXME: new event - userconnected
-        modules['events'].add_listener('user_connected',
-                                       self.user_connect_handler)
         scheduler = AsyncIOScheduler()
         scheduler.add_job(self.do_work, 'interval', minutes=1,
                           id="do_most_important_id")
