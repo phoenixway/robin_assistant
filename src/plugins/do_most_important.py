@@ -10,8 +10,8 @@ log = logging.getLogger('pythonConfig')
 class PArtOfLiving(IPlugin):
     modules = None
 
-    async def do_work(self):
-        log.debug("Doing work")
+    async def do_regular_work(self):
+        log.debug("Doing regular work")
         ai = PArtOfLiving.modules['ai_core']
         lst = [i for i in ai.stories
                if i.name == "do_most_important"]
@@ -20,13 +20,14 @@ class PArtOfLiving(IPlugin):
             if len(ai.log) == 0 or (len(ai.log) > 0 and ai.log[-1] !=
                                     first_question):
                 ai.add_own_will_story("do_most_important")
+                ai.add_own_will_story("is_day_planned")
                 ai.force_own_will_story()
 
     async def user_connect_handler(self, event):
         db = PArtOfLiving.modules['db']
         today = datetime.today() \
             .strftime('%Y-%m-%d')
-        if ('last_login_date' in db.keys()) and db['last_login_date'] == today:
+        if db['last_login_date'] == today:
             PArtOfLiving.modules['messages'].say('Welcome back')
         else:
             PArtOfLiving.modules['messages'].say('Good to see you')
@@ -40,6 +41,13 @@ class PArtOfLiving(IPlugin):
                                        self.user_connect_handler)
         # TODO: дві історії, одна щодо планування дня
         ai.add_story_by_source("""
+            story is_day_planned {
+                <fn>
+                    ret = db['day_planned']
+                    if ret is None:
+                        ret = "No!"
+                </fn>
+            }
             story do_most_important {
                 > Are u doing the currently most important task now?
                 <if in>
@@ -97,6 +105,6 @@ class PArtOfLiving(IPlugin):
         """)
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(self.do_work, 'interval', minutes=1,
+        scheduler.add_job(self.do_regular_work, 'interval', minutes=1,
                           id="do_most_important_id")
         scheduler.start()

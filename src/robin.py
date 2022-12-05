@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import asyncio
 import sys
-import shelve
 import logging
 import nest_asyncio
 from colorlog import ColoredFormatter
 
+from robin_db import RobinDb
 from robin_events import Robin_events
 from messages import Messages
 from plugin_manager import Plugins
@@ -37,7 +37,7 @@ def init_modules():
     MODULES['events'] = Robin_events()
     MODULES['plugins'] = Plugins(MODULES)
     MODULES['messages'] = Messages(MODULES)
-    MODULES['db'] = shelve.open('memory')
+    MODULES['db'] = RobinDb('memory')
     MODULES['ai_core'] = AICore(MODULES)
 
 

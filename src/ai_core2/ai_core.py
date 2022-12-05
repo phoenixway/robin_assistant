@@ -17,7 +17,9 @@ sys.path.append(os.getcwd())
 nest_asyncio.apply()
 
 
-def python_execute(code):
+def python_execute(code, modules):
+    db = modules['db']
+    ms = modules['messages']
     lines = code.splitlines()
     if len(lines[0]) == 0:
         lines.pop(0)
@@ -28,7 +30,7 @@ def python_execute(code):
         line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
         newlines.append(line)
     new_code = "\n".join(newlines)
-    loc = {}
+    loc = dict(locals())
     exec(new_code, globals(), loc)
     if 'ret' in loc:
         return loc['ret']
@@ -44,7 +46,7 @@ source_path = Path(__file__).resolve()
 source_dir = source_path.parent.parent
 stories_ = {}
 intents = []
-SILENCE_TIME = 10
+SILENCE_TIME = 3
 
 with open(source_dir/'brains/default.intents', 'r') as f:
     intents = json.load(f)
@@ -162,6 +164,7 @@ class AICore:
         # for s in new_stories:
         #     if s.name in 
         self.stories.extend(new_stories)
+        pass
 
     def force_own_will_story(self):
         log.debug("force_own_will_story")
