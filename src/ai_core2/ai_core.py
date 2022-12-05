@@ -153,17 +153,18 @@ class AICore:
                 break
         return answer
 
-    def add_own_will_story_id(self, story_id):
+    def add_own_will_story(self, story_id):
         self.robins_story_ids.add(story_id)
 
     def add_story_by_source(self, source):
         new_stories = RSParser.create_from_text(source)
-        for s in new_stories:
-            if s.name in 
+        # TODO: handle dublicates
+        # for s in new_stories:
+        #     if s.name in 
+        self.stories.extend(self.stories.extend(new_stories))
 
-        self.stories.extend()
     def force_own_will_story(self):
-        log.debug("start_next_robin_story")
+        log.debug("force_own_will_story")
         if self.robins_story_ids:
             s = self.robins_story_ids.pop(0)
             if s is not None:

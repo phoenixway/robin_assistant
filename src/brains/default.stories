@@ -1,0 +1,58 @@
+    story greet {
+        < <intent>greetings
+        > Hey! Whats up?
+        <if in>
+            all right => {
+                > Cool!
+            }
+            <intent>no => {
+                > Oh...
+            }
+        </if>
+        < fuck
+    }
+    story quit {
+        < <intent>bye
+        <fn>
+            sys.exit(0)
+        </fn>
+    }    
+    story {
+        < <intent>cursing
+        > Dont curse
+    }
+    story {
+        < time
+        <fn>
+            local date_table = os.date("*t")
+            local ms = string.match(tostring(os.clock()), "%d%.(%d+)")
+            local hour, minute, second = date_table.hour, date_table.min, date_table.sec
+
+            local year, month, day = date_table.year, date_table.month, date_table.day   -- date_table.wday to date_table.day
+
+            return string.format("%d-%d-%d %d:%d:%d:%s", year, month, day, hour, minute, second, ms)
+        </fn>
+    }
+    story {
+        < <intent>thanku
+        <fn>
+            local a = {'u welcome', 'im here to serve'}
+            return a[ math.random( #a ) ]            
+        </fn>
+    }
+    story {
+        < <intent>about
+        > I`m your battle machine - Robin.
+    }
+    story {
+        < open tasks
+        <fn>
+            os.execute('gedit &')
+        </fn>
+    }
+    story {
+        < if
+        <if True>
+            > True is true
+        </if>
+    }

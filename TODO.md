@@ -1,3 +1,5 @@
+* Exit by intent in user messages.
+* Features freeze until they will be stable enough.
 * split messages with br into several separate ones
 * довго вантажиться при запуску перша відповідь
 * mess sent mess receive налагодити
