@@ -174,12 +174,11 @@ class AICore:
                 self.force_story(s)
 
     async def fire_silence(self):
-        if not self.modules['messages'].websockets:
-            return
-        await asyncio.sleep(SILENCE_TIME)
-        log.debug("Silence detected")
-        if self.robins_story_ids:
-            self.force_own_will_story()
+        while self.handle_silence and self.modules['messages'].websockets:
+            await asyncio.sleep(SILENCE_TIME)
+            log.debug("Silence detected")
+            if self.robins_story_ids:
+                self.force_own_will_story()
         # a = self.respond('<silence>')
         # if a:
         #     self.modules['messages'].say(a)
