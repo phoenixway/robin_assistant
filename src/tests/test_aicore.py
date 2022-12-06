@@ -228,3 +228,21 @@ def test_func1():
     assert isinstance(next, FnNode), f"next must be {FnNode.name}"
     answer = ac.respond("func")
     assert answer == "if works!", "answer is not hello word"
+
+
+def test_own_will():
+    ac = AICore(None)
+    var2change = "initional state"
+    raw_story = r"""
+        story test_own_will {
+            <fn>
+                var2change = "modified state"
+            </fn>
+        }
+    """
+    ai.add_story_by_source(raw_story)
+    ai.set_silence_interval(seconds=3)
+    ai.add_to_own_will("test_own_will")
+    sleep(6)
+    assert var2change == "modified state", "var2change must be changed"
+    

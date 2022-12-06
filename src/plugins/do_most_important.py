@@ -19,8 +19,8 @@ class PArtOfLiving(IPlugin):
             first_question = lst[0].first_node.text
             if len(ai.log) == 0 or (len(ai.log) > 0 and ai.log[-1] !=
                                     first_question):
-                ai.add_own_will_story("do_most_important")
-                ai.add_own_will_story("is_day_planned")
+                ai.add_to_own_will("do_most_important")
+                ai.add_to_own_will("is_day_planned")
                 ai.force_own_will_story()
 
     async def user_connect_handler(self, event):

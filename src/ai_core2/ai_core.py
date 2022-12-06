@@ -155,7 +155,7 @@ class AICore:
                 break
         return answer
 
-    def add_own_will_story(self, story_id):
+    def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)
 
     def add_story_by_source(self, source):
