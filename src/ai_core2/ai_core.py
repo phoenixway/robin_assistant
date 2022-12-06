@@ -8,7 +8,7 @@ import sys
 import json
 import nest_asyncio
 from pathlib import Path
-from ai_core2.rs_parser import RSParser
+from .rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
 from .ast_nodes import MessageInNode
 from .ast_nodes import MessageOutNode, FnNode
@@ -18,8 +18,11 @@ nest_asyncio.apply()
 
 
 def python_execute(code, modules):
-    db = modules['db']
-    ms = modules['messages']
+    if modules:
+        if 'db' in modules:
+            db = modules['db']
+        if 'messages' in modules:
+            ms = modules['messages']
     lines = code.splitlines()
     if len(lines[0]) == 0:
         lines.pop(0)
@@ -36,9 +39,6 @@ def python_execute(code, modules):
         return loc['ret']
     else:
         return None
-
-
-fn_engine = python_execute
 
 
 log = logging.getLogger('pythonConfig')
@@ -81,12 +81,12 @@ class AICore:
         self.robins_story_ids = []
         self.silence_time = 2
 
-    def set_silence_time(self, silence_time):
-        self.silence_time = silence_time
+    def set_silence_time(self, minutes=0, seconds=0):
+        self.silence_time = minutes * 60 + seconds
 
     def run_expr(self, expr):
         m = self.modules
-        return eval(expr, locals=[m])
+        return eval(expr, globals(), locals())
 
     def next_str_node(self, n, log, i):
         res = None
@@ -149,8 +149,9 @@ class AICore:
             if next:
                 if isinstance(next, FnNode):
                     # self.log.append(str(next))
-                    answer = fn_engine(next.fn_body.rstrip())
-                    self.log.append("> " + answer)                    
+                    answer = python_execute(next.fn_body.rstrip(),
+                                            self.modules)
+                    self.log.append("> " + answer)
                 else:
                     answer = next.text
                     self.log.append(answer)
@@ -179,7 +180,7 @@ class AICore:
 
     async def fire_silence(self):
         while self.handle_silence and self.modules['messages'].websockets:
-            await asyncio.sleep(SILENCE_TIME)
+            await asyncio.sleep(self.silence_time)
             log.debug("Silence detected")
             if self.robins_story_ids:
                 self.force_own_will_story()

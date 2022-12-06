@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
+from time import sleep
 from parsimonious.grammar import Grammar
 
 from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
-from ..ai_core2.ast_nodes import IfInNode, MessageOutNode, MessageInNode  # noqa: E501
+from ..ai_core2.ast_nodes import MessageOutNode  # noqa: E501
 from ..ai_core2.ast_nodes import FnNode
 from ..ai_core2.story import Story
-from ..ai_core2.ai_core import AICore, python_execute
+from ..robin_db import RobinDb
+from ..robin_events import Robin_events
+from ..ai_core2.ai_core import AICore
 
 
 def check_next(log, st, goal, result_class=MessageOutNode):
@@ -113,14 +116,14 @@ def test_if_statement():
     assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< <intent>greetings"), "st.contains must work"
-    l = ["< <intent>greetings"]
-    check_next(l, st, "> Good to see u again, boss.")
-    l.append("> Good to see u again, boss.")
-    l.append("< Really?")
-    check_next(l, st, "> Nope.")
-    l.append("> Nope.")
-    l.append("< fuck you")
-    check_next(l, st, "> u welcome")
+    lst = ["< <intent>greetings"]
+    check_next(lst, st, "> Good to see u again, boss.")
+    lst.append("> Good to see u again, boss.")
+    lst.append("< Really?")
+    check_next(lst, st, "> Nope.")
+    lst.append("> Nope.")
+    lst.append("< fuck you")
+    check_next(lst, st, "> u welcome")
 
 
 def test_grammar():
@@ -231,18 +234,24 @@ def test_func1():
 
 
 def test_own_will():
-    ac = AICore(None)
-    var2change = "initional state"
+    modules = {}
+    modules['db'] = RobinDb('memory')
+    db = modules['db']
+    events = Robin_events()
+    modules['events'] = events
+    ai = AICore(modules)
+    db['var2change'] = "initional state"
+
     raw_story = r"""
         story test_own_will {
             <fn>
-                var2change = "modified state"
+                db['var2change'] = "modified state"
             </fn>
         }
     """
     ai.add_story_by_source(raw_story)
-    ai.set_silence_interval(seconds=3)
+    ai.set_silence_time(seconds=3)
     ai.add_to_own_will("test_own_will")
     sleep(6)
-    assert var2change == "modified state", "var2change must be changed"
-    
+    assert db['var2change'] == "modified state", "var2change must be changed"
+
