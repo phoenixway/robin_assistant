@@ -105,6 +105,6 @@ class PArtOfLiving(IPlugin):
         """)
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(self.do_regular_work, 'interval', minutes=1,
+        scheduler.add_job(self.do_regular_work, 'interval', minutes=8,
                           id="do_most_important_id")
         scheduler.start()

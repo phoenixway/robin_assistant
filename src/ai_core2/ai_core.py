@@ -46,7 +46,7 @@ source_path = Path(__file__).resolve()
 source_dir = source_path.parent.parent
 stories_ = {}
 intents = []
-SILENCE_TIME = 3
+
 
 with open(source_dir/'brains/default.intents', 'r') as f:
     intents = json.load(f)
@@ -79,6 +79,10 @@ class AICore:
         self.repeat_if_silence = False
         self.handle_silence = True
         self.robins_story_ids = []
+        self.silence_time = 2
+
+    def set_silence_time(self, silence_time):
+        self.silence_time = silence_time
 
     def run_expr(self, expr):
         m = self.modules
