@@ -23,6 +23,8 @@ def python_execute(code, modules):
             db = modules['db']
         if 'messages' in modules:
             ms = modules['messages']
+        if 'events' in modules:
+            ev = modules['events']
     lines = code.splitlines()
     if len(lines[0]) == 0:
         lines.pop(0)
@@ -178,7 +180,7 @@ class AICore:
             if s is not None:
                 self.force_story(s)
 
-    async def fire_silence(self):
+    async def start_silence(self):
         while self.handle_silence and self.modules['messages'].websockets:
             await asyncio.sleep(self.silence_time)
             log.debug("Silence detected")
@@ -190,19 +192,30 @@ class AICore:
         # else:
         #     self.start_next_robin_story()
 
-    async def message_received_handler(self, data):
-        log.debug('message received handler')
+    def init_silence(self):
         if self.handle_silence:
             if self.silence_task is not None:
                 self.silence_task.cancel()
-            self.silence_task = asyncio.create_task(self.fire_silence())
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if (loop is not None) and (loop.is_running()):
+                self.silence_task = loop.create_task(self.start_silence())
+            else:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            self.silence_task = loop.create_task(self.start_silence())
+            # self.silence_task = asyncio.create_task(self.start_silence())
+
+    async def message_received_handler(self, data):
+        log.debug('message received handler')
+        self.init_silence()
 
     async def message_send_handler(self, data):
         log.debug('message send handler')
-        if self.handle_silence:
-            if self.silence_task is not None:
-                self.silence_task.cancel()
-            self.silence_task = asyncio.create_task(self.fire_silence())
+        self.init_silence()
 
     def force_story(self, story_id):
         # FIXME:whole func

@@ -252,6 +252,6 @@ def test_own_will():
     ai.add_story_by_source(raw_story)
     ai.set_silence_time(seconds=3)
     ai.add_to_own_will("test_own_will")
+    ai.init_silence()
     sleep(6)
     assert db['var2change'] == "modified state", "var2change must be changed"
-
