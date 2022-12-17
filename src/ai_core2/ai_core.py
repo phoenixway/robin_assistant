@@ -225,7 +225,16 @@ class AICore:
         st = [i for i in self.stories if i.name == story_id][0]
         if story_id and st:
             # TODO: parse any nodes
-            next_answer = st.first_node.text
-            answer = next_answer
+            if isinstance(st.first_node, FnNode):
+                next_answer = python_execute(st.first_node.fn_body.rstrip(),
+                                             self.modules)
+                if next_answer is None:
+                    next_answer = "Done"
+                else:
+                    next_answer = "> " + next_answer
+            else:
+                next_answer = st.first_node.text = next.text
+                # if "> " in next_answer or "< " in next_answer:
+                #     next_answer = next_answer[2:]
             self.log.append(next_answer)
-            self.modules['messages'].say(answer[2:])
+            self.modules['messages'].say(next_answer[2:])

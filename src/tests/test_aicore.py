@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-from time import sleep
+from asyncio import sleep
 from parsimonious.grammar import Grammar
+import pytest
+# import pytest_asyncio.plugin
 
 from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
 from ..ai_core2.ast_nodes import MessageOutNode  # noqa: E501
@@ -9,6 +11,7 @@ from ..ai_core2.story import Story
 from ..robin_db import RobinDb
 from ..robin_events import Robin_events
 from ..ai_core2.ai_core import AICore
+from ..messages import Messages
 
 
 def check_next(log, st, goal, result_class=MessageOutNode):
@@ -233,7 +236,8 @@ def test_func1():
     assert answer == "if works!", "answer is not hello word"
 
 
-def test_own_will():
+@pytest.mark.asyncio
+async def test_own_will():
     modules = {}
     modules['db'] = RobinDb('memory')
     db = modules['db']
@@ -241,6 +245,9 @@ def test_own_will():
     modules['events'] = events
     ai = AICore(modules)
     db['var2change'] = "initional state"
+    messages = Messages(modules)
+    modules['messages'] = messages
+    messages.websockets.append([])
 
     raw_story = r"""
         story test_own_will {
@@ -253,5 +260,5 @@ def test_own_will():
     ai.set_silence_time(seconds=3)
     ai.add_to_own_will("test_own_will")
     ai.init_silence()
-    sleep(6)
+    await sleep(6)
     assert db['var2change'] == "modified state", "var2change must be changed"
