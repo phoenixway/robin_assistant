@@ -103,6 +103,9 @@ class PArtOfLiving(IPlugin):
                 </if>
             }
         """)
+        ai.add_to_own_will("do_most_important")
+        ai.add_to_own_will("is_day_planned")
+        # ai.add_to_own_will()
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
         scheduler.add_job(self.do_regular_work, 'interval', minutes=8,

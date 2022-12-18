@@ -16,33 +16,7 @@ from .ast_nodes import MessageOutNode, FnNode
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
 
-
-def python_execute(code, modules):
-    if modules:
-        if 'db' in modules:
-            db = modules['db']
-        if 'messages' in modules:
-            ms = modules['messages']
-        if 'events' in modules:
-            ev = modules['events']
-    lines = code.splitlines()
-    if len(lines[0]) == 0:
-        lines.pop(0)
-    m = re.search(r"(^\s+)", lines[0])
-    zero_indent = len(m.group(1))
-    newlines = []
-    for line in lines:
-        line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
-        newlines.append(line)
-    new_code = "\n".join(newlines)
-    loc = dict(locals())
-    exec(new_code, globals(), loc)
-    if 'ret' in loc:
-        return loc['ret']
-    else:
-        return None
-
-
+tasks = set()
 log = logging.getLogger('pythonConfig')
 source_path = Path(__file__).resolve()
 source_dir = source_path.parent.parent
@@ -81,7 +55,7 @@ class AICore:
         self.repeat_if_silence = False
         self.handle_silence = True
         self.robins_story_ids = []
-        self.silence_time = 2
+        self.set_silence_time(minutes=2)
 
     def set_silence_time(self, minutes=0, seconds=0):
         self.silence_time = minutes * 60 + seconds
@@ -150,10 +124,8 @@ class AICore:
             next = self.next_in_story(self.log, story)
             if next:
                 if isinstance(next, FnNode):
-                    # self.log.append(str(next))
-                    answer = python_execute(next.fn_body.rstrip(),
-                                            self.modules)
-                    self.log.append("> " + answer)
+                    answer = next.run(self.modules)
+                    self.log.append(answer)
                 else:
                     answer = next.text
                     self.log.append(answer)
@@ -181,7 +153,9 @@ class AICore:
                 self.force_story(s)
 
     async def start_silence(self):
+        log.debug("Silence detection started")
         while self.handle_silence and self.modules['messages'].websockets:
+            log.debug(f"Waiting silence for {self.silence_time} seconds")
             await asyncio.sleep(self.silence_time)
             log.debug("Silence detected")
             if self.robins_story_ids:
@@ -206,7 +180,8 @@ class AICore:
             else:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            self.silence_task = loop.create_task(self.start_silence())
+                self.silence_task = loop.create_task(self.start_silence())
+            tasks.add(self.silence_task)
             # self.silence_task = asyncio.create_task(self.start_silence())
 
     async def message_received_handler(self, data):
@@ -226,14 +201,9 @@ class AICore:
         if story_id and st:
             # TODO: parse any nodes
             if isinstance(st.first_node, FnNode):
-                next_answer = python_execute(st.first_node.fn_body.rstrip(),
-                                             self.modules)
-                if next_answer is None:
-                    next_answer = "Done"
-                else:
-                    next_answer = "> " + next_answer
+                next_answer = st.first_node.run(self.modules)
             else:
-                next_answer = st.first_node.text = next.text
+                next_answer = st.first_node.text
                 # if "> " in next_answer or "< " in next_answer:
                 #     next_answer = next_answer[2:]
             self.log.append(next_answer)
