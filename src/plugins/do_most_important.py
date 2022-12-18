@@ -45,7 +45,9 @@ class PArtOfLiving(IPlugin):
                 <fn>
                     ret = db['day_planned']
                     if ret is None:
-                        ret = "No!"
+                        ret = "You do not planned yr day yet"
+                    else:
+                        ret = "You planned yr day at " + ret!"
                 </fn>
             }
             story do_most_important {
