@@ -5,7 +5,7 @@
     "(bye|exit|(quit))": "bye",
     "(yes|yeah|sure|ok)": "yes",
     "(no|nope)": "no",
-    "(stop|(stop that)|forget)": "stop_phase",
+    "(stop|(stop that)|forget|(shut up))": "stop_phrase",
     "(thank)": "thanku",
     "((.* about yourself)|bot)": "about"
 
