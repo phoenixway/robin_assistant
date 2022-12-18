@@ -52,8 +52,6 @@
         </fn>
     }
     story {
-        < if
-        <if True>
-            > True is true
-        </if>
+        < <intent>stop_phase
+        > Ok, boss.
     }
