@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
-import os
+from pathlib import Path
 import logging
 from yapsy.PluginManager import PluginManager
 
@@ -18,7 +18,9 @@ class Plugins:
         log.debug("Plugin manager started.")
         global tsks
         simplePluginManager = PluginManager()
-        simplePluginManager.setPluginPlaces(["src/plugins"])
+        source_path = Path(__file__).resolve()
+        source_dir = source_path.parent / "plugins"
+        simplePluginManager.setPluginPlaces([source_dir])
         simplePluginManager.collectPlugins()
         for pluginInfo in simplePluginManager.getAllPlugins():
             t = asyncio.create_task(pluginInfo.plugin_object.activate(
