@@ -39,6 +39,5 @@ cossack.roman@gmail.com
 https://github.com/phoenixway  
 https://twitter.com/roman_cossack  
 
-2018-2023. Copyright Roman Kozak (Pylypchuk)  
-All rights reserved.
+2018-2023. Copyright Roman Kozak (Pylypchuk). All rights reserved.
 
