@@ -25,7 +25,8 @@ Install requirements:
 pip3 install -r requirements.txt  
 
 ## Usage
-Run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:
+Run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:  
+
 scripts/run_server.sh  
 scripts/run_client.sh  ## for gui client OR  
 scripts/run_client_cli.sh ## for cli client
