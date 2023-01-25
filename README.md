@@ -15,7 +15,21 @@ To my big and true sorry, malware with same name appeared in Internet in late 20
 
 ## What next?
 See TODO.md
- 
+
+## Installation
+### Linux
+Download source code:  
+git clone https://github.com/phoenixway/robin_assistant  
+
+Install requirements:  
+pip3 install -r requirements.txt  
+
+## Usage
+Run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:
+scripts/run_server.sh  
+scripts/run_client.sh  ## for gui client OR  
+scripts/run_client_cli.sh ## for cli client
+
 ## Licence
 GNU 2
 
