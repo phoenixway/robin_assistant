@@ -13,9 +13,6 @@ To my big and true sorry, malware with same name appeared in Internet in late 20
 * All Robin's behaviour in general including possible dialogs are described in the form of special story-files. Which have not-technician-friendly format.
 * Не надто досліджував я мови скриптів інших чат-ботів, але щось мені підказує, що спосіб валідації вводу користувача та генерації відповіді на нього є достатньо іновативним.
 
-## What next?
-See TODO.md
-
 ## Installation
 ### Linux
 Download source code:  
@@ -30,6 +27,9 @@ Run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in
 scripts/run_server.sh  
 scripts/run_client.sh  ## for gui client OR  
 scripts/run_client_cli.sh ## for cli client
+
+## What next?
+See TODO.md
 
 ## Licence
 GNU 2
