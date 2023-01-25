@@ -34,11 +34,11 @@ scripts/run_client_cli.sh ## for cli client
 GNU 2
 
 ## Author
-Roman Kozak (Pylypchuk)
-cossack.roman@gmail.com
-https://github.com/phoenixway
-https://twitter.com/roman_cossack
+Roman Kozak (Pylypchuk)  
+cossack.roman@gmail.com  
+https://github.com/phoenixway  
+https://twitter.com/roman_cossack  
 
-2018-2023. Copyright Roman Kozak (Pylypchuk)
+2018-2023. Copyright Roman Kozak (Pylypchuk)  
 All rights reserved.
 
