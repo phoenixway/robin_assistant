@@ -2,16 +2,22 @@
 from asyncio import sleep
 from parsimonious.grammar import Grammar
 import pytest
-# import pytest_asyncio.plugin
 
-from ..ai_core2.rs_parser import RSParser   # noqa: F403, F401
-from ..ai_core2.ast_nodes import MessageOutNode  # noqa: E501
-from ..ai_core2.ast_nodes import FnNode
-from ..ai_core2.story import Story
-from ..robin_db import RobinDb
-from ..robin_events import Robin_events
-from ..ai_core2.ai_core import AICore
-from ..messages import Messages
+# import pytest_asyncio.plugin
+import os
+import sys
+sys.path.append(os.path.abspath('..'))
+sys.path.append(os.path.abspath('../src'))
+
+print (os.getcwd())
+from src.ai_core2.rs_parser import RSParser   # noqa: F403, F401
+from src.ai_core2.ast_nodes import MessageOutNode  # noqa: E501
+from src.ai_core2.ast_nodes import FnNode
+from src.ai_core2.story import Story
+from src.robin_db import RobinDb
+from src.robin_events import Robin_events
+from src.ai_core2.ai_core import AICore
+from src.messages import Messages
 
 
 def check_next(log, st, goal, result_class=MessageOutNode):

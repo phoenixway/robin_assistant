@@ -1,3 +1,4 @@
 __pycache__
 renv
 /memory
+.pytest_cache
