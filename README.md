@@ -18,7 +18,7 @@ To my big and true sorry, malware with same name appeared in Internet in late 20
 Download source code:  
 git clone https://github.com/phoenixway/robin_assistant  
 
-Start virtual development enviroment:
+Create and start virtual development enviroment, if you want:
 python3 -m venv urname4enviroment
 source urname4enviroment/bin/activate
 
@@ -26,6 +26,7 @@ Install requirements:
 pip3 install -r requirements.txt  
 
 ## Usage
+Firstly, do not forget to activate virtual enviroment, if you install requirements into it. 
 Run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:  
 
 scripts/run_server.sh  
