@@ -16,22 +16,30 @@ To my big and true sorry, malware with same name appeared in Internet in late 20
 ## Installation
 ### Linux
 Download source code:  
+```sh
 git clone https://github.com/phoenixway/robin_assistant  
+```
 
 Create and start virtual development enviroment, if you want:
+```sh
 python3 -m venv urname4enviroment
 source urname4enviroment/bin/activate
+```
 
 Install requirements:  
+```sh
 pip3 install -r requirements.txt  
+```
 
 ## Usage
 Firstly, do not forget to activate virtual enviroment, if you install requirements into it. 
 Run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:  
 
+```sh
 scripts/run_server.sh  
 scripts/run_client.sh  ## for gui client (buggy yet) OR  
 scripts/run_client_cli.sh ## for cli client
+```
 
 ## What next?
 See TODO.md
