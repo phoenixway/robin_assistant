@@ -44,7 +44,7 @@ scripts/run_client_cli.sh ## for cli client
 ## What next?
 See TODO.md
 
-## Licence
+## License
 GNU 2
 
 ## Author
