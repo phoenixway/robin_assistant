@@ -37,7 +37,7 @@ Then run 2 scripts (run_server.sh must be first) from {source code folder}/scrip
 
 ```sh
 scripts/run_server.sh  
-scripts/run_client.sh  ## for gui client (buggy yet) OR  
+# scripts/run_client.sh  ## for gui client (not available yet) OR  
 scripts/run_client_cli.sh ## for cli client
 ```
 
