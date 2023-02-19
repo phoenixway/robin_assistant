@@ -11,3 +11,4 @@
 * інтро для початківця
 * мотивація написання 
 * user input can trigger script execution in brains
+* default config storage change
