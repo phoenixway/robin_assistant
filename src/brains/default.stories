@@ -25,20 +25,16 @@
     story {
         < time
         <fn>
-            local date_table = os.date("*t")
-            local ms = string.match(tostring(os.clock()), "%d%.(%d+)")
-            local hour, minute, second = date_table.hour, date_table.min, date_table.sec
-
-            local year, month, day = date_table.year, date_table.month, date_table.day   -- date_table.wday to date_table.day
-
-            return string.format("%d-%d-%d %d:%d:%d:%s", year, month, day, hour, minute, second, ms)
+            from datetime import datetime
+            ret = str(datetime.now())
         </fn>
     }
     story {
         < <intent>thanku
         <fn>
-            local a = {'u welcome', 'im here to serve'}
-            return a[ math.random( #a ) ]            
+            # local a = {'u welcome', 'im here to serve'}
+            # return a[ math.random( #a ) ]            
+            ret='welcome'
         </fn>
     }
     story {
