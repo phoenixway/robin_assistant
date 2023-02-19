@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 import shelve
 
+class SqliteDb:
+    def __init__(self) -> None:
+        pass
+
+    def query(query_text):
+        pass
 
 class RobinDb:
     def __init__(self, db_name):
+        self.sql = SqliteDb()
         self.db_name = db_name
         self.db = shelve.open(db_name)
 
