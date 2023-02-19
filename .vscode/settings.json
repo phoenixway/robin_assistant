@@ -6,7 +6,7 @@
     "python.testing.pytestEnabled": true,
     "editor.tabCompletion": "on",
     "diffEditor.codeLens": true,
-    "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder/src/}"},
+    "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/src"},
     "python.linting.pylintArgs": [
         "--disable=F0401"
     ] 

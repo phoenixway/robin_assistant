@@ -88,7 +88,9 @@ class Messages:
                 input_text = await websocket.recv()
                 error = False
                 log.debug(f"Ws server received: {input_text}")
-                self.telegram_say(f"Ws server received: {input_text}")
+                # TODO: telegram optionally
+                if self.telegram_works:
+                    self.telegram_say(f"Ws server received: {input_text}")
                 self.MODULES['events'].emit('message_received', input_text)
                 # TODO: find answer from within event handler in aicore
                 answer = self.get_answer(input_text)

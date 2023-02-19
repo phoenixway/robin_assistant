@@ -33,8 +33,9 @@
         < <intent>thanku
         <fn>
             # local a = {'u welcome', 'im here to serve'}
-            # return a[ math.random( #a ) ]            
-            ret='welcome'
+            # return a[ math.random( #a ) ]  
+            db['test']='u welcome'          
+            ret=db['test']
         </fn>
     }
     story {
