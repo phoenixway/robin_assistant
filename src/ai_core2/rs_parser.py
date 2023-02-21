@@ -3,10 +3,7 @@
 from parsimonious.grammar import Grammar
 from .visitor import RSVisitor
 
-
-class RSParser:
-    # TODO: прибрати зайве
-    rs_grammar = Grammar(r"""
+rs_grammar_old = Grammar(r"""
         stories = story+
         story = maybe_ws story_start_keyword maybe_ws maybe_story_name maybe_ws block maybe_ws  # noqa: E501
         story_start_keyword = ~r"story"
@@ -57,6 +54,43 @@ class RSParser:
         let_keyword_close = ~r"</let>"
         maybe_var_name = var_name*
         var_name = ~r"[\w\s_\d]+" 
+        maybe_ws = ws*
+        ws_must = ws+
+        maybe_intent_keyword = intent_keyword+
+        maybe_statements = statement*
+    """)
+
+class RSParser:
+    # TODO: прибрати зайве
+    # noqa: E501
+    rs_grammar = Grammar(r"""
+        stories = story+
+        story = maybe_ws story_start_keyword maybe_ws maybe_story_name maybe_ws block maybe_ws  # noqa: E501
+        story_start_keyword = ~r"story"
+        maybe_story_name = story_name*
+        story_name = ~r"[\w_\d]+"
+        block = lbr maybe_ws maybe_statements maybe_ws rbr
+        rbr = ~r"\}"
+        lbr = ~r"\{"
+        statement = (oneliner_with_params / oneliner)
+        oneliner_with_params = inout ws_must text_with_params
+        text_with_params = text_with_param+
+        text_with_param = many_raw_text variable many_raw_text
+        many_raw_text = raw_text*
+        oneliner = inout ws_must text
+        variable = let_keyword_open maybe_ws let_keyword_close maybe_ws
+        inout = ~r"[<>]"
+        text = (intent_text / simple_text)
+        intent_text = maybe_intent_keyword raw_text
+        simple_text = raw_text
+        parameter = (intent_parameter / simple_parameter)
+        simple_parameter = raw_text
+        intent_parameter = maybe_intent_keyword raw_text
+        raw_text = ~r"[-\w\s\?\!\.\,\d\'\`]+"
+        ws = ~r"\s"
+        intent_keyword = ~r"<intent>"
+        let_keyword_open = ~r"<let>"
+        let_keyword_close = ~r"</let>"
         maybe_ws = ws*
         ws_must = ws+
         maybe_intent_keyword = intent_keyword+

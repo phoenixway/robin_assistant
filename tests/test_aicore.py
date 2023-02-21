@@ -270,12 +270,14 @@ async def test_own_will():
     assert db['var2change'] == "modified state", "var2change must be changed"
 
 def test_parametrized_input():
-    # < report < let when > yesterday | %d | ( % i days ago) < /let >
+    # < report <let> yesterday | %d | ( % i days ago) < /let >
     raw_story = r"""
-        story {
-            <let></let>
-            > it's parametrized input!
-        }
+    story{
+        < test
+        > bla <var varname1>yesterday|%d|(%i days ago)</var> bla2 bla3 <var varname2>%f</var> bla4 bla5 <var varname4>%f</var>
+        < test 2
+        > u said $varname1 $varname2 $varname3 $varname4
+    }
     """
     st = RSParser.create_from_text(raw_story)
     st = st[0]

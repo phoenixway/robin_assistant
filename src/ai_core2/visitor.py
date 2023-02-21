@@ -147,6 +147,8 @@ class RSVisitor(NodeVisitor):
         for child in visited_children:
             if child != "not_important":
                 for node in child:
+                    if node == "not_important":
+                        continue
                     if n is not None:
                         if isinstance(n, IfInNode):
                             for st in n.last_statements:
