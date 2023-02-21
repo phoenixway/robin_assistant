@@ -1,12 +1,13 @@
 {
     "python.testing.pytestArgs": [
-        "--rootdir","${workspaceFolder}/src"
+        "--rootdir","${workspaceFolder}/tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "editor.tabCompletion": "on",
     "diffEditor.codeLens": true,
-    "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/src"},
+    "python.envFile": "${workspaceFolder}/.env",
+    "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}/tests"},
     "python.linting.pylintArgs": [
         "--disable=F0401"
     ] 

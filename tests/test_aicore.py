@@ -268,3 +268,20 @@ async def test_own_will():
     ai.init_silence()
     await sleep(6)
     assert db['var2change'] == "modified state", "var2change must be changed"
+
+def test_parametrized_input():
+    # < report < let when > yesterday | %d | ( % i days ago) < /let >
+    raw_story = r"""
+        story {
+            <let></let>
+            > it's parametrized input!
+        }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< report <let when>yesterday|%d|(%i days ago)</let>"), "st.contains must work"
+    lst = [r"< report <let when>yesterday|%d|(%i days ago)</let>"]
+    check_next(lst, st, "> it's parametrized input!")

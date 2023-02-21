@@ -158,3 +158,8 @@ class Messages:
         # t.add_done_callback(background_tasks.remove(t))
         # t1 = asyncio.create_task(self.telegram_serve())
         # background_tasks.add(t1)
+
+    # story {
+    #     < report < let when > yesterday | %d | ( % i ago) < /let >
+    #     > parametrized input works!
+    # }
