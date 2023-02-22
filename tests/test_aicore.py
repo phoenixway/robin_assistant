@@ -273,10 +273,10 @@ def test_parametrized_input():
     # < report <let> yesterday | %d | ( % i days ago) < /let >
     raw_story = r"""
     story{
-        < test
-        > bla <var varname1>yesterday|%d|(%i days ago)</var> bla2 bla3 <var varname2>%f</var> bla4 bla5 <var varname4>%f</var>
-        < test 2
-        > u said $varname1 $varname2 $varname3 $varname4
+        < i want to enter data
+        > please
+        < <v varname1 yesterday|%d|(%i days ago)> bla2 bla3 <v varname2 %f> bla4 bla5 <v varname4 %f>
+        > ur data are: $varname1 $varname2 $varname3 $varname4
     }
     """
     st = RSParser.create_from_text(raw_story)
