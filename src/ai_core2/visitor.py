@@ -41,6 +41,23 @@ class RSVisitor(NodeVisitor):
         s = " ".join(buf)
         n = MessageOutNode(s) if s[:2] == "> " else MessageInNode(s)
         return n
+    
+    def visit_oneliner_with_params(self, node, visited_children):
+        buf = []
+        for child in visited_children:
+            if child == "not_important":
+                continue
+            if len(child) > 0:
+                buf.append(child.strip())
+        s = " ".join(buf)
+        n = MessageOutNode(s) if s[:2] == "> " else MessageInNode(s)
+        return n
+
+    def visit_input_var(self, node, visited_children):
+        return node.text
+
+    def visit_maybe_raw_text(self, node, visited_children):
+        return node.text
 
     def visit_if_in_statement(self, node, visited_children):
         # TODO: при заповненні ifnode якщо існує ifnode.next цей next має бути  і в next полі самих останніх вкладених statements if`a  # noqa: E501

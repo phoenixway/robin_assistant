@@ -212,7 +212,8 @@ def test_func():
     assert next is not None, f"next is None, must be Node:{FnNode}"
     assert isinstance(next, FnNode), f"next must be {FnNode.name}"
     answer = ac.respond("func")
-    assert answer == "Hello, world!", "answer is not hello word"
+    assert answer == "> Hello, world!", "answer is not hello word"
+    pass
 
 
 def test_func1():
@@ -239,7 +240,7 @@ def test_func1():
     assert next is not None, f"next is None, must be Node:{FnNode}"
     assert isinstance(next, FnNode), f"next must be {FnNode.name}"
     answer = ac.respond("func")
-    assert answer == "if works!", "answer is not hello word"
+    assert answer == "> if works!", "answer is not hello word"
 
 
 @pytest.mark.asyncio
@@ -269,14 +270,35 @@ async def test_own_will():
     await sleep(6)
     assert db['var2change'] == "modified state", "var2change must be changed"
 
+
 def test_parametrized_input():
+    # < report <let> yesterday | %d | ( % i days ago) < /let >
+    #     <fn>
+    #     s = "Alarming!"
+    #     ret = s
+    # </fn>        
+    raw_story = r"""
+    story {
+        < alarm in %d minutes
+        > Alarming!
+    }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< alarm in %d minutes"), "st.contains must work"
+    lst = [r"< alarm in %d minutes"]
+    check_next(lst, st, "> Alarming!")
+
+
+def test_parametrized_input1():
     # < report <let> yesterday | %d | ( % i days ago) < /let >
     raw_story = r"""
     story{
-        < i want to enter data
-        > please
-        < <v varname1 yesterday|%d|(%i days ago)> bla2 bla3 <v varname2 %f> bla4 bla5 <v varname4 %f>
-        > ur data are: $varname1 $varname2 $varname3 $varname4
+        < I went there <date: yesterday|(on %d)|(%i days ago)> and bought <goods1: %s> and <goods2: %s>
+        > ur data are: $date $goods1 $goods2
     }
     """
     st = RSParser.create_from_text(raw_story)
