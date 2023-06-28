@@ -12,7 +12,7 @@ class PArtOfLiving(IPlugin):
 
     async def do_regular_work(self):
         log.debug("Doing regular work")
-        ai = PArtOfLiving.modules['ai_core']
+        ai = PArtOfLiving.modules['ai']
         lst = [i for i in ai.stories
                if i.name == "do_most_important"]
         if lst:
@@ -36,7 +36,7 @@ class PArtOfLiving(IPlugin):
     async def activate(self, modules):
         log.debug("Activating plugin for doing most important task..")
         PArtOfLiving.modules = modules
-        ai = modules['ai_core']
+        ai = modules['ai']
         modules['events'].add_listener('user_connected',
                                        self.user_connect_handler)
         # TODO: дві історії, одна щодо планування дня

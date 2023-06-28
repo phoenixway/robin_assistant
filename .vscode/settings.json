@@ -7,7 +7,7 @@
     "editor.tabCompletion": "on",
     "diffEditor.codeLens": true,
     "python.envFile": "${workspaceFolder}/.env",
-    "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/src;${workspaceFolder}/tests"},
+    "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/robin_ai;${workspaceFolder}/tests"},
     "python.linting.pylintArgs": [
         "--disable=F0401"
     ] 

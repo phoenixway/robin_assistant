@@ -4,13 +4,21 @@ import sys
 import logging
 import nest_asyncio
 from colorlog import ColoredFormatter
-
-from robin_db import RobinDb
-from robin_events import Robin_events
-from messages import Messages
-from plugin_manager import Plugins
-from ai_core2.ai_core import AICore
 from os import _exit
+
+try:
+    from .robin_db import RobinDb
+    from .robin_events import Robin_events
+    from .messages import Messages
+    from .plugin_manager import Plugins
+    from .ai_core2.ai_core import AI
+except ImportError:
+    from robin_db import RobinDb
+    from robin_events import Robin_events
+    from messages import Messages
+    from plugin_manager import Plugins
+    from ai_core2.ai_core import AI
+
 
 nest_asyncio.apply()
 log = None
@@ -38,7 +46,7 @@ def init_modules():
     MODULES['plugins'] = Plugins(MODULES)
     MODULES['messages'] = Messages(MODULES)
     MODULES['db'] = RobinDb('memory')
-    MODULES['ai_core'] = AICore(MODULES)
+    MODULES['ai'] = AI(MODULES)
 
 
 async def quit_handler(data):
@@ -68,14 +76,14 @@ async def quit_handler(data):
 async def start_handler(data):
     log.debug("Start_handler called")
     # MODULES['messages'].say("Connected.")
-    asyncio.create_task(MODULES['ai_core'].message_received_handler(None))
+    asyncio.create_task(MODULES['ai'].message_received_handler(None))
 
 
 async def startup_finisher():
     finished = False
     while not finished:
         await asyncio.sleep(5)
-        finished = MODULES['messages'].is_started and MODULES['events'].is_started and MODULES['ai_core'].is_started  # noqa: E501
+        finished = MODULES['messages'].is_started and MODULES['events'].is_started and MODULES['ai'].is_started  # noqa: E501
     MODULES['events'].emit('startup', None)
 
 
@@ -92,19 +100,20 @@ async def async_modules():
         log.debug("async modules finished")
 
 
-init_logger()
-log.info('Welcome!')
-init_modules()
-MODULES['events'].add_listener('startup', start_handler)
-MODULES['events'].add_listener('quit', quit_handler)
+def run():
+    init_logger()
+    log.info('Welcome!')
+    init_modules()
+    MODULES['events'].add_listener('startup', start_handler)
+    MODULES['events'].add_listener('quit', quit_handler)
 
-try:
-    asyncio.run(async_modules())
-except KeyboardInterrupt:
-    pass
-except RuntimeError:
-    pass
-except asyncio.exceptions.CancelledError:
-    pass
-finally:
-    asyncio.run(quit_handler(None))
+    try:
+        asyncio.run(async_modules())
+    except KeyboardInterrupt:
+        pass
+    except RuntimeError:
+        pass
+    except asyncio.exceptions.CancelledError:
+        pass
+    finally:
+        asyncio.run(quit_handler(None))

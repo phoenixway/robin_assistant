@@ -89,7 +89,7 @@ grammar = r"""
     parameter = (intent_parameter / simple_parameter)
     simple_parameter = raw_text
     intent_parameter = maybe_intent_keyword raw_text
-    raw_text = ~r"[-\w\s\?\!\.\,\d\'\`]+"
+    raw_text = ~r"[-\w\s\?\!\.\,\d\'\\$`]+"
     ws = ~r"\s"
     intent_keyword = ~r"<intent>"
     let_keyword_open = ~r"<let>"
@@ -99,6 +99,7 @@ grammar = r"""
     maybe_intent_keyword = intent_keyword+
     maybe_statements = statement*
 """
+
 
 class RSParser:
     # TODO: прибрати зайве

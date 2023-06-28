@@ -1,3 +1,7 @@
+* покриття тестами вводу з параметрами
+* більш наглядні функції валідації сирого вводу з елементом історії
+* завантаження мізків з каталога
+* подальший розвиток парсення вводу на параметри
 * Exit by intent in user messages.
 * Features freeze until they will be stable enough.
 * split messages with br into several separate ones

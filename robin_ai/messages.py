@@ -68,7 +68,7 @@ class Messages:
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
-        return self.MODULES['ai_core'].respond(message)
+        return self.MODULES['ai'].eat_text(message)
 
     def telegram_say(self, message):
         # try:

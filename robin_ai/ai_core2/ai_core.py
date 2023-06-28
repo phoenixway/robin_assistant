@@ -10,8 +10,8 @@ import nest_asyncio
 from pathlib import Path
 from .rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
-from .ast_nodes import MessageInNode
-from .ast_nodes import MessageOutNode, FnNode
+from .ast_nodes import InputNode
+from .ast_nodes import OutputNode, FnNode, ParamInputNode
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -36,7 +36,17 @@ def recognize_intent(text):
             return intents[intent]
 
 
-class AICore:
+# text_input_to_canonical_form
+def to_canonical(text):
+    res = f"< {text}"
+    intent = recognize_intent(text)
+    if intent is not None:
+        res = f"< <intent>{intent}"
+    # TODO: combine intents and parameters
+    return res
+
+
+class AI:
     def __init__(self, modules):
         # create_default_stories()
         #  TODO: check that brains exist
@@ -46,7 +56,8 @@ class AICore:
         self.story_ids = [s.name for s in self.stories]
         self.modules = modules
         self.active_story = None
-        self.log = []
+        self.vars = []
+        self.history = []
         if modules is not None:
             modules['events'].add_listener('message_received', self.message_received_handler)  # noqa: E501
             modules['events'].add_listener('message_send', self.message_send_handler)  # noqa: E501
@@ -66,8 +77,8 @@ class AICore:
 
     def next_str_node(self, n, log, i):
         res = None
-        if isinstance(n, MessageInNode) or isinstance(n, MessageOutNode) or \
-           isinstance(n, FnNode):
+        if isinstance(n, InputNode) or isinstance(n, OutputNode) or \
+           isinstance(n, FnNode) or isinstance(n, ParamInputNode):
             res = n.next
         elif isinstance(n, IfNode):
             r = self.run_expr(n.condition)
@@ -88,10 +99,19 @@ class AICore:
                 res = self.next_str_node(res, log, i)
         return res
 
-    def next_in_story(self, log, s):
-        # node to process
+    def get_next(self, log, s):
+        '''Get story next element'''
+        
         n = s.first_node
-        if (n is None) or (str(n) not in log):
+        # detect if n is user input with parameters
+        if isinstance(n, ParamInputNode):
+            valid, vars = n.validate(log[0])
+            if valid:
+                self.vars.extend(vars)
+                log[-1] = n.text
+            else:
+                return None
+        elif (n is None) or (str(n) not in log):
             return None
         # index in log
         il = len(log) - log[::-1].index(str(n)) - 1
@@ -108,30 +128,32 @@ class AICore:
         else:
             return n
 
-    def respond(self, text):
-        log.debug("Parsing with aicore")
+    def eat_singal(self, signal):
+        pass
+
+    def eat_text(self, text):
+        log.debug("Parsing user input with ai.eat_text")
         if text == '<silence>':
             return None
         else:
             answer = f"Default answer on '{text}'"
-        intent = recognize_intent(text)
-        if intent is not None:
-            self.log.append(f"< <intent>{intent}")
-        else:
-            self.log.append("< " + text)
+        # спочатку задетектити чи не регекс
+        self.history.append(to_canonical(text))
+        # next in story must return also list of variables' values
+        # or something similar
 
         for story in self.stories:
-            next = self.next_in_story(self.log, story)
+            next = self.get_next(self.history, story)
             if next:
                 if isinstance(next, FnNode):
+                    self.modules['vars'] = self.vars
                     answer = next.run(self.modules)
-                    self.log.append(answer)
                 else:
                     answer = next.text
-                    self.log.append(answer)
-                    if "> " in answer or "< " in answer:
-                        answer = answer[2:]
                 break
+        self.history.append(answer)
+        if "> " in answer or "< " in answer:
+            answer = answer[2:]
         return answer
 
     def add_to_own_will(self, story_id):
@@ -206,5 +228,5 @@ class AICore:
                 next_answer = st.first_node.text
                 # if "> " in next_answer or "< " in next_answer:
                 #     next_answer = next_answer[2:]
-            self.log.append(next_answer)
+            self.history.append(next_answer)
             self.modules['messages'].say(next_answer[2:])

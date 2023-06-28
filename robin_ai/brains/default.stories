@@ -23,6 +23,18 @@
         > Dont curse
     }
     story {
+        < alarm in %d minutes
+        <fn>
+            from datetime import datetime, timedelta
+            dt = datetime.now() + timedelta(minutes=int(vars[0]))
+            def func(ms, interval):
+                ms.say("Ring ring in " + str(interval) + " minutes!")
+            scheduler.add_job(func, 'date', run_date=dt, args=[ms, int(vars[0])])
+            scheduler.start()
+            ret="Alarm will work in " + str(vars[0]) + " minutes!"
+        </fn>
+    }
+    story {
         < time
         <fn>
             from datetime import datetime

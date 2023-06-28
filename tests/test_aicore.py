@@ -295,9 +295,10 @@ def test_parametrized_input():
 
 def test_parametrized_input1():
     # < report <let> yesterday | %d | ( % i days ago) < /let >
+    # < I went there <date: yesterday|(on %d)|(%i days ago)> and bought <goods1: %s> and <goods2: %s>
     raw_story = r"""
     story{
-        < I went there <date: yesterday|(on %d)|(%i days ago)> and bought <goods1: %s> and <goods2: %s>
+        < I went there <date: yesterday|recently>, bought <goods1: %s> and <goods2: %s>
         > ur data are: $date $goods1 $goods2
     }
     """

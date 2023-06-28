@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from parsimonious.nodes import NodeVisitor
-from .ast_nodes import IfInNode, IfNode, AstNode, MessageInNode, MessageOutNode, FnNode  # noqa: E501
+from .ast_nodes import IfInNode, IfNode, AstNode, MessageInNode, MessageOutNode, FnNode, MessageInNodeWithVariables  # noqa: E501
 from .story import Story
 
 
@@ -50,7 +50,7 @@ class RSVisitor(NodeVisitor):
             if len(child) > 0:
                 buf.append(child.strip())
         s = " ".join(buf)
-        n = MessageOutNode(s) if s[:2] == "> " else MessageInNode(s)
+        n = MessageInNodeWithVariables(s)
         return n
 
     def visit_input_var(self, node, visited_children):

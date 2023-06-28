@@ -1,6 +1,29 @@
 #!/usr/bin/env python3
 import re
-# import sys
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from parsimonious.grammar import Grammar
+
+
+class InputVisitor():
+    pass
+
+# DRAFT
+"""
+    user_input = (raw_text | number_param | variants)*
+    raw_text = ~r"[-\w\s\?\!\.\,\d\'\\$`]+"
+    number_param = ~r"%\d+"
+    variants = ~r"(" + raw_text + ")" + ~r"\|" + ~r"(" + raw_text + ~r")"
+"""
+
+# в варіантах має бути можливе використання параметрів, інших варіантів
+# змінні з умовним форматуванням
+raw_input_grammar = """
+"""
+input_grammar = Grammar(raw_input_grammar)
+visitor = InputVisitor()
+
+parsed = input_grammar.parse(text)
+result = visitor.visit(parsed)
 
 
 class AstNode:
@@ -23,28 +46,42 @@ class AstNode:
 
 class StringNode(AstNode):
     def __init__(self, text):
-        self.text = text
+        self.value = text
         super().__init__()
 
     def __str__(self):
-        return f'{self.text}'
+        return f'{self.value}'
 
     def __repr__(self):
-        return f'{self.__class__.__name__}: "{self.text}"'
+        return f'{self.__class__.__name__}: "{self.value}"'
         
     def equals(self, item):
-        return self.text == item
+        return self.value == item
 
 
-class MessageInNode(StringNode):
+class InputNode(StringNode):
     def __init__(self, text):
         super().__init__(text)
 
     def validate(message):
         return message[0:2] == "< "
 
+    
+class ParamInputNode(StringNode):
+    def __init__(self, text):
+        super().__init__(text.replace('%d', r'(\d+)'))
 
-class MessageOutNode(StringNode):
+    def validate(self, message):
+        if not message[0:2] == "< ":
+            return False, None
+        if r"(\d+)" in self.value:
+            digitsRegex = re.compile(self.value)
+            matches = digitsRegex.findall(message)
+            return True, matches
+        return False, None
+
+
+class OutputNode(StringNode):
     def __init__(self, message):
         super().__init__(message)
 
@@ -60,6 +97,9 @@ def python_execute(code, modules):
             ms = modules['messages']
         if 'events' in modules:
             ev = modules['events']
+        if 'vars' in modules:
+            vars = modules['vars']
+    scheduler = AsyncIOScheduler()
     lines = code.splitlines()
     if len(lines[0]) == 0:
         lines.pop(0)
@@ -133,9 +173,9 @@ class IfNode(AstNode):
 
 class NodeFactory:
     def create_node(text):
-        if MessageInNode.validate(text):
-            return MessageInNode(text)
-        elif MessageOutNode.validate(text):
-            return MessageOutNode(text)
+        if InputNode.validate(text):
+            return InputNode(text)
+        elif OutputNode.validate(text):
+            return OutputNode(text)
         else:
             return StringNode(text)
