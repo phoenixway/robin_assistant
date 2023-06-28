@@ -294,8 +294,23 @@ def test_parametrized_input():
 
 
 def test_parametrized_input1():
-    # < report <let> yesterday | %d | ( % i days ago) < /let >
-    # < I went there <date: yesterday|(on %d)|(%i days ago)> and bought <goods1: %s> and <goods2: %s>
+    raw_story = r"""
+    story {
+        < alarm in %d minutes
+        > Alarming! %d minutes passed!
+    }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< alarm in %d minutes"), "st.contains must work"
+    lst = [r"< alarm in %d minutes"]
+    check_next(lst, st, "> Alarming!")
+
+
+def test_parametrized_input2():
     raw_story = r"""
     story{
         < I went there <date: yesterday|recently>, bought <goods1: %s> and <goods2: %s>

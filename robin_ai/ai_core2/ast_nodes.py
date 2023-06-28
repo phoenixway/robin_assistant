@@ -17,13 +17,13 @@ class InputVisitor():
 
 # в варіантах має бути можливе використання параметрів, інших варіантів
 # змінні з умовним форматуванням
-raw_input_grammar = """
-"""
-input_grammar = Grammar(raw_input_grammar)
-visitor = InputVisitor()
+# raw_input_grammar = """
+# """
+# input_grammar = Grammar(raw_input_grammar)
+# visitor = InputVisitor()
 
-parsed = input_grammar.parse(text)
-result = visitor.visit(parsed)
+# parsed = input_grammar.parse(text)
+# result = visitor.visit(parsed)
 
 
 class AstNode:
@@ -66,7 +66,7 @@ class InputNode(StringNode):
     def validate(message):
         return message[0:2] == "< "
 
-    
+"""
 class ParamInputNode(StringNode):
     def __init__(self, text):
         super().__init__(text.replace('%d', r'(\d+)'))
@@ -78,7 +78,32 @@ class ParamInputNode(StringNode):
             digitsRegex = re.compile(self.value)
             matches = digitsRegex.findall(message)
             return True, matches
-        return False, None
+        return False, None"""
+
+
+""" 
+є можливий елемент сценарію - ввід користувача з параметрами.
+реальне текстове повідомлення користувача слід вміти 
+    - перевірити на відповідність сценарному
+    - його параметри визначити 
+    - і передати модулю управління відповіддю ші 
+    - правильно запустити наступний сценарний елемент
+"""
+
+class ParamInputNode(StringNode):
+    def __init__(self, text):
+        # парсить при створенні
+        super().__init__(text)
+
+    def validate(self, message):
+        if not message[0:2] == "< ":
+            return False, None
+        try:
+            parsed = input_grammar.parse(message)
+        except:
+            return False, None
+        result = visitor.visit(parsed)
+        return True, result
 
 
 class OutputNode(StringNode):
