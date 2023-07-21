@@ -28,12 +28,11 @@ MODULES = {}
 def init_logger():
     global log
     log = logging.getLogger('pythonConfig')
-    if len(sys.argv) > 1:
+    if hasattr(sys, 'gettrace') and sys.gettrace() is not None:
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
     ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
     LOGFORMAT = "%(log_color)s%(levelname)-6s%(reset)s %(message)-40s %(reset)s %(log_color)s%(filename)s:%(lineno)s <- %(funcName)s() %(reset)s"  # noqa: E501
     formatter = ColoredFormatter(LOGFORMAT)
     ch.setFormatter(formatter)

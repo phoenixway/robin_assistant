@@ -1,31 +1,39 @@
 #!/usr/bin/env python3
-from asyncio import sleep
-from parsimonious.grammar import Grammar
 import pytest
-
-# import pytest_asyncio.plugin
+import logging
 import os
 import sys
+
+from asyncio import sleep
+from parsimonious.grammar import Grammar
+# import pytest_asyncio.plugin
+
 sys.path.append(os.path.abspath('..'))
-sys.path.append(os.path.abspath('../src'))
+sys.path.append(os.path.abspath('../robin_ai'))
+logging.basicConfig(level=logging.DEBUG)
+logging.debug(os.getcwd())
 
-print (os.getcwd())
-from src.ai_core2.rs_parser import RSParser   # noqa: F403, F401
-from src.ai_core2.ast_nodes import MessageOutNode  # noqa: E501
-from src.ai_core2.ast_nodes import FnNode
-from src.ai_core2.story import Story
-from src.robin_db import RobinDb
-from src.robin_events import Robin_events
-from src.ai_core2.ai_core import AICore
-from src.messages import Messages
+from robin_ai.ai_core2.rs_parser import RSParser   # noqa: F403, F401
+from robin_ai.ai_core2.ast_nodes import OutputNode  # noqa: E501
+from robin_ai.ai_core2.ast_nodes import FnNode
+from robin_ai.ai_core2.story import Story
+from robin_ai.robin_db import RobinDb
+from robin_ai.robin_events import Robin_events
+from robin_ai.ai_core2.ai_core import AI
+from robin_ai.messages import Messages
+from robin_ai.ai_core2.input_templates import TemplatesHandler
 
 
-def check_next(log, st, goal, result_class=MessageOutNode):
-    ac = AICore(None)
-    next = ac.next_in_story(log, st)
+def check_next(log, s, goal, result_class=OutputNode):
+    ''' Check if goal is next element in story with a given log
+    Parameters:
+        s : str Story script
+    '''
+    ac = AI(None)
+    next = ac.get_next(log, s)
     assert next is not None, f"next is None, must be Node:{goal}"
     assert isinstance(next, result_class), f"next must be {result_class.name}"
-    assert next.text == goal, f"AICore.next_in_story: must be {goal}"
+    assert TemplatesHandler.substitute(next.value, ac.runtime_vars) == goal, f"AICore.next_in_story: must be {goal}"
 
 
 def test_next_in_story1():
@@ -206,13 +214,13 @@ def test_func():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< func"), "st.contains must work"
     lst = ["< func"]
-    ac = AICore(None)
+    ac = AI(None)
     ac.stories.append(st)
-    next = ac.next_in_story(lst, st)
+    next = ac.get_next(lst, st)
     assert next is not None, f"next is None, must be Node:{FnNode}"
     assert isinstance(next, FnNode), f"next must be {FnNode.name}"
-    answer = ac.respond("func")
-    assert answer == "> Hello, world!", "answer is not hello word"
+    answer = ac.eat_text("func")
+    assert answer == "Hello, world!", "answer is not hello word"
     pass
 
 
@@ -234,13 +242,13 @@ def test_func1():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< func"), "st.contains must work"
     lst = ["< func"]
-    ac = AICore(None)
+    ac = AI(None)
     ac.stories.append(st)
-    next = ac.next_in_story(lst, st)
+    next = ac.get_next(lst, st)
     assert next is not None, f"next is None, must be Node:{FnNode}"
     assert isinstance(next, FnNode), f"next must be {FnNode.name}"
-    answer = ac.respond("func")
-    assert answer == "> if works!", "answer is not hello word"
+    answer = ac.eat_text("func")
+    assert answer == "if works!", "answer is not hello word"
 
 
 @pytest.mark.asyncio
@@ -250,7 +258,7 @@ async def test_own_will():
     db = modules['db']
     events = Robin_events()
     modules['events'] = events
-    ai = AICore(modules)
+    ai = AI(modules)
     db['var2change'] = "initional state"
     messages = Messages(modules)
     modules['messages'] = messages
@@ -272,11 +280,6 @@ async def test_own_will():
 
 
 def test_parametrized_input():
-    # < report <let> yesterday | %d | ( % i days ago) < /let >
-    #     <fn>
-    #     s = "Alarming!"
-    #     ret = s
-    # </fn>        
     raw_story = r"""
     story {
         < alarm in %d minutes
@@ -289,7 +292,7 @@ def test_parametrized_input():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains(
         r"< alarm in %d minutes"), "st.contains must work"
-    lst = [r"< alarm in %d minutes"]
+    lst = [r"< alarm in 5 minutes"]
     check_next(lst, st, "> Alarming!")
 
 
@@ -297,7 +300,7 @@ def test_parametrized_input1():
     raw_story = r"""
     story {
         < alarm in %d minutes
-        > Alarming! %d minutes passed!
+        > Alarming! $0 minutes passed!
     }
     """
     st = RSParser.create_from_text(raw_story)
@@ -306,8 +309,8 @@ def test_parametrized_input1():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains(
         r"< alarm in %d minutes"), "st.contains must work"
-    lst = [r"< alarm in %d minutes"]
-    check_next(lst, st, "> Alarming!")
+    lst = [r"< alarm in 5 minutes"]
+    check_next(lst, st, "> Alarming! 5 minutes passed!")
 
 
 def test_parametrized_input2():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from parsimonious.nodes import NodeVisitor
-from .ast_nodes import IfInNode, IfNode, AstNode, MessageInNode, MessageOutNode, FnNode, MessageInNodeWithVariables  # noqa: E501
+from .ast_nodes import IfInNode, IfNode, AstNode, InputNode, OutputNode, FnNode, ParamInputNode  # noqa: E501
 from .story import Story
 
 
@@ -39,7 +39,7 @@ class RSVisitor(NodeVisitor):
             if len(child) > 0:
                 buf.append(child.strip())
         s = " ".join(buf)
-        n = MessageOutNode(s) if s[:2] == "> " else MessageInNode(s)
+        n = OutputNode(s) if s[:2] == "> " else InputNode(s)
         return n
     
     def visit_oneliner_with_params(self, node, visited_children):
@@ -47,10 +47,11 @@ class RSVisitor(NodeVisitor):
         for child in visited_children:
             if child == "not_important":
                 continue
-            if len(child) > 0:
-                buf.append(child.strip())
+            striped_child = child.strip()
+            if len(striped_child) > 0:
+                buf.append(striped_child)
         s = " ".join(buf)
-        n = MessageInNodeWithVariables(s)
+        n = ParamInputNode(s)
         return n
 
     def visit_input_var(self, node, visited_children):
@@ -91,7 +92,7 @@ class RSVisitor(NodeVisitor):
             elif child != "not_important" and not isinstance(child, AstNode):
                 message = child.strip()
         # trigger input node of this variant
-        inp = MessageInNode("< " + message)
+        inp = InputNode("< " + message)
         # and other following nodes
         inp.next = n1
         return inp, last
@@ -214,4 +215,3 @@ class RSVisitor(NodeVisitor):
 
     def generic_visit(self, node, visited_children):
         return "not_important"
-        

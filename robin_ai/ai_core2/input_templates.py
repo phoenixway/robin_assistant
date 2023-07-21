@@ -1,41 +1,79 @@
 #!/usr/bin/env python3
+
 import re
+import logging
 from parsimonious.grammar import Grammar
+from parsimonious.nodes import NodeVisitor
 from parsimonious.exceptions import ParseError, VisitationError
 
 
-class NumberVarNode:
+class VarNode:
+    def __init_(self, value):
+        self.value = value
+
+
+class NumberVarNode(VarNode):
     pass
 
 
-class InputVisitor():
+class InputVisitor(NodeVisitor):
+    def visit_message(self, node, visited_children):
+        children = [child for child in visited_children if child is not None]
+        # for child in children:
+        #     logging.debug(child)
+        #     pass
+        return children[0]
+
+    def visit_statements_or_raw_text(self, node, visited_children):
+        children = [child for child in visited_children if child is not None]
+        return children
+
+    def visit_statement_or_raw_text(self, node, visited_children):
+        return visited_children[0]
+
+    def visit_statement(self, node, visited_children):
+        return visited_children[0]
+
+    def visit_number_param(self, node, visited_children):
+        return NumberVarNode()
+
+    def visit_raw_text(self, node, visited_children):
+        return node.text.strip()
+
     def generic_visit(self, node, visited_children):
-        return "not_important"
+        return None
+
+
+raw_input_grammar = """
+    message = in_symbol ws_must statements_or_raw_text
+    in_symbol = ~r"<"
+    statements_or_raw_text = statement_or_raw_text*
+    statement_or_raw_text = (statement / ws_must / raw_text)
+    statement = number_param
+    number_param = ~r"%d+"
+    raw_text = ~r"[-\w\s\?\!\.\,\d\'\`]+"
+    ws = ~r"\s"
+    ws_must = ws+
+"""
+input_grammar = Grammar(raw_input_grammar)
+inputVisitor = InputVisitor()
+
+
+class RuntimeVariables:
+    def __init__(self):
+        self.unnamed_vars = []
+        self.named_vars = dict()
 
 
 class TemplatesHandler():
-    def __init_(self):
-        # в варіантах має бути можливе використання параметрів, інших варіантів
-        # змінні з умовним форматуванням
-        self.raw_input_grammar = """
-            message = statement_or_raw_text*
-            statement_or_raw_text = (statement / raw_text)
-            statement = number_param
-            raw_text = ~r"[-\w\s\?\!\.\,\d\'\`]+"
-            ws = ~r"\s"
-            number_param = ~r"%\d+"
-        """
-        self.input_grammar = Grammar(self.raw_input_grammar)
-        self.visitor = InputVisitor()
-
-    def validate_templete(self, templete):
+    def validate_template(template):
         try:
-            parsed = self.input_grammar.parse(templete)
-            _ = self.visitor.visit(parsed)
+            parsed = input_grammar.parse(template)
+            ast = inputVisitor.visit(parsed)
         except (ParseError, VisitationError) as error:
-            print(error)
-            return False
-        return True
+            logging.debug(error)
+            return False, None
+        return True, ast
 
     def check(node, text, position):
         if isinstance(node, str):
@@ -48,11 +86,12 @@ class TemplatesHandler():
             if not m:
                 return False, None, -1
             else:
-                number = int(m.group(0))
-                return True, number, position + len(str(number))
+                number = int(m.group(1))
+                node.value = number
+                return True, node, position + len(str(number))
         return False, None, -1
 
-    def validate(self, template_node, text):
+    def validate(template_node, text):
         """Validate user input text againts template.
 
         Args:
@@ -63,18 +102,27 @@ class TemplatesHandler():
             is_valid, parameters: Bool, list
         """
         position = 0
-        params = []
+        vars = RuntimeVariables()
+        if text[:2] != "< ":
+            return False, None
+        text = text[2:]
         for node in template_node.ast:
             if position > len(text):
                 return False, None
-            is_in_text, node_params, end_position = TemplatesHandler.check(
+            is_in_text, node, end_position = TemplatesHandler.check(
                 node,
                 text,
                 position)
             if (not is_in_text) or (end_position > len(text)):
                 return False, None
             else:
-                params.extend(node_params)
+                if isinstance(node, NumberVarNode):
+                    vars.unnamed_vars.append(node)
                 position = end_position + 1
-        return True, params
+        return True, vars
 
+    def substitute(text, vars):
+        for var in vars.unnamed_vars:
+            i = vars.unnamed_vars.index(var)
+            text = text.replace("$" + str(i), str(var.value))
+        return text

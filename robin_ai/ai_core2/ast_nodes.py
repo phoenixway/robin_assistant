@@ -1,29 +1,7 @@
 #!/usr/bin/env python3
 import re
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from parsimonious.grammar import Grammar
-
-
-class InputVisitor():
-    pass
-
-# DRAFT
-"""
-    user_input = (raw_text | number_param | variants)*
-    raw_text = ~r"[-\w\s\?\!\.\,\d\'\\$`]+"
-    number_param = ~r"%\d+"
-    variants = ~r"(" + raw_text + ")" + ~r"\|" + ~r"(" + raw_text + ~r")"
-"""
-
-# в варіантах має бути можливе використання параметрів, інших варіантів
-# змінні з умовним форматуванням
-# raw_input_grammar = """
-# """
-# input_grammar = Grammar(raw_input_grammar)
-# visitor = InputVisitor()
-
-# parsed = input_grammar.parse(text)
-# result = visitor.visit(parsed)
+from .input_templates import TemplatesHandler
 
 
 class AstNode:
@@ -39,7 +17,7 @@ class AstNode:
 
     def log_form(self):
         return str(self)
-    
+
     def equals(self, item):
         raise Exception("Not implemented yet")
 
@@ -54,7 +32,7 @@ class StringNode(AstNode):
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.value}"'
-        
+
     def equals(self, item):
         return self.value == item
 
@@ -65,6 +43,7 @@ class InputNode(StringNode):
 
     def validate(message):
         return message[0:2] == "< "
+
 
 """
 class ParamInputNode(StringNode):
@@ -81,7 +60,7 @@ class ParamInputNode(StringNode):
         return False, None"""
 
 
-""" 
+"""
 є можливий елемент сценарію - ввід користувача з параметрами.
 реальне текстове повідомлення користувача слід вміти 
     - перевірити на відповідність сценарному
@@ -93,24 +72,22 @@ class ParamInputNode(StringNode):
     - циклом перевірити усі ast nodes на те чи знахїодяться вони послідовно в реальній строці
     - зберігати при цьому поточну позицію строки реальної, на якій йде робота. 
     - очевидно при невідповідності або закінченні реальної строки - що слід контролювати - закінчити і повернути false
-    - при відповідності - заповнити змінні які при успіху перевірок передати в управління
-    
+    - при відповідності - заповнити змінні які при успіху перевірок передати в управління 
+усе сказане слід покрити тестами
 """
+
 
 class ParamInputNode(StringNode):
     def __init__(self, text):
         # парсить при створенні
+        _, self.ast = parsed, ast = TemplatesHandler.validate_template(text)
         super().__init__(text)
 
     def validate(self, message):
-        if not message[0:2] == "< ":
-            return False, None
-        try:
-            parsed = input_grammar.parse(message)
-        except:
-            return False, None
-        result = visitor.visit(parsed)
-        return True, result
+        '''Check if message entered by user suites this ParamInputNode instance's template, stored in self.value
+        '''
+        result = TemplatesHandler.validate(self, message)
+        return result
 
 
 class OutputNode(StringNode):
@@ -153,11 +130,11 @@ def python_execute(code, modules):
 class FnNode(AstNode):
     def __init__(self, fn_body):
         self.fn_body = fn_body
-    
+
     def __str__(self):
         return f'{self.fn_body}'
         # raise Exception("Not implemented")
-    
+
     def run(self, modules):
         next_answer = python_execute(self.fn_body.rstrip(),
                                      modules)
@@ -176,7 +153,7 @@ class IfInNode(AstNode):
 
     def __str__(self):
         return f'{id(self)}'
-        
+
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.variants}"'
 
@@ -200,7 +177,7 @@ class IfNode(AstNode):
         return f'{self.__class__.__name__}: "{self.condition}"'
 
     def validate(message):
-        return False        
+        return False
 
 
 class NodeFactory:

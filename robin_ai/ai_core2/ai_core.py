@@ -12,6 +12,7 @@ from .rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
 from .ast_nodes import InputNode
 from .ast_nodes import OutputNode, FnNode, ParamInputNode
+from .input_templates import TemplatesHandler, RuntimeVariables
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
@@ -56,7 +57,7 @@ class AI:
         self.story_ids = [s.name for s in self.stories]
         self.modules = modules
         self.active_story = None
-        self.vars = []
+        self.runtime_vars = RuntimeVariables()
         self.history = []
         if modules is not None:
             modules['events'].add_listener('message_received', self.message_received_handler)  # noqa: E501
@@ -101,14 +102,13 @@ class AI:
 
     def get_next(self, log, s):
         '''Get story next element'''
-        
         n = s.first_node
         # detect if n is user input with parameters
         if isinstance(n, ParamInputNode):
             valid, vars = n.validate(log[0])
             if valid:
-                self.vars.extend(vars)
-                log[-1] = n.text
+                self.runtime_vars = vars
+                log[-1] = n.value
             else:
                 return None
         elif (n is None) or (str(n) not in log):
@@ -146,15 +146,17 @@ class AI:
             next = self.get_next(self.history, story)
             if next:
                 if isinstance(next, FnNode):
-                    self.modules['vars'] = self.vars
+                    if self.modules is None:
+                        self.modules = dict()
+                    self.modules['vars'] = self.runtime_vars
                     answer = next.run(self.modules)
                 else:
-                    answer = next.text
+                    answer = next.value
                 break
         self.history.append(answer)
         if "> " in answer or "< " in answer:
             answer = answer[2:]
-        return answer
+        return TemplatesHandler.substitute(answer, self.runtime_vars)
 
     def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)
@@ -225,7 +227,7 @@ class AI:
             if isinstance(st.first_node, FnNode):
                 next_answer = st.first_node.run(self.modules)
             else:
-                next_answer = st.first_node.text
+                next_answer = TemplatesHandler.substitute(st.first_node.value, self.runtime_vars)
                 # if "> " in next_answer or "< " in next_answer:
                 #     next_answer = next_answer[2:]
             self.history.append(next_answer)

@@ -16,9 +16,8 @@ class PArtOfLiving(IPlugin):
         lst = [i for i in ai.stories
                if i.name == "do_most_important"]
         if lst:
-            first_question = lst[0].first_node.text
-            if len(ai.log) == 0 or (len(ai.log) > 0 and ai.log[-1] !=
-                                    first_question):
+            first_question = lst[0].first_node.value
+            if len(ai.history) == 0 or (len(ai.history) > 0 and ai.history[-1] != first_question):
                 ai.add_to_own_will("do_most_important")
                 ai.add_to_own_will("is_day_planned")
                 ai.force_own_will_story()

@@ -10,6 +10,13 @@
     "terminal.integrated.env.linux": {"PYTHONPATH": "${workspaceFolder}/robin_ai;${workspaceFolder}/tests"},
     "python.linting.pylintArgs": [
         "--disable=F0401"
-    ] 
-
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8"
+    },
+    "python.formatting.provider": "none",
+    "python.linting.flake8Args": [
+        "--max-line-length=120",
+        "--ignore=E402",
+    ]
 }

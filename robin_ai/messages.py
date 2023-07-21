@@ -3,12 +3,12 @@ import asyncio
 import nest_asyncio
 import websockets
 import logging
-from tgclient import TelegramBot
+# from tgclient import TelegramBot
 
 nest_asyncio.apply()
 background_tasks = set()
 TELEGRAM_BOT_TOKEN = r"5700563667:AAG0Q-EK3f7hGo4EcwISGC87gIJ40morNTs"
-telegram_bot = TelegramBot(TELEGRAM_BOT_TOKEN)
+# telegram_bot = TelegramBot(TELEGRAM_BOT_TOKEN)
 log = logging.getLogger('pythonConfig')
 
 
@@ -72,8 +72,8 @@ class Messages:
 
     def telegram_say(self, message):
         # try:
-        telegram_bot.sendMessage(chat_id=self.telegram_client_id,
-                                 text=message)
+        # telegram_bot.sendMessage(chat_id=self.telegram_client_id
+        # text=message)
         log.debug(f"Telegrambot sent: {message}")
         # except:
         # print("telegram_say error")
@@ -126,25 +126,25 @@ class Messages:
             #     log.error('ConnectionClosedOK')
 
     def run_telegram_bot(self):
-        log.debug('Telegram bot started.')
+        log.debug('Deprecated.')
 
-        @telegram_bot.message("text")
-        def text(message):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            t = loop.create_task(self.ws_say(
-                f"TelegramBot received: {message['text']}"))
-            background_tasks.add(t)
-            # t.add_done_callback(background_tasks.remove(t))
-            loop.run_until_complete(t)
-            loop.close()
-            log.debug(f"TelegramBot received: {message['text']}")
-            answer = self.get_answer(message['text'])
-            self.telegram_client_id = message['chat']['id']
-            log.debug(f"{self.telegram_client_id}")
-            asyncio.run(self.say(answer))
+        # @telegram_bot.message("text")
+        # def text(message):
+        #     loop = asyncio.new_event_loop()
+        #     asyncio.set_event_loop(loop)
+        #     t = loop.create_task(self.ws_say(
+        #         f"TelegramBot received: {message['text']}"))
+        #     background_tasks.add(t)
+        #     # t.add_done_callback(background_tasks.remove(t))
+        #     loop.run_until_complete(t)
+        #     loop.close()
+        #     log.debug(f"TelegramBot received: {message['text']}")
+        #     answer = self.get_answer(message['text'])
+        #     self.telegram_client_id = message['chat']['id']
+        #     log.debug(f"{self.telegram_client_id}")
+        #     asyncio.run(self.say(answer))
 
-        telegram_bot.run()
+        # telegram_bot.run()
 
     async def telegram_serve(self):
         import threading
