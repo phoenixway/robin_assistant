@@ -19,39 +19,19 @@ nest_asyncio.apply()
 
 tasks = set()
 log = logging.getLogger('pythonConfig')
-source_path = Path(__file__).resolve()
-source_dir = source_path.parent.parent
-stories_ = {}
-intents = []
-
-
-with open(source_dir/'brains/default.intents', 'r') as f:
-    intents = json.load(f)
-
-
-def recognize_intent(text):
-    for intent in intents:
-        text = text.lower()
-        m = re.match(intent, text)
-        if m is not None:
-            return intents[intent]
-
-
-# text_input_to_canonical_form
-def to_canonical(text):
-    res = f"< {text}"
-    intent = recognize_intent(text)
-    if intent is not None:
-        res = f"< <intent>{intent}"
-    # TODO: combine intents and parameters
-    return res
+# source_path = Path(__file__).resolve()
+# source_dir = source_path.parent.parent
 
 
 class AI:
     def __init__(self, modules):
         # create_default_stories()
         #  TODO: check that brains exist
-        with open(source_dir/'brains/default.stories', 'r') as f:
+        source_dir = Path(modules['config']['brains_path'])
+        self.intents = []
+        with open(source_dir / 'default.intents', 'r') as f:
+            self.intents = json.load(f)
+        with open(source_dir / 'default.stories', 'r') as f:
             s = f.read()
             self.stories = RSParser.create_from_text(s)
         self.story_ids = [s.name for s in self.stories]
@@ -68,6 +48,22 @@ class AI:
         self.handle_silence = True
         self.robins_story_ids = []
         self.set_silence_time(minutes=2)
+
+    def recognize_intent(self, text):
+        for intent in self.intents:
+            text = text.lower()
+            m = re.match(intent, text)
+            if m is not None:
+                return self.intents[intent]
+
+    # text_input_to_canonical_form
+    def to_canonical(self, text):
+        res = f"< {text}"
+        intent = self.recognize_intent(text)
+        if intent is not None:
+            res = f"< <intent>{intent}"
+        # TODO: combine intents and parameters
+        return res
 
     def set_silence_time(self, minutes=0, seconds=0):
         self.silence_time = minutes * 60 + seconds
@@ -138,7 +134,7 @@ class AI:
         else:
             answer = f"Default answer on '{text}'"
         # спочатку задетектити чи не регекс
-        self.history.append(to_canonical(text))
+        self.history.append(self.to_canonical(text))
         # next in story must return also list of variables' values
         # or something similar
 

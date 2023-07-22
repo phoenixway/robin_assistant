@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import shelve
 import sqlite3
-import contextlib
+# import contextlib
 import os
 
 
@@ -63,10 +63,12 @@ class SqliteDb:
 
 
 class RobinDb:
-    def __init__(self, db_name):
-        self.raw_sql = SqliteDb(db_name + '.sqlite')
+    def __init__(self, db_name, MODULES):
+        sql_db_path = os.pardir = os.path.join(MODULES['config']['config_path'], db_name + '.sqlite')
+        self.raw_sql = SqliteDb(sql_db_path)
         self.db_name = db_name
-        self.shelve_db = shelve.open(db_name + '.db')
+        shelve_db_path = os.pardir = os.path.join(MODULES['config']['config_path'], db_name + '.db')
+        self.shelve_db = shelve.open(shelve_db_path)
         self.daylog = DayLog(self.raw_sql)
 
     def close(self):
@@ -115,6 +117,3 @@ class DayLog:
     def get(self, date):
         res = self.sqlitedb.get('''SELECT * FROM daylog''')
         return res
-
-
-

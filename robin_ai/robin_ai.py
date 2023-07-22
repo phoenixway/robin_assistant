@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import asyncio
 import sys
 import logging
@@ -12,12 +13,14 @@ try:
     from .messages import Messages
     from .plugin_manager import Plugins
     from .ai_core2.ai_core import AI
+    from .handle_config import init_config
 except ImportError:
     from robin_db import RobinDb
     from robin_events import Robin_events
     from messages import Messages
     from plugin_manager import Plugins
     from ai_core2.ai_core import AI
+    from handle_config import init_config
 
 
 nest_asyncio.apply()
@@ -28,7 +31,7 @@ MODULES = {}
 def init_logger():
     global log
     log = logging.getLogger('pythonConfig')
-    if hasattr(sys, 'gettrace') and sys.gettrace() is not None:
+    if (hasattr(sys, 'gettrace') and sys.gettrace() is not None) or (len(sys.argv) > 0):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
@@ -41,10 +44,11 @@ def init_logger():
 
 def init_modules():
     global MODULES
+    MODULES['config'] = init_config()
     MODULES['events'] = Robin_events()
     MODULES['plugins'] = Plugins(MODULES)
     MODULES['messages'] = Messages(MODULES)
-    MODULES['db'] = RobinDb('memory')
+    MODULES['db'] = RobinDb('memory', MODULES)
     MODULES['ai'] = AI(MODULES)
 
 
@@ -116,3 +120,6 @@ def run():
         pass
     finally:
         asyncio.run(quit_handler(None))
+
+
+run()

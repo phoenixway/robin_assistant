@@ -8,7 +8,7 @@
             "name": "Python: app",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}${pathSeparator}robin_ai${pathSeparator}robin_server.py",
+            "program": "${workspaceFolder}${pathSeparator}robin_ai${pathSeparator}robin_ai.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": ["${PYTHONPATH:${}}${workspaceFolder}"],
