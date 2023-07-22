@@ -1,6 +1,6 @@
 [Core]
 Name = Plugin 1
-Module = do_most_important
+Module = personal_management
 
 [Documentation]
 Author = John Smith
