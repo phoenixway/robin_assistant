@@ -161,7 +161,7 @@ class AI:
         new_stories = RSParser.create_from_text(source)
         # TODO: handle dublicates
         # for s in new_stories:
-        #     if s.name in 
+        #     if s.name in
         self.stories.extend(new_stories)
         pass
 
