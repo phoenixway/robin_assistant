@@ -20,6 +20,7 @@ Download source code:
 git clone https://github.com/phoenixway/robin_assistant  
 ```
 
+#### Deprecated - creating virtual environment  
 Create and start virtual development enviroment, if you want:
 ```sh
 python3 -m venv urname4enviroment
@@ -31,8 +32,9 @@ Install requirements:
 pip3 install -r requirements.txt  
 ```
 
-## Usage
 Firstly do not forget to activate virtual enviroment if you installed requirements into it. 
+
+## Usage
 Then run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:  
 
 ```sh

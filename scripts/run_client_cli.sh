@@ -9,5 +9,5 @@ o the path where the symlink file was located
 done
 DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 cd $DIR/../
-pwd 
+#pwd 
 ./runner.pex ./robin_ai/ws-client-cli.py
