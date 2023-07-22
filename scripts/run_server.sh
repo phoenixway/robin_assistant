@@ -10,5 +10,5 @@ done
 DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 # $DIR/../src/robin.py
 cd $DIR/../robin_ai
-../runner.pex -m robin_ai.py
+../runner.pex -m robin_ai.robin.ai
 

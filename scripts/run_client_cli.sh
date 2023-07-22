@@ -8,5 +8,6 @@ while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 o the path where the symlink file was located
 done
 DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
-$DIR/../robin_ai/ws-client-cli.py
-../runner.pex ws-client-cli.py
+cd $DIR/../
+pwd 
+./runner.pex ./robin_ai/ws-client-cli.py
