@@ -80,6 +80,17 @@ class PArtOfLiving(IPlugin):
                                     }
                                 </if>
                             }
+                            no motivation => {
+                                > Think about consequences. Accept responsibility for them and for the current day. For your life! Is it the best dicision to lose them? To live worse version of your life?
+                                <if in>
+                                    <intent>no => {
+                                        > Then force yourself to do what is right.
+                                    }
+                                    <intent>yes => {
+                                        > Its your choice. You cant run from consequences.
+                                    }
+                                </if>
+                            }
                             <intent>no => {
                                 > Think about what prevents u from that? Do u realize consenquests of skipping? Do u accept own responsibility for not doing most important task?
                                 <if in>

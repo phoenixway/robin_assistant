@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 from parsimonious.grammar import Grammar
 
-from src.ai_core2.rs_parser import RSParser   # noqa: F403, F401
-from src.ai_core2.ast_nodes import IfInNode, IfNode, NodeFactory, MessageOutNode, MessageInNode  # noqa: E501
-from src.ai_core2.story import Story
-from src.ai_core2.ai_core import AICore
+from robin_ai.ai_core2.rs_parser import RSParser   # noqa: F403, F401
+from robin_ai.ai_core2.ast_nodes import IfInNode, IfNode, NodeFactory, OutputNode, InputNode  # noqa: E501
+from robin_ai.ai_core2.story import Story
+from robin_ai.ai_core2.ai_core import AICore
 
 
 def test_message_in_node():

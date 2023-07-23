@@ -31,7 +31,7 @@ MODULES = {}
 def init_logger():
     global log
     log = logging.getLogger('pythonConfig')
-    if (hasattr(sys, 'gettrace') and sys.gettrace() is not None) or (len(sys.argv) > 0):
+    if (hasattr(sys, 'gettrace') and sys.gettrace() is not None) or (len(sys.argv) > 1):
         log.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)

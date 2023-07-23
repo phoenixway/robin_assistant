@@ -3,7 +3,7 @@
 import pytest
 import logging
 import sys
-from src.robin_db import RobinDb, SqliteDb
+from robin_ai.robin_db import RobinDb, SqliteDb
 from pathlib import Path
 
 
