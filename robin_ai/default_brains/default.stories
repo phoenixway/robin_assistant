@@ -13,7 +13,7 @@
     }
     story quit {
         < <intent>bye
-        <fn>
+        > <fn>
             import sys
             sys.exit(0)
         </fn>
@@ -24,7 +24,7 @@
     }
     story {
         < alarm in %d minutes
-        <fn>
+        > <fn>
             from datetime import datetime, timedelta
             interval = vars.unnamed_vars[0].value
             dt = datetime.now() + timedelta(minutes=int(interval))
@@ -37,14 +37,14 @@
     }
     story {
         < time
-        <fn>
+        > <fn>
             from datetime import datetime
             ret = str(datetime.now())
         </fn> 
     }
     story {
         < <intent>thanku
-        <fn>
+        > <fn>
             # local a = {'u welcome', 'im here to serve'}
             # return a[ math.random( #a ) ]  
             db['test']='u welcome'          
@@ -57,7 +57,7 @@
     }
     story {
         < open tasks
-        <fn>
+        > <fn>
             os.execute('gedit &')
         </fn>
     }

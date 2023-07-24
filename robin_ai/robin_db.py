@@ -68,7 +68,7 @@ class RobinDb:
         self.raw_sql = SqliteDb(sql_db_path)
         self.db_name = db_name
         shelve_db_path = os.pardir = os.path.join(MODULES['config']['config_path'], db_name + '.db')
-        self.shelve_db = shelve.open(shelve_db_path)
+        self.shelve_db = shelve.open(shelve_db_path, "c")
         self.daylog = DayLog(self.raw_sql)
 
     def close(self):
@@ -89,7 +89,8 @@ class RobinDb:
 
     def __del__(self):
         # del self.sql
-        self.shelve_db.close()
+        if self.shelve_db:
+            self.shelve_db.close()
 
 
 class DayLog:

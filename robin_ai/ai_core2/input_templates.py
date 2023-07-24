@@ -16,6 +16,10 @@ class NumberVarNode(VarNode):
     pass
 
 
+class StringVarNode(VarNode):
+    pass
+
+
 class InputVisitor(NodeVisitor):
     def visit_message(self, node, visited_children):
         children = [child for child in visited_children if child is not None]
@@ -36,6 +40,9 @@ class InputVisitor(NodeVisitor):
 
     def visit_number_param(self, node, visited_children):
         return NumberVarNode()
+    
+    def visit_string_param(self, node, visited_children):
+        return StringVarNode()
 
     def visit_raw_text(self, node, visited_children):
         return node.text.strip()
@@ -90,6 +97,18 @@ class TemplatesHandler():
                 number = int(m.group(1))
                 node.value = number
                 return True, node, position + len(str(number))
+        if isinstance(node, StringVarNode):
+            m = re.match(r"^((\"(.*)\")|(\b\w+\b))", text[position:])
+            if not m:
+                return False, None, -1
+            else:
+                # if m.group(3):
+                #     s = m.group(3)
+                # else:
+                s = m.group(0)
+                node.value = s
+                return True, node, position + len(str(s))
+            
         return False, None, -1
 
     def validate(template_node, text):
@@ -117,7 +136,7 @@ class TemplatesHandler():
             if (not is_in_text) or (end_position > len(text)):
                 return False, None
             else:
-                if isinstance(node, NumberVarNode):
+                if isinstance(node, NumberVarNode) or isinstance(node, StringVarNode):
                     vars.unnamed_vars.append(node)
                 position = end_position + 1
         return True, vars

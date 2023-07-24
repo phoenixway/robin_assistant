@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import re
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+# import re
+
 from .input_templates import TemplatesHandler
 
 
@@ -98,51 +98,51 @@ class OutputNode(StringNode):
         return message[0:2] == "> "
 
 
-def python_execute(code, modules):
-    if modules:
-        if 'db' in modules:
-            db = modules['db']
-        if 'messages' in modules:
-            ms = modules['messages']
-        if 'events' in modules:
-            ev = modules['events']
-        if 'vars' in modules:
-            vars = modules['vars']
-    scheduler = AsyncIOScheduler()
-    lines = code.splitlines()
-    if len(lines[0]) == 0:
-        lines.pop(0)
-    m = re.search(r"(^\s+)", lines[0])
-    zero_indent = len(m.group(1))
-    newlines = []
-    for line in lines:
-        line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
-        newlines.append(line)
-    new_code = "\n".join(newlines)
-    loc = dict(locals())
-    exec(new_code, globals(), loc)
-    if 'ret' in loc:
-        return loc['ret']
-    else:
-        return None
+# def python_execute(code, modules):
+#     if modules:
+#         if 'db' in modules:
+#             db = modules['db']
+#         if 'messages' in modules:
+#             ms = modules['messages']
+#         if 'events' in modules:
+#             ev = modules['events']
+#         if 'vars' in modules:
+#             vars = modules['vars']
+#     scheduler = AsyncIOScheduler()
+#     lines = code.splitlines()
+#     if len(lines[0]) == 0:
+#         lines.pop(0)
+#     m = re.search(r"(^\s+)", lines[0])
+#     zero_indent = len(m.group(1))
+#     newlines = []
+#     for line in lines:
+#         line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
+#         newlines.append(line)
+#     new_code = "\n".join(newlines)
+#     loc = dict(locals())
+#     exec(new_code, globals(), loc)
+#     if 'ret' in loc:
+#         return loc['ret']
+#     else:
+#         return None
 
 
 class FnNode(AstNode):
     def __init__(self, fn_body):
-        self.fn_body = fn_body
+        self.value = fn_body
 
     def __str__(self):
-        return f'{self.fn_body}'
+        return f'{self.value}'
         # raise Exception("Not implemented")
 
-    def run(self, modules):
-        next_answer = python_execute(self.fn_body.rstrip(),
-                                     modules)
-        if next_answer is None:
-            next_answer = "> Done"
-        else:
-            next_answer = "> " + next_answer
-        return next_answer
+    # def run(self, modules):
+    #     next_answer = python_execute(self.fn_body.rstrip(),
+    #                                  modules)
+    #     if next_answer is None:
+    #         next_answer = "> Done"
+    #     else:
+    #         next_answer = "> " + next_answer
+    #     return next_answer
 
 
 class IfInNode(AstNode):

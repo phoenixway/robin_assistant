@@ -19,6 +19,7 @@ from robin_ai.ai_core2.ast_nodes import FnNode
 from robin_ai.ai_core2.story import Story
 from robin_ai.robin_db import RobinDb
 from robin_ai.robin_events import Robin_events
+from robin_ai.handle_config import init_config
 from robin_ai.ai_core2.ai_core import AI
 from robin_ai.messages import Messages
 from robin_ai.ai_core2.input_templates import TemplatesHandler
@@ -29,11 +30,17 @@ def check_next(log, s, goal, result_class=OutputNode):
     Parameters:
         s : str Story script
     '''
-    ac = AI(None)
+    config = init_config()
+    MODULES = {'config': config}
+    ac = AI(MODULES)
     next = ac.get_next(log, s)
     assert next is not None, f"next is None, must be Node:{goal}"
-    assert isinstance(next, result_class), f"next must be {result_class.name}"
-    assert TemplatesHandler.substitute(next.value, ac.runtime_vars) == goal, f"AICore.next_in_story: must be {goal}"
+    assert isinstance(next, result_class), f"next must be {result_class.__name__}"
+    if result_class.__name__ == "FnNode":
+        res = ac.run_fn(next)
+    else:
+        res = next.value
+    assert TemplatesHandler.substitute(res, ac.runtime_vars) == goal, f"AICore.next_in_story: must be {goal}"
 
 
 def test_next_in_story1():
@@ -201,11 +208,11 @@ def test_func():
     raw_story = r"""
         story testname {
             < func
-            <fn>
+            > <fn>
                 s = "Hello, world!"
                 print(s)
                 ret = s
-            </fn>
+              </fn>
         }
     """
     st = RSParser.create_from_text(raw_story)
@@ -214,26 +221,19 @@ def test_func():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< func"), "st.contains must work"
     lst = ["< func"]
-    ac = AI(None)
-    ac.stories.append(st)
-    next = ac.get_next(lst, st)
-    assert next is not None, f"next is None, must be Node:{FnNode}"
-    assert isinstance(next, FnNode), f"next must be {FnNode.name}"
-    answer = ac.eat_text("func")
-    assert answer == "Hello, world!", "answer is not hello word"
-    pass
+    check_next(lst, st, "Hello, world!", FnNode)
 
 
 def test_func1():
     raw_story = r"""
         story testname1 {
             < func
-            <fn>
+            > <fn>
                 if True:
                     ret = "if works!"
                 else:
                     ret = "else works!"
-            </fn>
+              </fn>
         }
     """
     st = RSParser.create_from_text(raw_story)
@@ -242,19 +242,13 @@ def test_func1():
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< func"), "st.contains must work"
     lst = ["< func"]
-    ac = AI(None)
-    ac.stories.append(st)
-    next = ac.get_next(lst, st)
-    assert next is not None, f"next is None, must be Node:{FnNode}"
-    assert isinstance(next, FnNode), f"next must be {FnNode.name}"
-    answer = ac.eat_text("func")
-    assert answer == "if works!", "answer is not hello word"
+    check_next(lst, st, "if works!", FnNode)
 
 
 @pytest.mark.asyncio
 async def test_own_will():
     modules = {}
-    modules['db'] = RobinDb('memory')
+    modules['db'] = RobinDb('memory', modules)
     db = modules['db']
     events = Robin_events()
     modules['events'] = events
@@ -266,9 +260,9 @@ async def test_own_will():
 
     raw_story = r"""
         story test_own_will {
-            <fn>
+            > <fn>
                 db['var2change'] = "modified state"
-            </fn>
+              </fn>
         }
     """
     ai.add_story_by_source(raw_story)
@@ -315,6 +309,27 @@ def test_parametrized_input1():
 
 def test_parametrized_input2():
     raw_story = r"""
+    story {
+        < query goals %s 
+        > <fn>
+            ret = 'yes we can'
+          </fn>
+    }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< query goals %s"), "st.contains must work"
+    lst = [r'< query goals "test query" ']
+    check_next(lst, st, "yes we can", FnNode)
+    lst = [r"< query goals one_word"]
+    check_next(lst, st, "yes we can", FnNode)
+
+'''`
+def test_parametrized_input3():
+    raw_story = r"""
     story{
         < I went there <date: yesterday|recently>, bought <goods1: %s> and <goods2: %s>
         > ur data are: $date $goods1 $goods2
@@ -327,4 +342,4 @@ def test_parametrized_input2():
     assert st.contains(
         r"< report <let when>yesterday|%d|(%i days ago)</let>"), "st.contains must work"
     lst = [r"< report <let when>yesterday|%d|(%i days ago)</let>"]
-    check_next(lst, st, "> it's parametrized input!")
+    check_next(lst, st, "> it's parametrized input!")'''

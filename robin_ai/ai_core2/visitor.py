@@ -146,7 +146,6 @@ class RSVisitor(NodeVisitor):
         return visited_children
 
     def visit_parameter(self, node, visited_children):
-        pass
         return visited_children[0]
 
     def visit_fn_statement(self, node, visited_children):

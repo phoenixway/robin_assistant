@@ -8,6 +8,8 @@ import sys
 import json
 import nest_asyncio
 from pathlib import Path
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from .rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
 from .ast_nodes import InputNode
@@ -39,7 +41,7 @@ class AI:
         self.active_story = None
         self.runtime_vars = RuntimeVariables()
         self.history = []
-        if modules is not None:
+        if modules is not None and 'events' in modules:
             modules['events'].add_listener('message_received', self.message_received_handler)  # noqa: E501
             modules['events'].add_listener('message_send', self.message_send_handler)  # noqa: E501
         self.silence_task = None
@@ -101,7 +103,7 @@ class AI:
         n = s.first_node
         # detect if n is user input with parameters
         if isinstance(n, ParamInputNode):
-            valid, vars = n.validate(log[0])
+            valid, vars = n.validate(log[-1])
             if valid:
                 self.runtime_vars = vars
                 log[-1] = n.value
@@ -127,6 +129,41 @@ class AI:
     def eat_singal(self, signal):
         pass
 
+    def run_fn(self, node):
+        next_answer = None
+        code = node.value.rstrip()
+        if self.modules:
+            if 'db' in self.modules:
+                db = self.modules['db']
+            if 'messages' in self.modules:
+                ms = self.modules['messages']
+            if 'events' in self.modules:
+                ev = self.modules['events']
+            if 'vars' in self.modules:
+                vars = self.modules['vars']
+        scheduler = AsyncIOScheduler()
+        lines = code.splitlines()
+        if len(lines[0]) == 0:
+            lines.pop(0)
+        m = re.search(r"(^\s+)", lines[0])
+        zero_indent = len(m.group(1))
+        newlines = []
+        for line in lines:
+            line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
+            newlines.append(line)
+        new_code = "\n".join(newlines)
+        loc = dict(locals())
+        exec(new_code, globals(), loc)
+        if 'ret' in loc:
+            return loc['ret']
+        else:
+            return None
+        if next_answer is None:
+            next_answer = "> Done"
+        else:
+            next_answer = "> " + next_answer
+        return next_answer
+
     def eat_text(self, text):
         log.debug("Parsing user input with ai.eat_text")
         if text == '<silence>':
@@ -145,7 +182,7 @@ class AI:
                     if self.modules is None:
                         self.modules = dict()
                     self.modules['vars'] = self.runtime_vars
-                    answer = next.run(self.modules)
+                    answer = self.run_fn(next)
                 else:
                     answer = next.value
                 break
