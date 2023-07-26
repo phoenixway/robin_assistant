@@ -262,7 +262,7 @@ class AI:
         if story_id and st:
             # TODO: parse any nodes
             if isinstance(st.first_node, FnNode):
-                next_answer = st.first_node.run(self.modules)
+                next_answer = self.run_fn(st.first_node)
             else:
                 next_answer = TemplatesHandler.substitute(st.first_node.value, self.runtime_vars)
                 # if "> " in next_answer or "< " in next_answer:

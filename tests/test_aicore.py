@@ -36,10 +36,7 @@ def check_next(log, s, goal, result_class=OutputNode):
     next = ac.get_next(log, s)
     assert next is not None, f"next is None, must be Node:{goal}"
     assert isinstance(next, result_class), f"next must be {result_class.__name__}"
-    if result_class.__name__ == "FnNode":
-        res = ac.run_fn(next)
-    else:
-        res = next.value
+    res = ac.run_fn(next) if result_class.__name__ == "FnNode" else next.value
     assert TemplatesHandler.substitute(res, ac.runtime_vars) == goal, f"AICore.next_in_story: must be {goal}"
 
 
