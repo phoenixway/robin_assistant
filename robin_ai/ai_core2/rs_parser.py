@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-
+import logging
 from parsimonious.grammar import Grammar
+from parsimonious.exceptions import ParseError
 from .visitor import RSVisitor
 
+
+log = logging.getLogger('pythonConfig')
+
+#        oneliner_with_params = inout ws_must maybe_raw_text input_var maybe_raw_text
 grammar_old = r"""
         stories = story+
         story = maybe_ws story_start_keyword maybe_ws maybe_story_name maybe_ws block maybe_ws  # noqa: E501
@@ -31,16 +36,13 @@ grammar_old = r"""
         rbr = ~r"\}"
         lbr = ~r"\{"
         oneliner = inout ws_must text
-        oneliner_with_params = inout ws_must maybe_raw_text input_var maybe_raw_text
-        input_text_with_vars = raw_input_text_with_vars_with_spaces+
-        raw_input_text_with_vars_with_spaces = maybe_ws raw_input_text_with_vars maybe_ws
-        raw_input_text_with_vars = input_var_with_raw_text+
-        input_var_with_raw_text = maybe_raw_text input_var maybe_raw_text
+        oneliner_with_params = (oneliner_with_vars / random_input)
+        oneliner_with_vars = inout ws_must maybe_raw_text input_var maybe_raw_text
+        random_input = maybe_ws random_symbols maybe_ws
+        random_symbols = ~r"< \*"
         input_var = ~r"%\w"
         maybe_raw_text = raw_text*
-        raw_text_or_variable_with_spaces = maybe_ws raw_text_or_variable maybe_ws
-        raw_text_or_variable = (raw_text / variable)
-        variable = let_keyword_open let_keyword_close 
+        variable = let_keyword_open let_keyword_close
         inout = ~r"[<>]"
         text = (intent_text / simple_text)
         fn_statement = maybe_ws fn_start code fn_end maybe_ws
@@ -107,7 +109,12 @@ class RSParser:
     rs_grammar = Grammar(grammar_old)
 
     def create_from_text(text):
-        res = RSParser.rs_grammar.parse(text)
-        v = RSVisitor()
-        ret = v.visit(res)
-        return ret
+        try:
+            res = RSParser.rs_grammar.parse(text)
+            v = RSVisitor()
+            res = v.visit(res)
+            return res
+        except ParseError as e:
+            log.error(f"Stories parsing error: {e}")
+        except Exception as e:
+            log.error(f"Visiting stories error: {e}")

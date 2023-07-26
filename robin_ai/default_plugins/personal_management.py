@@ -29,7 +29,7 @@ class PArtOfLiving(IPlugin):
         if db['last_login_date'] == today:
             PArtOfLiving.modules['messages'].say('Welcome back')
         else:
-            PArtOfLiving.modules['messages'].say('Good to see you')
+            PArtOfLiving.modules['messages'].say('Greatings. I wish you a good day! Do your best and let the Force be with you!')
             db['last_login_date'] = today
 
     async def activate(self, modules):
@@ -41,7 +41,7 @@ class PArtOfLiving(IPlugin):
         # TODO: дві історії, одна щодо планування дня
         ai.add_story_by_source("""
             story is_day_planned {
-                <fn>
+                > <fn>
                     ret = db['day_planned']
                     if ret is None:
                         ret = "You do not planned yr day yet"
@@ -49,7 +49,27 @@ class PArtOfLiving(IPlugin):
                         ret = "You planned yr day at " + ret!"
                 </fn>
             }
+            story day_preparation {
+                > Do you have optimal goals and plan for today?
+                <if in>
+                    <intent>yes => {
+                        > Great! It's an absolutely mandatory element of high level day.
+                    }
+                    <intent>no => {
+                        > ADo it!
+                    }
+                </if>
+            }
             story do_most_important {
+                > Do you have optimal goals and plan for today?
+                <if in>
+                    <intent>yes => {
+                        > Great! It's an absolutely mandatory element of high level day.
+                    }
+                    <intent>no => {
+                        
+                    }
+                </if>
                 > Are u doing the currently most important task now?
                 <if in>
                     <intent>yes => {

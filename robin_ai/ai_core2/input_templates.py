@@ -20,6 +20,10 @@ class StringVarNode(VarNode):
     pass
 
 
+class RandomVarNode(VarNode):
+    pass
+
+
 class InputVisitor(NodeVisitor):
     def visit_message(self, node, visited_children):
         children = [child for child in visited_children if child is not None]
@@ -43,6 +47,9 @@ class InputVisitor(NodeVisitor):
     
     def visit_string_param(self, node, visited_children):
         return StringVarNode()
+    
+    def visit_random_random(self, node, visited_children):
+        return RandomVarNode()
 
     def visit_raw_text(self, node, visited_children):
         return node.text.strip()
@@ -56,9 +63,10 @@ raw_input_grammar = """
     in_symbol = ~r"<"
     statements_or_raw_text = statement_or_raw_text*
     statement_or_raw_text = (statement / ws_must / raw_text)
-    statement = (number_param / string_param)
+    statement = (number_param / string_param / random_param)
     number_param = ~r"%d"
     string_param = ~r"%s"
+    random_param = ~r"\*"
     raw_text = ~r"[-\w\s\?\!\.\,\d\'\`]+"
     ws = ~r"\s"
     ws_must = ws+

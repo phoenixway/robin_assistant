@@ -150,6 +150,40 @@ def test_if_statement():
     check_next(lst, st, "> u welcome")
 
 
+def test_if_statement_new():
+    source = """
+        story {
+            < <intent>greetings
+            > Good to see u again, boss.
+            < *
+            > <if @ == "Really?">
+                > Nope.
+            <elif @ == "Oh no.."> {
+                > What?
+                < Whatever
+                > As u command.
+            }
+            <else>
+                > No comments.
+            < Yaha
+            > Yahaha
+        }
+    """
+    st = RSParser.create_from_text(source)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains("< <intent>greetings"), "st.contains must work"
+    lst = ["< <intent>greetings"]
+    check_next(lst, st, "> Good to see u again, boss.")
+    lst.append("> Good to see u again, boss.")
+    lst.append("< Really?")
+    check_next(lst, st, "> Nope.")
+    lst.append("> Nope.")
+    lst.append("< Yaha")
+    check_next(lst, st, "> Yahaha")
+
+
 def test_grammar():
     raw_gr = r"""
         if_variant_must = if_variant+
@@ -327,7 +361,24 @@ def test_parametrized_input2():
     lst = [r"< query goals one_word"]
     check_next(lst, st, "yes we can", FnNode)
 
-'''`
+
+def test_parametrized_input3():
+    raw_story = r"""
+    story {
+        < *
+        > superbla
+    }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< *"), "st.contains must work"
+    lst = [r'< random input text']
+    check_next(lst, st, "> superbla")
+
+'''
 def test_parametrized_input3():
     raw_story = r"""
     story{

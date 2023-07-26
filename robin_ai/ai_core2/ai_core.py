@@ -76,41 +76,54 @@ class AI:
 
     def next_str_node(self, n, log, i):
         res = None
-        if isinstance(n, InputNode) or isinstance(n, OutputNode) or \
-           isinstance(n, FnNode) or isinstance(n, ParamInputNode):
+        if isinstance(n, (InputNode, OutputNode, FnNode, ParamInputNode)):
             res = n.next
         elif isinstance(n, IfNode):
             r = self.run_expr(n.condition)
-            if r:
-                res = n.first_in_if_block
-            else:
-                res = n.first_in_else_block
+            res = n.first_in_if_block if r else n.first_in_else_block
         elif isinstance(n, IfInNode):
-            lst = [it for it in n.variants if str(it) == log[i]]
-            if lst:
+            if lst := [it for it in n.variants if str(it) == log[i]]:
                 res = lst[0]
             else:
                 res = None
         else:
             res = None
-        if res is not None:
-            if isinstance(res, IfNode) or isinstance(res, IfInNode):
-                res = self.next_str_node(res, log, i)
+        if res is not None and isinstance(res, (IfNode, IfInNode)):
+            res = self.next_str_node(res, log, i)
         return res
+
+    def compare_node(self, n, real_text):
+        if isinstance(n, ParamInputNode):
+            valid, vars = n.validate(real_text)
+            if valid:
+                self.runtime_vars = vars
+                return True
+            else:
+                return False
+        elif isinstance(n, FnNode):
+            return False
+        else:
+            return n.equals(real_text)
 
     def get_next(self, log, s):
         '''Get story next element'''
         n = s.first_node
         # detect if n is user input with parameters
-        if isinstance(n, ParamInputNode):
-            valid, vars = n.validate(log[-1])
-            if valid:
-                self.runtime_vars = vars
-                log[-1] = n.value
-            else:
-                return None
-        elif (n is None) or (str(n) not in log):
+        if self.compare_node(n, log[0]):
+            log[0] = n.value
+            # log[-1] = n.value
+        elif n is None or (str(n) not in log):
             return None
+        
+        # if isinstance(n, ParamInputNode):
+        #     valid, vars = n.validate(log[0])
+        #     if valid:
+        #         self.runtime_vars = vars
+        #         log[-1] = n.value
+        #     else:
+        #         return None
+        # elif (n is None) or (str(n) not in log):
+        #     return None
         # index in log
         il = len(log) - log[::-1].index(str(n)) - 1
         # TODO: how to handle ifinnode as n and one of its variants's key as
@@ -119,9 +132,11 @@ class AI:
         while True:
             il = il + 1
             n = self.next_str_node(n, log, il)
-            if (il >= len(log)) or (n is None) or (log[il] != n.log_form()):
+            # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
+            if (il >= len(log)) or (n is None) or (not self.compare_node(n, log[il])):
                 break
-        if il < len(log) and n is not None and log[il] != n.log_form():
+        # if il < len(log) and n is not None and log[il] != n.log_form():
+        if il < len(log) and n is not None and (not self.compare_node(n, log[il])):
             return None
         else:
             return n
@@ -146,7 +161,7 @@ class AI:
         if len(lines[0]) == 0:
             lines.pop(0)
         m = re.search(r"(^\s+)", lines[0])
-        zero_indent = len(m.group(1))
+        zero_indent = len(m[1])
         newlines = []
         for line in lines:
             line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
@@ -154,15 +169,7 @@ class AI:
         new_code = "\n".join(newlines)
         loc = dict(locals())
         exec(new_code, globals(), loc)
-        if 'ret' in loc:
-            return loc['ret']
-        else:
-            return None
-        if next_answer is None:
-            next_answer = "> Done"
-        else:
-            next_answer = "> " + next_answer
-        return next_answer
+        return loc.get('ret', None)
 
     def eat_text(self, text):
         log.debug("Parsing user input with ai.eat_text")
@@ -176,11 +183,10 @@ class AI:
         # or something similar
 
         for story in self.stories:
-            next = self.get_next(self.history, story)
-            if next:
+            if next := self.get_next(self.history, story):
                 if isinstance(next, FnNode):
                     if self.modules is None:
-                        self.modules = dict()
+                        self.modules = {}
                     self.modules['vars'] = self.runtime_vars
                     answer = self.run_fn(next)
                 else:
@@ -200,7 +206,6 @@ class AI:
         # for s in new_stories:
         #     if s.name in
         self.stories.extend(new_stories)
-        pass
 
     def force_own_will_story(self):
         log.debug("force_own_will_story")
@@ -224,21 +229,20 @@ class AI:
         #     self.start_next_robin_story()
 
     def init_silence(self):
-        if self.handle_silence:
-            if self.silence_task is not None:
-                self.silence_task.cancel()
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
+        if not self.handle_silence:
+            return
+        if self.silence_task is not None:
+            self.silence_task.cancel()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
 
-            if (loop is not None) and (loop.is_running()):
-                self.silence_task = loop.create_task(self.start_silence())
-            else:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                self.silence_task = loop.create_task(self.start_silence())
-            tasks.add(self.silence_task)
+        if loop is None or not (loop.is_running()):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        self.silence_task = loop.create_task(self.start_silence())
+        tasks.add(self.silence_task)
             # self.silence_task = asyncio.create_task(self.start_silence())
 
     async def message_received_handler(self, data):
