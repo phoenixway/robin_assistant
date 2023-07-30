@@ -10,9 +10,14 @@ def folder_exists(folder):
     return os.path.exists(folder) and os.path.isdir(folder)
 
 
+def folder_empty(folder):
+    return os.listdir(folder) == []
+
+
 def assure_exists(folder, init_func):
     if folder_exists(folder):
-        pass
+        if folder_empty(folder):
+            init_func(folder)
     else:
         try:
             os.makedirs(folder)
@@ -106,8 +111,8 @@ def init_config():
     assure_exists(brains_path, init_brains)
     plugins_path = os.path.join(robin_config_path, 'plugins')
     assure_exists(plugins_path, init_plugins)
-    config = dict()
-    config['config_path'] = robin_config_path
-    config['brains_path'] = brains_path
-    config['plugins_path'] = plugins_path
-    return config
+    return {
+        'config_path': robin_config_path,
+        'brains_path': brains_path,
+        'plugins_path': plugins_path,
+    }

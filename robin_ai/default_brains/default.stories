@@ -62,6 +62,14 @@
         </fn>
     }
     story {
+        < anime time!
+        > <fn>
+            import webbrowser
+            webbrowser.open_new_tab('https://jut.su')
+            ret = "Enjoy, sir."
+        </fn> 
+    }
+    story {
         < <intent>stop_phase
         > Ok, boss.
     }

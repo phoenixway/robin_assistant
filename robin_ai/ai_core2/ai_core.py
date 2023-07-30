@@ -169,7 +169,7 @@ class AI:
         new_code = "\n".join(newlines)
         loc = dict(locals())
         exec(new_code, globals(), loc)
-        return loc.get('ret', None)
+        return loc.get('ret')
 
     def eat_text(self, text):
         log.debug("Parsing user input with ai.eat_text")
@@ -268,4 +268,7 @@ class AI:
                 # if "> " in next_answer or "< " in next_answer:
                 #     next_answer = next_answer[2:]
             self.history.append(next_answer)
-            self.modules['messages'].say(next_answer[2:])
+            if "< " in next_answer or "> " in next_answer:
+                self.modules['messages'].say(next_answer[2:])
+            else:
+                self.modules['messages'].say(next_answer)

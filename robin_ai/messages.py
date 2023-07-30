@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import asyncio
-import nest_asyncio
 import websockets
+import nest_asyncio
 import logging
+import asyncio
+import signal
 # from tgclient import TelegramBot
 
 nest_asyncio.apply()
@@ -22,9 +23,22 @@ class Messages:
         self.telegram_client_id = 612272249
         self.t = None
         self.is_started = False
-        self.ws_stop = asyncio.Future()
+        log.info("Starting meess")
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            self.ws_stop = loop.create_future()
+        else:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            self.ws_stop = loop.create_future()
+        loop.add_signal_handler(signal.SIGTERM, self.ws_stop.set_result, None)
+        # self.ws_stop = asyncio.Future()
 
     async def say_async(self, message):
+        log.info("Got message")
         await self.ws_say(message)
         # try:
         if self.telegram_works:
@@ -68,6 +82,7 @@ class Messages:
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
+        # return "default"
         return self.MODULES['ai'].eat_text(message)
 
     def telegram_say(self, message):
@@ -80,6 +95,7 @@ class Messages:
 
     async def ws_process(self, websocket):
         self.websockets.append(websocket)
+        log.info("User connected via websocket protocol.")
         self.MODULES['events'].emit('user_connected', None)
         self.websocket = websocket
         error = False
@@ -117,9 +133,14 @@ class Messages:
             # try:
             self.is_started = True
             log.debug("Ws server started.")
-            async with websockets.serve(self.ws_process, "localhost", 8765,
-                                        ping_interval=None):
-                await self.ws_stop
+            ws = await websockets.serve(self.ws_process, "localhost", 8765)
+            await ws.wait_closed()
+            # await self.ws_stop
+            # loop = asyncio.get_event_loop()
+            # loop.run_until_complete(ws)
+            # async with websockets.serve(self.ws_process, "localhost", 8765):
+            #     log.debug("that")
+            #     await self.ws_stop
             # except:
             #     log.error("Ws server exception")
             # except websockets.exceptions.ConnectionClosedOK:
@@ -158,8 +179,3 @@ class Messages:
         # t.add_done_callback(background_tasks.remove(t))
         # t1 = asyncio.create_task(self.telegram_serve())
         # background_tasks.add(t1)
-
-    # story {
-    #     < report < let when > yesterday | %d | ( % i ago) < /let >
-    #     > parametrized input works!
-    # }

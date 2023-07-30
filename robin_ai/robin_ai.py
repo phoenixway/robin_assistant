@@ -14,7 +14,7 @@ try:
     from .plugin_manager import Plugins
     from .ai_core2.ai_core import AI
     from .handle_config import init_config
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     from robin_db import RobinDb
     from robin_events import Robin_events
     from messages import Messages
@@ -60,7 +60,8 @@ async def quit_handler(data):
     m.stop()
     loop = asyncio.get_running_loop()
     pending = asyncio.all_tasks()
-    MODULES['db'].close()
+    if 'db' in MODULES and MODULES['db']:
+        MODULES['db'].close()
     for task in pending:
         task.cancel()
     loop.stop()
@@ -103,7 +104,7 @@ async def async_modules():
         log.debug("async modules finished")
 
 
-def run():
+def main():
     init_logger()
     log.info('Welcome!')
     init_modules()
@@ -112,9 +113,7 @@ def run():
 
     try:
         asyncio.run(async_modules())
-    except KeyboardInterrupt:
-        pass
-    except RuntimeError:
+    except (KeyboardInterrupt, RuntimeError):
         pass
     except asyncio.exceptions.CancelledError:
         pass
@@ -122,4 +121,5 @@ def run():
         asyncio.run(quit_handler(None))
 
 
-run()
+if __name__ == "__main__":
+    main()
