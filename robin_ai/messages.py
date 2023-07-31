@@ -38,7 +38,6 @@ class Messages:
         # self.ws_stop = asyncio.Future()
 
     async def say_async(self, message):
-        log.info("Got message")
         await self.ws_say(message)
         # try:
         if self.telegram_works:
