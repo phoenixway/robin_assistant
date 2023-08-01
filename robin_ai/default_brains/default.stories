@@ -61,6 +61,13 @@
             os.execute('gedit &')
         </fn>
     }
+    story force_own_will {
+        < system_command force_own_will
+        > <fn>
+            ai.ai_core2.force_own_will()
+            ret = "Inner command executed, boss."
+        </fn>
+    }
     story {
         < anime time!
         > <fn>
