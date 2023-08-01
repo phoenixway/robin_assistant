@@ -156,6 +156,8 @@ class AI:
                 ev = self.modules['events']
             if 'vars' in self.modules:
                 vars = self.modules['vars']
+            if 'ai' in self.modules:
+                ai = self.modules['ai']
         scheduler = AsyncIOScheduler()
         lines = code.splitlines()
         if len(lines[0]) == 0:
@@ -164,10 +166,11 @@ class AI:
         zero_indent = len(m[1])
         newlines = []
         for line in lines:
-            line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
+            line = re.sub(r"(^\s{" + str(zero_indent) + r"})", "", line)
             newlines.append(line)
         new_code = "\n".join(newlines)
         loc = dict(locals())
+        ret = None
         exec(new_code, globals(), loc)
         return loc.get('ret')
 
@@ -192,7 +195,8 @@ class AI:
                 else:
                     answer = next.value
                 break
-        self.history.append(answer)
+        if "system_command" not in text:
+            self.history.append(answer)
         if "> " in answer or "< " in answer:
             answer = answer[2:]
         return TemplatesHandler.substitute(answer, self.runtime_vars)

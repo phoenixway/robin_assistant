@@ -45,11 +45,15 @@ def init_logger():
 def init_modules():
     global MODULES
     MODULES['config'] = init_config()
-    MODULES['events'] = Robin_events()
-    MODULES['plugins'] = Plugins(MODULES)
+    MODULES['config']['debug_server_mode'] = False
+    debug_server_mode = MODULES['config']['debug_server_mode']
+    if not debug_server_mode:
+        MODULES['events'] = Robin_events()
+        MODULES['plugins'] = Plugins(MODULES)
     MODULES['messages'] = Messages(MODULES)
-    MODULES['db'] = RobinDb('memory', MODULES)
-    MODULES['ai'] = AI(MODULES)
+    if not debug_server_mode:
+        MODULES['db'] = RobinDb('memory', MODULES)
+        MODULES['ai'] = AI(MODULES)
 
 
 async def quit_handler(data):
@@ -84,18 +88,20 @@ async def start_handler(data):
 
 
 async def startup_finisher():
-    finished = False
-    while not finished:
-        await asyncio.sleep(5)
-        finished = MODULES['messages'].is_started and MODULES['events'].is_started and MODULES['ai'].is_started  # noqa: E501
-    MODULES['events'].emit('startup', None)
+    if not MODULES['config']['debug_server_mode']:
+        finished = False
+        while not finished:
+            await asyncio.sleep(5)
+            finished = MODULES['messages'].is_started and MODULES['events'].is_started and MODULES['ai'].is_started  # noqa: E501
+        MODULES['events'].emit('startup', None)
 
 
 async def async_modules():
     loop = asyncio.get_event_loop()
     loop.create_task(MODULES['messages'].serve())
     loop.create_task(startup_finisher())
-    loop.create_task(MODULES['plugins'].activate())
+    if not MODULES['config']['debug_server_mode']:
+        loop.create_task(MODULES['plugins'].activate())
     try:
         loop.run_forever()
     except KeyboardInterrupt:
@@ -108,8 +114,9 @@ def main():
     init_logger()
     log.info('Welcome!')
     init_modules()
-    MODULES['events'].add_listener('startup', start_handler)
-    MODULES['events'].add_listener('quit', quit_handler)
+    if not MODULES['config']['debug_server_mode']:
+        MODULES['events'].add_listener('startup', start_handler)
+        MODULES['events'].add_listener('quit', quit_handler)
 
     try:
         asyncio.run(async_modules())

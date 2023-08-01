@@ -16,6 +16,7 @@ log = logging.getLogger('pythonConfig')
 class Messages:
 
     def __init__(self, modules):
+        self.modules = modules
         self.websocket = None
         self.websockets = []
         self.telegram_works = False
@@ -23,7 +24,6 @@ class Messages:
         self.telegram_client_id = 612272249
         self.t = None
         self.is_started = False
-        log.info("Starting meess")
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
@@ -82,7 +82,7 @@ class Messages:
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
         # return "default"
-        return self.MODULES['ai'].eat_text(message)
+        return "default" if self.modules['config']['debug_server_mode'] else self.MODULES['ai'].eat_text(message)
 
     def telegram_say(self, message):
         # try:
@@ -95,7 +95,8 @@ class Messages:
     async def ws_process(self, websocket):
         self.websockets.append(websocket)
         log.info("User connected via websocket protocol.")
-        self.MODULES['events'].emit('user_connected', None)
+        if not self.modules['config']['debug_server_mode']:
+            self.MODULES['events'].emit('user_connected', None)
         self.websocket = websocket
         error = False
         while True:
@@ -106,7 +107,8 @@ class Messages:
                 # TODO: telegram optionally
                 if self.telegram_works:
                     self.telegram_say(f"Ws server received: {input_text}")
-                self.MODULES['events'].emit('message_received', input_text)
+                if not self.modules['config']['debug_server_mode']:
+                    self.MODULES['events'].emit('message_received', input_text)
                 # TODO: find answer from within event handler in aicore
                 answer = self.get_answer(input_text)
                 await self.say_async(answer)
@@ -134,9 +136,9 @@ class Messages:
             log.debug("Ws server started.")
             ws = await websockets.serve(self.ws_process, "localhost", 8765)
             await ws.wait_closed()
-            # await self.ws_stop
-            # loop = asyncio.get_event_loop()
-            # loop.run_until_complete(ws)
+            await self.ws_stop
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(ws)
             # async with websockets.serve(self.ws_process, "localhost", 8765):
             #     log.debug("that")
             #     await self.ws_stop

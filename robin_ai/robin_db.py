@@ -64,10 +64,14 @@ class SqliteDb:
 
 class RobinDb:
     def __init__(self, db_name, MODULES):
-        sql_db_path = os.pardir = os.path.join(MODULES['config']['config_path'], db_name + '.sqlite')
+        sql_db_path = os.pardir = os.path.join(
+            MODULES['config']['config_path'], f'{db_name}.sqlite'
+        )
         self.raw_sql = SqliteDb(sql_db_path)
         self.db_name = db_name
-        shelve_db_path = os.pardir = os.path.join(MODULES['config']['config_path'], db_name + '.db')
+        shelve_db_path = os.pardir = os.path.join(
+            MODULES['config']['config_path'], f'{db_name}.db'
+        )
         self.shelve_db = shelve.open(shelve_db_path, "c")
         self.daylog = DayLog(self.raw_sql)
 
@@ -76,10 +80,7 @@ class RobinDb:
         del self.raw_sql
 
     def __getitem__(self, key):
-        if key in self.shelve_db.keys():
-            return self.shelve_db[key]
-        else:
-            return None
+        return self.shelve_db[key] if key in self.shelve_db.keys() else None
 
     def __setitem__(self, key, value):
         self.shelve_db[key] = value
