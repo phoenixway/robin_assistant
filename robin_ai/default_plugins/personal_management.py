@@ -24,8 +24,7 @@ class PArtOfLiving(IPlugin):
 
     async def user_connect_handler(self, event):
         db = PArtOfLiving.modules['db']
-        today = datetime.today() \
-            .strftime('%Y-%m-%d')
+        today = datetime.now().strftime('%Y-%m-%d')
         if db['last_login_date'] == today:
             PArtOfLiving.modules['messages'].say('Welcome back')
         else:
@@ -40,23 +39,63 @@ class PArtOfLiving(IPlugin):
                                        self.user_connect_handler)
         # TODO: дві історії, одна щодо планування дня
         ai.add_story_by_source("""
-            story is_day_planned {
-                > <fn>
-                    ret = db['day_planned']
-                    if ret is None:
-                        ret = "You do not planned yr day yet"
-                    else:
-                        ret = "You planned yr day at " + ret!"
-                </fn>
-            }
             story day_preparation {
-                > Do you have optimal goals and plan for today?
+                > Do you have 3 top priorities for today?
                 <if in>
                     <intent>yes => {
-                        > Great! It's an absolutely mandatory element of high level day.
+                        > Great! Having day beams is an absolutely mandatory element of a high level day. What about goal list?
+                        <if in> 
+                            <intent>yes => {
+                                > Have you plan allowing make ur day goals reality?
+                                <if in>
+                                    <intent>yes => {
+                                    }
+                                </if>
+                            }
+                            <intent>no => {
+                                > It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals. Do you have a plan allowing ur day goals to become reality? 
+                                <if in>
+                                    <intent>yes => {
+                                        > What about realisation?
+                                    }
+                                    <intent>no => {
+                                        > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
+                                    }
+                                </if>
+                            }
+                        </if>
                     }
                     <intent>no => {
-                        > ADo it!
+                        > Why don't to do it right now?
+                        <if in>
+                            <intent>yes => {
+                                > Cool!
+                            }
+                            busy => {
+                                > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
+                            }
+                            <intent>no_motivation => {
+                                > What about Levi's method?
+                                    < dont want
+                                    > Are u realize the consequences? Do you accept them? Responsibility for them?
+                                    <if in>
+                                        <intent>yes => {
+                                            > Then let's them be. 
+                                        }
+                                        <intent>no => {
+                                            > Think of them!
+                                        }
+                                    </if>
+                            }
+                            <intent>no => {
+                                > It's important! What prevents u?
+                                <if in>
+                                    not thinking about consenquences => {
+                                        > Please, think about consenquences. U will not live the best version of today if u do not set, write and plan most important goals for today!
+                                    }
+                                </if>
+                            }
+                        </if>
                     }
                 </if>
             }
@@ -67,7 +106,7 @@ class PArtOfLiving(IPlugin):
                         > Great! It's an absolutely mandatory element of high level day.
                     }
                     <intent>no => {
-                        
+                        > Do it!
                     }
                 </if>
                 > Are u doing the currently most important task now?
@@ -135,8 +174,8 @@ class PArtOfLiving(IPlugin):
                 </if>
             }
         """)
-        ai.add_to_own_will("do_most_important")
-        ai.add_to_own_will("is_day_planned")
+        ai.add_to_own_will("day_preparation")
+        # ai.add_to_own_will("is_day_planned")
         # ai.add_to_own_will()
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()

@@ -3,10 +3,11 @@
     "(hello|hey|hi|(good day))": "greetings",
     "i planned day": "i_planned_day",
     "(bye|exit|(quit))": "bye",
-    "(yes|yeah|sure|ok)": "yes",
+    "(yes|yeah|sure|ok|maybe)": "yes",
+    "((.* no motivation)|(don't want))": "no_motivation",
     "(no|nope)": "no",
     "(stop|(stop that)|forget|(shut up))": "stop_phrase",
-    "(thank)": "thanku",
+    "((thank)|(thx))": "thanku",
     "((.* about yourself)|bot)": "about"
 
 }

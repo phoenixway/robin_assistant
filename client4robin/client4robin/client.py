@@ -2,6 +2,7 @@
 
 import sys
 import os
+import readline
 import asyncio
 import queue
 import ssl

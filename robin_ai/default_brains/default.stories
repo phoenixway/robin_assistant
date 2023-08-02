@@ -43,6 +43,44 @@
         </fn> 
     }
     story {
+        < anime time!
+        > <fn>
+            import webbrowser
+            webbrowser.open_new_tab('https://jut.su')
+            ret = "Enjoy, sir."
+        </fn> 
+    }
+
+    story {
+        < next wp
+        > <fn>
+            import subprocess
+            try:
+                result = subprocess.run(['variety', '--next'], stdout=subprocess.PIPE)
+                ret = "As u command"
+            except subprocess.CalledProcessError:
+                ret = "Can't, sorry."
+        </fn>
+    }
+    story {
+        < inspire me
+        > <fn>
+            import subprocess
+            try:
+                result = subprocess.run(['motivate'], stdout=subprocess.PIPE)
+                ret = result.stdout.decode('utf-8').strip()
+            except subprocess.CalledProcessError:
+                ret = "Can't, sorry."
+        </fn>
+    }
+    story force_own_will {
+        < system_command force_own_will
+        > <fn>
+            ai.force_own_will_story()
+            ret = "System command executed, boss!"
+        </fn>
+    }
+    story {
         < <intent>thanku
         > <fn>
             # local a = {'u welcome', 'im here to serve'}
@@ -60,21 +98,6 @@
         > <fn>
             os.execute('gedit &')
         </fn>
-    }
-    story force_own_will {
-        < system_command force_own_will
-        > <fn>
-            ai.ai_core2.force_own_will()
-            ret = "Inner command executed, boss."
-        </fn>
-    }
-    story {
-        < anime time!
-        > <fn>
-            import webbrowser
-            webbrowser.open_new_tab('https://jut.su')
-            ret = "Enjoy, sir."
-        </fn> 
     }
     story {
         < <intent>stop_phase
