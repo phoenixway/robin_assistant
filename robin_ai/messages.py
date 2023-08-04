@@ -111,7 +111,8 @@ class Messages:
                     self.MODULES['events'].emit('message_received', input_text)
                 # TODO: find answer from within event handler in aicore
                 answer = self.get_answer(input_text)
-                await self.say_async(answer)
+                if answer is not None:
+                    await self.say_async(answer)
             except websockets.exceptions.ConnectionClosedOK:
                 if not error:
                     log.info('Ws connection is closed by client.')

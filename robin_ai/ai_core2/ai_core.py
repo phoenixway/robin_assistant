@@ -105,38 +105,27 @@ class AI:
         else:
             return n.equals(real_text)
 
-    def get_next(self, log, s):
+    def get_next(self, history, s):
         '''Get story next element'''
         n = s.first_node
         # detect if n is user input with parameters
-        if self.compare_node(n, log[0]):
-            log[0] = n.value
+        if self.compare_node(n, history[-1]):
+            history[-1] = n.value
             # log[-1] = n.value
-        elif n is None or (str(n) not in log):
+        elif n is None or (str(n) not in history):
             return None
-        
-        # if isinstance(n, ParamInputNode):
-        #     valid, vars = n.validate(log[0])
-        #     if valid:
-        #         self.runtime_vars = vars
-        #         log[-1] = n.value
-        #     else:
-        #         return None
-        # elif (n is None) or (str(n) not in log):
-        #     return None
-        # index in log
-        il = len(log) - log[::-1].index(str(n)) - 1
+        il = len(history) - history[::-1].index(str(n)) - 1
         # TODO: how to handle ifinnode as n and one of its variants's key as
         # log[il]?
         # TODO: what to do when n is control statement?
         while True:
             il = il + 1
-            n = self.next_str_node(n, log, il)
+            n = self.next_str_node(n, history, il)
             # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
-            if (il >= len(log)) or (n is None) or (not self.compare_node(n, log[il])):
+            if (il >= len(history)) or (n is None) or (not self.compare_node(n, history[il])):
                 break
         # if il < len(log) and n is not None and log[il] != n.log_form():
-        if il < len(log) and n is not None and (not self.compare_node(n, log[il])):
+        if il < len(history) and n is not None and (not self.compare_node(n, history[il])):
             return None
         else:
             return n
@@ -159,6 +148,7 @@ class AI:
             if 'ai' in self.modules:
                 ai = self.modules['ai']
         scheduler = AsyncIOScheduler()
+        scheduler.start()
         lines = code.splitlines()
         if len(lines[0]) == 0:
             lines.pop(0)
@@ -195,6 +185,9 @@ class AI:
                 else:
                     answer = next.value
                 break
+        if answer is None:
+            del self.history[-1]
+            return None
         if "system_command" not in text:
             self.history.append(answer)
         if "> " in answer or "< " in answer:
@@ -226,11 +219,6 @@ class AI:
             log.debug("Silence detected")
             if self.robins_story_ids:
                 self.force_own_will_story()
-        # a = self.respond('<silence>')
-        # if a:
-        #     self.modules['messages'].say(a)
-        # else:
-        #     self.start_next_robin_story()
 
     def init_silence(self):
         if not self.handle_silence:
@@ -256,6 +244,10 @@ class AI:
     async def message_send_handler(self, data):
         log.debug('message send handler')
         self.init_silence()
+
+    def force_say(self, text):
+        self.history.append(self.to_canonical(text))
+        self.modules['messages'].say(text)
 
     def force_story(self, story_id):
         # FIXME:whole func
