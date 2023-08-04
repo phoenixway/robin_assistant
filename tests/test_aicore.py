@@ -103,16 +103,13 @@ def test_next_in_story2():
     assert st.contains("< <intent>greetings"), "st.contains must work"
     log = ["< <intent>greetings"]
     check_next(log, st, "> Hey! Whats up?")
-    log.append("> Hey! Whats up?")
-    log.append('< all right')
+    log.extend(("> Hey! Whats up?", '< all right'))
     check_next(log, st, "> Cool!")
-    log.append("> Cool!")
-    log.append(r"< what cool?")
+    log.extend(("> Cool!", r"< what cool?"))
     check_next(log, st, "> everything")
-    log.append("> everything")
-    log.append("< fuck")
+    log.extend(("> everything", "< fuck"))
     check_next(log, st, "> dont curse")
-
+    
 
 def test_if_statement():
     source = """
@@ -139,21 +136,40 @@ def test_if_statement():
     assert st.contains("< <intent>greetings"), "st.contains must work"
     lst = ["< <intent>greetings"]
     check_next(lst, st, "> Good to see u again, boss.")
-    lst.append("> Good to see u again, boss.")
-    lst.append("< Really?")
+    lst.extend(("> Good to see u again, boss.", "< Really?"))
     check_next(lst, st, "> Nope.")
-    lst.append("> Nope.")
-    lst.append("< fuck you")
+    lst.extend(("> Nope.", "< fuck you"))
     check_next(lst, st, "> u welcome")
+
+
+def test_inline_fn():
+    source = r"""
+    story testname {
+        < input1
+        > f[code1 = 'random python inline code'] output1 f[code2 = 'that will be executed before and after Robin response']
+        < input 2
+        > output 2
+    }
+    """
+    sts = RSParser.create_from_text(source)
+    st = sts[1]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.name == "testname", "st.name must be testname"
+    assert st.contains("< input1"), "st.contains must work"
+    log = ["< input1"]
+    check_next(log, st, "> output1")
+    log.extend(("> output1", '< input2'))
+    check_next(log, st, "> output 2")
 
 
 def test_if_statement_new():
     source = """
-        story {
+        old_story {
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            > <if @ == "Really?">
+            > <if @ == "Really?"> 
                 > Nope.
             <elif @ == "Oh no.."> {
                 > What?
@@ -166,6 +182,26 @@ def test_if_statement_new():
             > Yahaha
         }
     """
+    source = """
+        story {
+            < <intent>greetings
+            > Good to see u again, boss.
+            < *
+            > if[li == "Really?"]
+                > Nope.
+            elif[li == "Oh no.."] {
+                > What?
+                < Whatever
+                > As u command.
+            }
+            else fn[
+                x = 1 + 1
+                ret = "No comments."                
+            ]
+            < Yaha
+            > Yahaha
+        }
+    """
     st = RSParser.create_from_text(source)
     st = st[0]
     assert st is not None, "StoryFactory.create_from_text error"
@@ -173,11 +209,9 @@ def test_if_statement_new():
     assert st.contains("< <intent>greetings"), "st.contains must work"
     lst = ["< <intent>greetings"]
     check_next(lst, st, "> Good to see u again, boss.")
-    lst.append("> Good to see u again, boss.")
-    lst.append("< Really?")
+    lst.extend(("> Good to see u again, boss.", "< Really?"))
     check_next(lst, st, "> Nope.")
-    lst.append("> Nope.")
-    lst.append("< Yaha")
+    lst.extend(("> Nope.", "< Yaha"))
     check_next(lst, st, "> Yahaha")
 
 

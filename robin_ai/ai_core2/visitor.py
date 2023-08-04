@@ -43,21 +43,11 @@ class RSVisitor(NodeVisitor):
         return n
 
     def visit_oneliner_with_params(self, node, visited_children):
-        # buf = []
-        # for child in visited_children:
-        #     if child == "not_important":
-        #         continue
-        #     striped_child = child.strip()
-        #     if len(striped_child) > 0:
-        #         buf.append(striped_child)
-        # s = " ".join(buf)
-        # n = ParamInputNode(s)
-        pass
         return visited_children[0]
 
     def visit_input_var(self, node, visited_children):
         return node.text
-    
+
     def visit_random_input(self, node, visited_children):
         return ParamInputNode("< *")
 
@@ -73,7 +63,7 @@ class RSVisitor(NodeVisitor):
         n = ParamInputNode(s)
         return n
 
-    def visit_maybe_raw_text(self, node, visited_children):
+    def visit_maybe_text(self, node, visited_children):
         return node.text
 
     def visit_if_in_statement(self, node, visited_children):
@@ -86,11 +76,6 @@ class RSVisitor(NodeVisitor):
                 for item in child:
                     n.variants.append(item[0])
                     n.last_statements.append(item[1])
-                # for d in child:
-                #     param = tuple(d.keys())[0]
-                #     n1, n2 = d[param]
-                #     n.variants[param] = n1
-                #     n.last_statements[param] = n2
         return n
 
     def visit_if_in_variant_must(self, node, visited_children):
