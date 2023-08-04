@@ -109,44 +109,13 @@ def test_next_in_story2():
     check_next(log, st, "> everything")
     log.extend(("> everything", "< fuck"))
     check_next(log, st, "> dont curse")
+
     
-
-def test_if_statement():
-    source = """
-        story {
-            < <intent>greetings
-            <if True>
-                    > Good to see u again, boss.
-                    < Really?
-                    > Nope.
-            <else>
-                > Oh no..
-                < What?
-                > Forget.
-            </if>
-            < fuck you
-            > u welcome
-
-        }
-    """
-    st = RSParser.create_from_text(source)
-    st = st[0]
-    assert st is not None, "StoryFactory.create_from_text error"
-    assert isinstance(st, Story), "st must be Story"
-    assert st.contains("< <intent>greetings"), "st.contains must work"
-    lst = ["< <intent>greetings"]
-    check_next(lst, st, "> Good to see u again, boss.")
-    lst.extend(("> Good to see u again, boss.", "< Really?"))
-    check_next(lst, st, "> Nope.")
-    lst.extend(("> Nope.", "< fuck you"))
-    check_next(lst, st, "> u welcome")
-
-
 def test_inline_fn():
     source = r"""
     story testname {
         < input1
-        > f[code1 = 'random python inline code'] output1 f[code2 = 'that will be executed before and after Robin response']
+        > <f code1 = 'random python inline code'] output1 <f code2 = 'that will be executed before and after Robin response'>
         < input 2
         > output 2
     }
@@ -163,44 +132,87 @@ def test_inline_fn():
     check_next(log, st, "> output 2")
 
 
-def test_if_statement_new():
+def test_grammar_if():
     source = """
-        old_story {
+        story test1{
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            > <if @ == "Really?"> 
+            <if li == "Really?">
                 > Nope.
-            <elif @ == "Oh no.."> {
+            <elif li == "Really?"> 
+                {
+                    > What?
+                    < Whatever
+                    > As u command.
+                }
+            <else>
+                <fn>
+                    x = 1 + 1
+                    ret = "No comments."
+                </fn>
+            < Yaha
+            > Yahaha
+        }
+    """
+    res = RSParser.rs_grammar.parse(source)
+    assert res is not None, "bad parsing"
+
+
+def test_if_statement():
+    source2 = """
+        story test1{
+            < <intent>greetings
+            > Good to see u again, boss.
+            < *
+            <if li == "Really?">
+                > Nope.
+            <elif li == "Oh no.."> {
                 > What?
                 < Whatever
                 > As u command.
-            }
-            <else>
-                > No comments.
+                }
+            <else> <fn>
+                    x = 1 + 1
+                    ret = "No comments."
+                </fn>
             < Yaha
             > Yahaha
         }
     """
     source = """
-        story {
+        story test1{
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            > if[li == "Really?"]
+            <if True>
                 > Nope.
-            elif[li == "Oh no.."] {
+            <elif "li" == "Really?"> 
+                {
                 > What?
                 < Whatever
                 > As u command.
-            }
-            else fn[
-                x = 1 + 1
-                ret = "No comments."                
-            ]
+                }
+            <else>
+                > Npoe
             < Yaha
             > Yahaha
         }
+    """
+    # TODO: змінні в метод який перевіряє умови
+    # TODO: як вивід fn в лозі спілкування відображати так щоб наступний потрібний оператор детектився? аналогічно рішення if оператора  на момент знаходження наступної відповіді в діалозі
+    # можна кожен прохід по такого типу узлам story фіксувати в лозі 
+    # вузли story мають дві функції. дати наступний вузул відносно поточного. друга - ідентифікувати частини кожної конкретної story які мали місце в актуальному лозі спілкування
+    """
+        тобто щоб визначити наступний вузол потрбно зафіксувати достатньо достовірно в лозі спілкування усі попередні. це важливий момент
+        інший важливий момент - достовірно розпізнати за записом в лозі елементи діалогу
+        має бути map_in_log(node) == node.id
+        чи node.trace_in_log == node.trace_to_be_pasted_in_log
+        обидва параметри відносно складно продумати для if оператора. 
+        це знову повертає до проблеми=необхідності мати можливість працювати з кількома діями (вивід, функії, зокрема if) Робіна підряд.
+        зате отримана гнучкість буде вражаючою        
+        має бути можливим перевірити точно map_in_log(node) == node.trace_to_be_pasted_in_log
+        великого об'єму код можна замінити хеш-кодами
     """
     st = RSParser.create_from_text(source)
     st = st[0]

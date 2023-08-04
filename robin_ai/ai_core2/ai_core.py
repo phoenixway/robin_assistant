@@ -36,7 +36,7 @@ class AI:
         with open(source_dir / 'default.stories', 'r') as f:
             s = f.read()
             self.stories = RSParser.create_from_text(s)
-        self.story_ids = [s.name for s in self.stories]
+        self.story_ids = [s.name for s in self.stories] if self.stories else []
         self.modules = modules
         self.active_story = None
         self.runtime_vars = RuntimeVariables()
@@ -79,8 +79,17 @@ class AI:
         if isinstance(n, (InputNode, OutputNode, FnNode, ParamInputNode)):
             res = n.next
         elif isinstance(n, IfNode):
-            r = self.run_expr(n.condition)
-            res = n.first_in_if_block if r else n.first_in_else_block
+            res = None
+            if self.run_expr(n.condition):
+                res = n.next_if_true
+            elif n.elif_variants:
+                for v in n.elif_variants:
+                    r1 = self.run_expr(v.condition)
+                    if r1:
+                        res = v.node
+                        break
+            else:
+                res = n.next_if_else
         elif isinstance(n, IfInNode):
             if lst := [it for it in n.variants if str(it) == log[i]]:
                 res = lst[0]

@@ -157,17 +157,20 @@ class IfInNode(AstNode):
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.variants}"'
 
-    def validate(message):
-        return False
+
+class ElifVariant():
+    def __init__(self, condition=None, node=None) -> None:
+        self.condition = condition
+        self.node = node
 
 
 class IfNode(AstNode):
     def __init__(self):
         self.condition = None
-        self.first_in_if_block = None
-        self.first_in_else_block = None
-        self.last4block = None
-        self.last4else_block = None
+        self.next_if_true = None
+        self.elif_variants = None
+        self.next_if_else = None
+        self.next = None
         super().__init__()
 
     def __str__(self):
@@ -175,9 +178,6 @@ class IfNode(AstNode):
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.condition}"'
-
-    def validate(message):
-        return False
 
 
 class NodeFactory:

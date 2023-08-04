@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from parsimonious.nodes import NodeVisitor
-from .ast_nodes import IfInNode, IfNode, AstNode, InputNode, OutputNode, FnNode, ParamInputNode  # noqa: E501
+from .ast_nodes import ElifVariant, IfInNode, IfNode, AstNode, InputNode, OutputNode, FnNode, ParamInputNode  # noqa: E501
 from .story import Story
 
 
@@ -25,8 +25,7 @@ class RSVisitor(NodeVisitor):
         return {'story_name': node.text}
 
     def visit_maybe_story_name(self, node, visited_children):
-        res = visited_children[0] if len(visited_children) > 0 else None
-        return res
+        return visited_children[0] if len(visited_children) > 0 else None
 
     def visit_statement(self, node, visited_children):
         return visited_children[0]
@@ -39,8 +38,7 @@ class RSVisitor(NodeVisitor):
             if len(child) > 0:
                 buf.append(child.strip())
         s = " ".join(buf)
-        n = OutputNode(s) if s[:2] == "> " else InputNode(s)
-        return n
+        return OutputNode(s) if s.startswith("> ") else InputNode(s)
 
     def visit_oneliner_with_params(self, node, visited_children):
         return visited_children[0]
@@ -60,8 +58,7 @@ class RSVisitor(NodeVisitor):
             if len(striped_child) > 0:
                 buf.append(striped_child)
         s = " ".join(buf)
-        n = ParamInputNode(s)
-        return n
+        return ParamInputNode(s)
 
     def visit_maybe_text(self, node, visited_children):
         return node.text
@@ -98,35 +95,12 @@ class RSVisitor(NodeVisitor):
         inp.next = n1
         return inp, last
 
-    def make_nodes_chain(lst):
-        i = 0
-        while i < len(lst):
-            if i + 1 < len(lst):
-                lst[i].next = lst[i + 1]
-            if i - 1 >= 0:
-                lst[i].parent = lst[i - 1]
-            i += 1
-        return lst[0], lst[-1]
-
-    def visit_if_statement(self, node, visited_children):
-        n = IfNode()
-        last = None
-        last_else = None
-        for child in visited_children:
-            if child != "not_important":
-                if isinstance(child, dict) and "condition" in child:
-                    n.condition = child["condition"]
-                elif isinstance(child, dict) and "else_part" in child:
-                    n.first_in_else_block, last_else = RSVisitor.make_nodes_chain(child["else_part"])
-                elif isinstance(child, list):
-                    n.first_in_if_block, last = RSVisitor.make_nodes_chain(child)
-        n.last4block = last
-        n.last4else_block = last_else
-        return n
-
     def visit_if_start(self, node, visited_children):
-        d = {"condition": child for child in visited_children if child != "not_important"}
-        return d
+        return {
+            "condition": child
+            for child in visited_children
+            if child != "not_important"
+        }
 
     def visit_if_condition(self, node, visited_children):
         pass
@@ -137,8 +111,9 @@ class RSVisitor(NodeVisitor):
         return {"else_part": lst}
 
     def visit_maybe_else_part(self, node, visited_children):
-        lst = [child for child in visited_children if child != "not_important"]
-        if lst:
+        if lst := [
+            child for child in visited_children if child != "not_important"
+        ]:
             return lst[0]
         else:
             return None
@@ -172,8 +147,11 @@ class RSVisitor(NodeVisitor):
                             for st in n.last_statements:
                                 st.next = node
                         if isinstance(n, IfNode):
-                            n.last4block.next = node
-                            n.last4else_block.next = node
+                            n.next_if_true.next = node
+                            n.next_if_else.next = node
+                            for v in n.elif_variants:
+                                v.node.next = node
+                                n.next = node
                         n.next = node
                         n.next.parent = n
                         n = node
@@ -212,6 +190,91 @@ class RSVisitor(NodeVisitor):
 
     def visit_text(self, node, visited_children):
         return node.text
+
+    def make_nodes_chain(lst):
+        i = 0
+        while i < len(lst):
+            if i + 1 < len(lst):
+                lst[i].next = lst[i + 1]
+            if i - 1 >= 0:
+                lst[i].parent = lst[i - 1]
+            i += 1
+        return lst[0], lst[-1]
+
+    def visit_if_statement11(self, node, visited_children):
+        n = IfNode()
+        last = None
+        last_else = None
+        for child in visited_children:
+            if child != "not_important":
+                if isinstance(child, dict) and "condition" in child:
+                    n.condition = child["condition"]
+                elif isinstance(child, dict) and "else_part" in child:
+                    n.first_in_else_block, last_else = RSVisitor.make_nodes_chain(child["else_part"])
+                elif isinstance(child, list):
+                    n.first_in_if_block, last = RSVisitor.make_nodes_chain(child)
+        n.last4block = last
+        n.last4else_block = last_else
+        return n
+    
+    # if_statement = maybe_ws if_tag maybe_ws then_part maybe_ws maybe_elif_substatements maybe_ws maybe_else_part maybe_ws
+    
+    def visit_else_substatement(self, node, visited_children):
+        return next(
+            (
+                child['then']
+                for child in visited_children
+                if isinstance(child, dict) and 'then' in child
+            ),
+            None,
+        )
+    
+    def visit_elif_tag(self, node, visited_children):
+        l = [c for c in visited_children if c != 'not_important']
+        return {'elif': l[0]} if l else None
+    
+    def visit_maybe_else_part(self, node, visited_children):
+        return {'else': visited_children[0]} if visited_children else None
+    
+    def visit_elif_substatement(self, node, visited_children):
+        v = ElifVariant()
+        for child in visited_children:
+            if isinstance(child, dict):
+                if 'elif' in child:
+                    v.condition = child['elif']
+                if 'then' in child:
+                    v.node = child['then']
+        return v if v.node and v.condition else None
+    
+    def visit_maybe_elif_substatements(self, node, visited_children):
+        if l := [child for child in visited_children if child != 'not_important']:
+            return {'elifs': l}
+        else:
+            return None
+    
+    def visit_then_part(self, node, visited_children):
+        return {'then': visited_children[0]}
+    
+    def visit_if_tag(self, node, visited_children):
+        # returns condition
+        return {'condition': [child for child in visited_children if child != 'not_important'][0]}
+    
+    def visit_if_statement1(self, node, visited_children):
+        return None
+    
+    def visit_if_statement(self, node, visited_children):
+        n = IfNode()
+        for child in visited_children:
+            if isinstance(child, dict):
+                if 'condition' in child:
+                    n.condition = child['condition']
+                if 'then' in child:
+                    n.next_if_true = child['then']
+                if 'else' in child:
+                    n.next_if_else = child['else']
+                if 'elifs' in child:
+                    n.elif_variants = child['elifs']
+        return n
 
     def generic_visit(self, node, visited_children):
         return "not_important"
