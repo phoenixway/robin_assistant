@@ -4,9 +4,13 @@ import nest_asyncio
 import logging
 import asyncio
 import signal
+import sys
 
-from robin_ai.actions_queue import RespondToUserMessageAction
-from robin_ai.robin_ai import MODULES
+try:
+    from .actions_queue import RespondToUserMessageAction
+except ImportError:
+    from actions_queue import RespondToUserMessageAction
+#from robin_ai.robin_ai import MODULES
 # from tgclient import TelegramBot
 
 nest_asyncio.apply()
@@ -18,12 +22,14 @@ log = logging.getLogger('pythonConfig')
 
 class Messages:
 
-    def __init__(self, modules):
-        self.modules = modules
+    def __init__(self, action_queue, event_manager, debug_server=False):
+        self.debug_server = debug_server
+        self.action_queue = action_queue
+        self.events = event_manager
         self.websocket = None
         self.websockets = []
         self.telegram_works = False
-        self.MODULES = modules
+        # self.MODULES = modules
         self.telegram_client_id = 612272249
         self.t = None
         self.is_started = False
@@ -43,8 +49,8 @@ class Messages:
     async def say_async(self, message):
         await self.ws_say(message)
         # try:
-        if self.telegram_works:
-            self.telegram_say(message)
+        # if self.telegram_works:
+        #     self.telegram_say(message)
         # except:
         # log.error('An exception telegram bot when sending message.')
 
@@ -63,7 +69,7 @@ class Messages:
         else:
             asyncio.set_event_loop(asyncio.new_event_loop())
             asyncio.run(self.say_async(message))
-        self.MODULES['events'].emit('message_send', message)
+        self.events.emit('message_send', message)
 
     def stop(self):
         self.ws_stop.set_result(None)
@@ -82,39 +88,41 @@ class Messages:
                 log.error("Ws server can't send a message because of \
                            incorrectly closed connection.")
 
-    def get_answer(self, message):
-        log.debug(f"get answer for: {message}")
-        return ["default"] if self.modules['config']['debug_server_mode'] else self.MODULES['ai'].respond_text(message)
+    # def get_answer(self, message):
+    #     log.debug(f"get answer for: {message}")
+    #     if not self.debug_server:
+    #         self.action_queue.add_action(RespondToUserMessageAction(message))
+    #     return ["deprecated"] #if self.debug_server else self.MODULES['ai'].respond_text(message)
 
-    def telegram_say(self, message):
-        # try:
-        # telegram_bot.sendMessage(chat_id=self.telegram_client_id
-        # text=message)
-        log.debug(f"Telegrambot sent: {message}")
-        # except:
-        # print("telegram_say error")
+    # def telegram_say(self, message):
+    #     # try:
+    #     # telegram_bot.sendMessage(chat_id=self.telegram_client_id
+    #     # text=message)
+    #     log.debug(f"Telegrambot sent: {message}")
+    #     # except:
+    #     # print("telegram_say error")
 
     async def ws_process(self, websocket):
         self.websockets.append(websocket)
         log.info("User connected via websocket protocol.")
-        if not self.modules['config']['debug_server_mode']:
-            self.MODULES['events'].emit('user_connected', None)
+        if not self.debug_server:
+            self.events.emit('user_connected', None)
         self.websocket = websocket
         error = False
         while True:
             try:
                 input_text = await websocket.recv()
-                MODULES['action_queue'].add_action(RespondToUserMessageAction(input_text))
+                self.action_queue.add_action(RespondToUserMessageAction(input_text))
                 error = False
                 log.debug(f"Ws server received: {input_text}")
                 # TODO: telegram optionally
-                if self.telegram_works:
-                    self.telegram_say(f"Ws server received: {input_text}")
-                if not self.modules['config']['debug_server_mode']:
-                    self.MODULES['events'].emit('message_received', input_text)
-                if answers := self.get_answer(input_text):
-                    for a in answers:
-                        await self.say_async(a)
+                # if self.telegram_works:
+                #     self.telegram_say(f"Ws server received: {input_text}")
+                if not self.debug_server:
+                    self.events.emit('message_received', input_text)
+                # if answers := self.get_answer(input_text):
+                #     for a in answers:
+                #         await self.say_async(a)
             except websockets.exceptions.ConnectionClosedOK:
                 if not error:
                     log.info('Ws connection is closed by client.')
@@ -150,8 +158,8 @@ class Messages:
             # except websockets.exceptions.ConnectionClosedOK:
             #     log.error('ConnectionClosedOK')
 
-    def run_telegram_bot(self):
-        log.debug('Deprecated.')
+    # def run_telegram_bot(self):
+    #     log.debug('Deprecated.')
 
         # @telegram_bot.message("text")
         # def text(message):
@@ -171,11 +179,11 @@ class Messages:
 
         # telegram_bot.run()
 
-    async def telegram_serve(self):
-        import threading
-        self.t = threading.Thread(target=self.run_telegram_bot)
-        self.t.daemon = True
-        self.t.start()
+    # async def telegram_serve(self):
+    #     import threading
+    #     self.t = threading.Thread(target=self.run_telegram_bot)
+    #     self.t.daemon = True
+    #     self.t.start()
 
     async def serve(self):
         t = asyncio.create_task(self.ws_serve())

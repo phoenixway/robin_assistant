@@ -6,9 +6,6 @@ import logging
 import nest_asyncio
 from colorlog import ColoredFormatter
 from os import _exit
-from robin_ai import actions_queue
-
-from robin_ai.actions_queue import ActionsQueue
 
 try:
     from .robin_db import RobinDb
@@ -17,13 +14,15 @@ try:
     from .plugin_manager import Plugins
     from .ai_core2.ai_core import AI
     from .handle_config import init_config
-except (ImportError, ModuleNotFoundError):
+    from .actions_queue import ActionsQueue
+except ImportError:
     from robin_db import RobinDb
     from robin_events import Robin_events
     from messages import Messages
     from plugin_manager import Plugins
     from ai_core2.ai_core import AI
     from handle_config import init_config
+    from actions_queue import ActionsQueue
 
 
 nest_asyncio.apply()
@@ -50,17 +49,20 @@ def init_modules():
     MODULES['config'] = init_config()
     MODULES['config']['debug_server_mode'] = False
     debug_server_mode = MODULES['config']['debug_server_mode']
-    MODULES['actions_queue'] = ActionsQueue()
+    actions_queue = ActionsQueue()
+    MODULES['actions_queue'] = actions_queue
+    events = None
     if not debug_server_mode:
-        MODULES['events'] = Robin_events()
+        events = MODULES['events'] = Robin_events()
         MODULES['plugins'] = Plugins(MODULES)
-    MODULES['messages'] = Messages(MODULES)
-    MODULES['actions_queue'].send_message_callback = MODULES['messages'].say
+    MODULES['messages'] = Messages(actions_queue, events)
+    actions_queue.send_message_callback = MODULES['messages'].say
     
     if not debug_server_mode:
         MODULES['db'] = RobinDb('memory', MODULES)
         MODULES['ai'] = AI(MODULES)
-        MODULES['actions_queue'].respond_to_user_message_callback = MODULES['ai'].respond_text
+        actions_queue.respond_to_user_message_callback = MODULES['ai'].respond_text
+
 
 
 async def quit_handler(data):
@@ -105,6 +107,7 @@ async def startup_finisher():
 
 async def async_modules():
     loop = asyncio.get_event_loop()
+    loop.create_task(MODULES['actions_queue'].listen_queue())
     loop.create_task(MODULES['messages'].serve())
     loop.create_task(startup_finisher())
     if not MODULES['config']['debug_server_mode']:

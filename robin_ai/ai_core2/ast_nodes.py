@@ -130,6 +130,9 @@ class OutputNode(StringNode):
 class FnNode(AstNode):
     def __init__(self, fn_body):
         self.value = fn_body
+        
+    def __hash__(self) -> int:
+        return hash(self.value)
 
     def __str__(self):
         return f'{self.value}'

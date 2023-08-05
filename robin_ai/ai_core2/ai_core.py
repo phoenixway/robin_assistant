@@ -10,7 +10,10 @@ import nest_asyncio
 from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-from robin_ai.actions_queue import SendMessageAction
+try:
+    from ..actions_queue import SendMessageAction
+except ImportError:
+    from actions_queue import SendMessageAction
 
 from .rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
@@ -20,11 +23,9 @@ from .input_templates import TemplatesHandler, RuntimeVariables
 
 sys.path.append(os.getcwd())
 nest_asyncio.apply()
-
 tasks = set()
 log = logging.getLogger('pythonConfig')
-# source_path = Path(__file__).resolve()
-# source_dir = source_path.parent.parent
+
 
 
 class AI:
@@ -112,7 +113,7 @@ class AI:
             else:
                 return False
         elif isinstance(n, FnNode):
-            return False
+            return hash(n) == int(real_text)
         else:
             return n.equals(real_text)
 
@@ -175,37 +176,46 @@ class AI:
         exec(new_code, globals(), loc)
         return loc.get('ret')
 
+    def execute_fn(self, node : FnNode) -> None:
+        self.history.append(hash(node))
+        if self.modules is None:
+            self.modules = {'vars': self.runtime_vars}
+        else:
+            self.modules['vars'] = self.runtime_vars
+        if answer := self.run_fn(node):
+            self.history.append(f"> {answer}")
+            self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))    
+        # else:
+        #     # TODO: поки що fnnode без текстової відповіді видаляємо з логу
+        #     del self.history[-1]
+
     def respond_text(self, text):
         log.debug("Parsing user input with ai.respond_text")
         if text == '<silence>':
             return None
         else:
             answer = f"Default answer on '{text}'"
-        # спочатку задетектити чи не регекс
         self.history.append(self.to_canonical(text))
         # next in story must return also list of variables' values
         # or something similar
 
         for story in self.stories:
-            if next := self.get_next(self.history, story):
+            if next_node := self.get_next(self.history, story):
                 # зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування
-                if isinstance(next, FnNode):
-                    if self.modules is None:
-                        self.modules = {}
-                    self.modules['vars'] = self.runtime_vars
-                    answer = self.run_fn(next)
+                if isinstance(next_node, FnNode):
+                    self.execute_fn(next_node)
+                    return
                 else:
-                    answer = next.value
+                    answer = next_node.value
+                    if "system_command" in text:
+                        del self.history[-1]
+                    else:
+                       self.history.append(answer)
+                    if "> " in answer or "< " in answer:
+                        answer = answer[2:]
                 break
-        if answer is None:
-            del self.history[-1]
-            return None
-        if "system_command" not in text:
-            self.history.append(answer)
-        if "> " in answer or "< " in answer:
-            answer = answer[2:]
         self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
-        return [TemplatesHandler.substitute(answer, self.runtime_vars)]
+        
 
     def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)
