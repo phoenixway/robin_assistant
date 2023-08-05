@@ -16,7 +16,7 @@ except ImportError:
     from actions_queue import SendMessageAction
 
 from .rs_parser import RSParser
-from .ast_nodes import IfInNode, IfNode
+from .ast_nodes import AstNode, IfInNode, IfNode
 from .ast_nodes import InputNode
 from .ast_nodes import OutputNode, FnNode, ParamInputNode
 from .input_templates import TemplatesHandler, RuntimeVariables
@@ -189,33 +189,49 @@ class AI:
         #     # TODO: поки що fnnode без текстової відповіді видаляємо з логу
         #     del self.history[-1]
 
+    def nodes_until_input(self, node) -> list:
+        """Returns all the children nodes until first InputNode"""
+        if node is None:
+            return []
+
+        if not isinstance(node, (InputNode, IfNode, IfInNode)):
+            return [node] + self.nodes_until_input(node.next) if node.next else [node]
+        else:
+            return []
+
+        
     def respond_text(self, text):
         log.debug("Parsing user input with ai.respond_text")
         if text == '<silence>':
             return None
         else:
-            answer = f"Default answer on '{text}'"
+            answer = None
         self.history.append(self.to_canonical(text))
-        # next in story must return also list of variables' values
-        # or something similar
+        # TODO: next in story must return also list of variables' values or something similar
 
         for story in self.stories:
             if next_node := self.get_next(self.history, story):
-                # зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування
-                if isinstance(next_node, FnNode):
-                    self.execute_fn(next_node)
-                    return
-                else:
-                    answer = next_node.value
-                    if "system_command" in text:
-                        del self.history[-1]
+                # зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
+                for n in self.nodes_until_input(next_node):
+                    # TODO: повторювати усе з if next_node доки не закінчиться історія або наступим елементом не буде intextnode
+                    if isinstance(n, FnNode):
+                        self.execute_fn(n)
+                        answer = 'not_None'
                     else:
-                       self.history.append(answer)
-                    if "> " in answer or "< " in answer:
-                        answer = answer[2:]
+                        answer = n.value
+                        if "system_command" in text:
+                            del self.history[-1]
+                        else:
+                            self.history.append(answer)
+                        if "> " in answer or "< " in answer:
+                            answer = answer[2:]
+                        self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
                 break
-        self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
+                
+        if not answer:
+            self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(f"Default answer on '{text}'", self.runtime_vars)))
         
+
 
     def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)
