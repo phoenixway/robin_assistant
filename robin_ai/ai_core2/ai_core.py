@@ -10,6 +10,8 @@ import nest_asyncio
 from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+from robin_ai.actions_queue import SendMessageAction
+
 from .rs_parser import RSParser
 from .ast_nodes import IfInNode, IfNode
 from .ast_nodes import InputNode
@@ -173,8 +175,8 @@ class AI:
         exec(new_code, globals(), loc)
         return loc.get('ret')
 
-    def eat_text(self, text):
-        log.debug("Parsing user input with ai.eat_text")
+    def respond_text(self, text):
+        log.debug("Parsing user input with ai.respond_text")
         if text == '<silence>':
             return None
         else:
@@ -186,6 +188,7 @@ class AI:
 
         for story in self.stories:
             if next := self.get_next(self.history, story):
+                # зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування
                 if isinstance(next, FnNode):
                     if self.modules is None:
                         self.modules = {}
@@ -201,7 +204,8 @@ class AI:
             self.history.append(answer)
         if "> " in answer or "< " in answer:
             answer = answer[2:]
-        return TemplatesHandler.substitute(answer, self.runtime_vars)
+        self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
+        return [TemplatesHandler.substitute(answer, self.runtime_vars)]
 
     def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)

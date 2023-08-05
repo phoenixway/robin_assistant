@@ -4,6 +4,9 @@ import nest_asyncio
 import logging
 import asyncio
 import signal
+
+from robin_ai.actions_queue import RespondToUserMessageAction
+from robin_ai.robin_ai import MODULES
 # from tgclient import TelegramBot
 
 nest_asyncio.apply()
@@ -81,8 +84,7 @@ class Messages:
 
     def get_answer(self, message):
         log.debug(f"get answer for: {message}")
-        # return "default"
-        return "default" if self.modules['config']['debug_server_mode'] else self.MODULES['ai'].eat_text(message)
+        return ["default"] if self.modules['config']['debug_server_mode'] else self.MODULES['ai'].respond_text(message)
 
     def telegram_say(self, message):
         # try:
@@ -102,6 +104,7 @@ class Messages:
         while True:
             try:
                 input_text = await websocket.recv()
+                MODULES['action_queue'].add_action(RespondToUserMessageAction(input_text))
                 error = False
                 log.debug(f"Ws server received: {input_text}")
                 # TODO: telegram optionally
@@ -109,10 +112,9 @@ class Messages:
                     self.telegram_say(f"Ws server received: {input_text}")
                 if not self.modules['config']['debug_server_mode']:
                     self.MODULES['events'].emit('message_received', input_text)
-                # TODO: find answer from within event handler in aicore
-                answer = self.get_answer(input_text)
-                if answer is not None:
-                    await self.say_async(answer)
+                if answers := self.get_answer(input_text):
+                    for a in answers:
+                        await self.say_async(a)
             except websockets.exceptions.ConnectionClosedOK:
                 if not error:
                     log.info('Ws connection is closed by client.')
