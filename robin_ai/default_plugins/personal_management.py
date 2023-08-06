@@ -18,9 +18,8 @@ class PArtOfLiving(IPlugin):
         if lst:
             first_question = lst[0].first_node.value
             if len(ai.history) == 0 or (len(ai.history) > 0 and ai.history[-1] != first_question):
-                ai.add_to_own_will("do_most_important")
-                ai.add_to_own_will("is_day_planned")
-                ai.force_own_will_story()
+                ai.add_to_own_will("day_preparation")
+                # ai.force_own_will_story()
 
     async def user_connect_handler(self, event):
         db = PArtOfLiving.modules['db']
@@ -38,30 +37,80 @@ class PArtOfLiving(IPlugin):
         modules['events'].add_listener('user_connected',
                                        self.user_connect_handler)
         # TODO: дві історії, одна щодо планування дня
-        ai.add_story_by_source("""
+        # TODO: чи план з таймінгом, дедлайнами. якщо реалізація не ок відповідь
+        s = """
+    story plan_control {
+        <if db['day_plan'] != API.today_str() > {
+            > Do you have a plan allowing ur day goals to become reality? 
+            <if in> 
+                <intent>yes => {
+                    <fn>
+                        db['day_plan'] = API.today_str()
+                    </fn>
+                    > Great!
+                    <if db['day_plan'] == API.today_str() >
+                        > U're best!
+                }
+                <intent>no => {
+                   > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
+            }
+            </if>
+        }
+        <else>
+            <fn>
+                ai.force_story('plan_control')
+            </fn>
+    }
+    story day_preparation {
+            < zz
+            <if db['day_priorities'] != API.today_str() > {
+                > Do u have today priorities? 
+                <if in> 
+                    <intent>yes => {
+                        <fn>
+                            db['day_priorities'] = API.today_str()
+                        </fn>
+                        > Great!
+                        <if db['day_priorities'] == API.today_str() >
+                            > U're best!
+                    }
+                </if>
+            }
+            <else>
+                <fn>
+                    ai.force_story('plan_control')
+                </fn>
+    }
+        """
+        s1 = """
+            story plan_control {
+                > Do you have a plan allowing ur day goals to become reality? 
+                    <if in>
+                        <intent>yes => {
+                            > What about realisation?
+                        }
+                        <intent>no => {
+                            > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
+                        }
+                    </if>
+            }
             story day_preparation {
                 > Do you have 3 top priorities for today?
                 <if in>
                     <intent>yes => {
                         > Great! Having day beams is an absolutely mandatory element of a high level day. What about goal list?
-                        <if in> 
+                        <if in>
                             <intent>yes => {
-                                > Have you plan allowing make ur day goals reality?
-                                <if in>
-                                    <intent>yes => {
-                                    }
-                                </if>
+                                <fn>
+                                    ai.force_story("plan_control")
+                                </fn>
                             }
                             <intent>no => {
-                                > It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals. Do you have a plan allowing ur day goals to become reality? 
-                                <if in>
-                                    <intent>yes => {
-                                        > What about realisation?
-                                    }
-                                    <intent>no => {
-                                        > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
-                                    }
-                                </if>
+                                
+                                <fn>
+                                    ai.force_say("It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.")
+                                    ai.force_story("plan_control")
+                                </fn>
                             }
                         </if>
                     }
@@ -173,7 +222,8 @@ class PArtOfLiving(IPlugin):
                     }
                 </if>
             }
-        """)
+        """
+        ai.add_story_by_source(s)
         ai.add_to_own_will("day_preparation")
         # ai.add_to_own_will("is_day_planned")
         # ai.add_to_own_will()

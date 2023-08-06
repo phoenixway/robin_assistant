@@ -4,6 +4,7 @@
         <if in>
             all right => {
                 > Cool!
+                > Great to hear that.
             }
             <intent>no => {
                 > Oh...
@@ -13,7 +14,7 @@
     }
     story quit {
         < <intent>bye
-        > <fn>
+        <fn>
             import sys
             sys.exit(0)
         </fn>
@@ -22,29 +23,36 @@
         < <intent>cursing
         > Dont curse
     }
-    story {
-        < alarm in %d minutes
-        > <fn>
+   
+    story alarm{
+        < alarm in %d m
+        <fn>
             from datetime import datetime, timedelta
             interval = vars.unnamed_vars[0].value
             dt = datetime.now() + timedelta(minutes=int(interval))
             def func(ms, interval):
                 ms.say("Ring ring in " + str(interval) + " minutes!")
+                import os
+                duration = 1  # seconds
+                freq = 440  # Hz
+                os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
             scheduler.add_job(func, 'date', run_date=dt, args=[ms, int(interval)])
-            scheduler.start()
+            # scheduler.start()
             ret="Alarm will work in " + str(interval) + " minutes!"
         </fn>
+        < thanx
+        > U welcome, milord.
     }
     story {
         < time
-        > <fn>
+        <fn>
             from datetime import datetime
             ret = str(datetime.now())
         </fn> 
     }
     story {
         < anime time!
-        > <fn>
+        <fn>
             import webbrowser
             webbrowser.open_new_tab('https://jut.su')
             ret = "Enjoy, sir."
@@ -53,7 +61,7 @@
 
     story {
         < next wp
-        > <fn>
+        <fn>
             import subprocess
             try:
                 result = subprocess.run(['variety', '--next'], stdout=subprocess.PIPE)
@@ -63,8 +71,31 @@
         </fn>
     }
     story {
+        < del wp
+        <fn>
+            import subprocess
+            try:
+                result = subprocess.run(['variety', '-t'], stdout=subprocess.PIPE)
+                ret = "As u command"
+            except subprocess.CalledProcessError:
+                ret = "Can't, sorry."
+        </fn>
+    }
+    story {
+        < fav wp
+        <fn>
+            import subprocess
+            try:
+                result = subprocess.run(['variety', '-f'], stdout=subprocess.PIPE)
+                ret = "As u command"
+            except subprocess.CalledProcessError:
+                ret = "Can't, sorry."
+        </fn>
+    }
+
+    story {
         < inspire me
-        > <fn>
+        <fn>
             import subprocess
             try:
                 result = subprocess.run(['motivate'], stdout=subprocess.PIPE)
@@ -75,14 +106,14 @@
     }
     story force_own_will {
         < system_command force_own_will
-        > <fn>
+        <fn>
             ai.force_own_will_story()
             ret = "System command executed, boss!"
         </fn>
     }
     story {
         < <intent>thanku
-        > <fn>
+        <fn>
             # local a = {'u welcome', 'im here to serve'}
             # return a[ math.random( #a ) ]  
             db['test']='u welcome'          
@@ -95,10 +126,11 @@
     }
     story {
         < open tasks
-        > <fn>
+        <fn>
             os.execute('gedit &')
         </fn>
     }
+
     story {
         < <intent>stop_phase
         > Ok, boss.
