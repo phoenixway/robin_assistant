@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import datetime
 import re
 import asyncio
 import logging
@@ -26,6 +27,10 @@ nest_asyncio.apply()
 tasks = set()
 log = logging.getLogger('pythonConfig')
 
+
+class API:
+    def today_str():
+        return datetime.datetime.now().strftime('%Y-%m-%d')
 
 
 class AI:
@@ -83,15 +88,15 @@ class AI:
             res = n.next
         elif isinstance(n, IfNode):
             res = None
-            if self.run_expr(n.condition):
+            if self.eval_expr(n.condition):
                 res = n.next_if_true
-            elif n.elif_variants:
-                for v in n.elif_variants:
-                    r1 = self.run_expr(v.condition)
-                    if r1:
-                        res = v.node
-                        break
-            else:
+            else: 
+                if n.elif_variants:
+                    for v in n.elif_variants:
+                        r1 = self.run_expr(v.condition)
+                        if r1:
+                            res = v.node
+                            break
                 res = n.next_if_else
         elif isinstance(n, IfInNode):
             if lst := [it for it in n.variants if str(it) == log[i]]:
@@ -104,7 +109,10 @@ class AI:
             res = self.next_str_node(res, log, i)
         return res
 
-    def compare_node(self, n, real_text):
+    def is_mapped(self, n : AstNode, real_text) -> bool:
+        """
+        Check if n maps to a current history element.
+        """
         if isinstance(n, ParamInputNode):
             valid, vars = n.validate(real_text)
             if valid:
@@ -117,51 +125,64 @@ class AI:
         else:
             return n.equals(real_text)
 
-    def get_next(self, history, s):
+    def get_next(self, history, s) -> AstNode:
         '''Get story next element'''
         n = s.first_node
         # detect if n is user input with parameters
-        if self.compare_node(n, history[-1]):
+        # TODO: fix bellow
+        if n is None:
+            return None
+        if self.is_mapped(n, history[-1]):
             history[-1] = n.value
-            # log[-1] = n.value
-        elif n is None or (str(n) not in history):
+
+        # elif n is None or (str(n) not in history):
+        # TODO: replace str(n) in history() for more suitable variant. including fnnode, ifnode cases
+        # TODO: take care for cases where story has several same nodes as first one
+        if str(n) not in history:
             return None
         il = len(history) - history[::-1].index(str(n)) - 1
-        # TODO: how to handle ifinnode as n and one of its variants's key as
-        # log[il]?
+        # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
         # TODO: what to do when n is control statement?
         while True:
             il = il + 1
             n = self.next_str_node(n, history, il)
             # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
-            if (il >= len(history)) or (n is None) or (not self.compare_node(n, history[il])):
+            if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
                 break
-        # if il < len(log) and n is not None and log[il] != n.log_form():
-        if il < len(history) and n is not None and (not self.compare_node(n, history[il])):
-            return None
-        else:
-            return n
+        return None if n is None or (il < len(history) and not self.is_mapped(n, history[il])) else n
+
 
     def eat_singal(self, signal):
         pass
 
-    def run_fn(self, node):
-        next_answer = None
-        code = node.value.rstrip()
-        if self.modules:
-            if 'db' in self.modules:
-                db = self.modules['db']
-            if 'messages' in self.modules:
-                ms = self.modules['messages']
-            if 'events' in self.modules:
-                ev = self.modules['events']
-            if 'vars' in self.modules:
-                vars = self.modules['vars']
-            if 'ai' in self.modules:
-                ai = self.modules['ai']
+    def init_runtime_modules(self):
+        m = self.modules
+        return m['db'], m['messages'], m['events'], self.runtime_vars, m['ai']
+    
+    def eval_expr(self, e):
+        db, ms, ev, vars, ai = self.init_runtime_modules()
         scheduler = AsyncIOScheduler()
         scheduler.start()
-        lines = code.splitlines()
+        lines = e.splitlines()
+        if len(lines[0]) == 0:
+            lines.pop(0)
+        if m := re.search(r"(^\s+)", lines[0]):
+            zero_indent = len(m[1])
+            newlines = []
+            for line in lines:
+                line = re.sub(r"(^\s{" + str(zero_indent) + r"})", "", line)
+                newlines.append(line)
+            new_code = "\n".join(newlines)
+        else:
+            new_code = e.lstrip().rstrip("\n")
+        loc = dict(locals())
+        return eval(new_code, globals(), loc)
+
+    def run_code(self, c):
+        db, ms, ev, vars, ai = self.init_runtime_modules()
+        scheduler = AsyncIOScheduler()
+        scheduler.start()
+        lines = c.splitlines()
         if len(lines[0]) == 0:
             lines.pop(0)
         m = re.search(r"(^\s+)", lines[0])
@@ -176,15 +197,16 @@ class AI:
         exec(new_code, globals(), loc)
         return loc.get('ret')
 
-    def execute_fn(self, node : FnNode) -> None:
+    def execute_fn(self, node : FnNode) -> str:
         self.history.append(hash(node))
         if self.modules is None:
             self.modules = {'vars': self.runtime_vars}
         else:
             self.modules['vars'] = self.runtime_vars
-        if answer := self.run_fn(node):
+        if answer := self.run_code(node.value.rstrip()):
             self.history.append(f"> {answer}")
             self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))    
+        
         # else:
         #     # TODO: поки що fnnode без текстової відповіді видаляємо з логу
         #     del self.history[-1]
@@ -199,39 +221,47 @@ class AI:
         else:
             return []
 
-        
-    def respond_text(self, text):
-        log.debug("Parsing user input with ai.respond_text")
-        if text == '<silence>':
-            return None
+    def implement(self, n : AstNode) -> str:
+        if isinstance(n, FnNode):
+            self.execute_fn(n)
+            return 'not_None'
+        elif isinstance(n, IfNode):
+            # TODO: check conditions, process (run/send message/whatever) depending on them
+            self.history.append(hash(n))
+            if self.eval_expr(n.condition):
+                self.implement(n.next_if_true)
+            else:
+                for item in n.elif_variants:
+                    if self.eval_expr(item.condition):
+                        self.implement(item.node)
+                        return 'not_None'
+                self.implement(n.next_if_else)
+            return 'not_None'
         else:
-            answer = None
+            answer = n.value
+            if "system_command" in n.value:
+                del self.history[-1]
+            else:
+                self.history.append(answer)
+            if "> " in answer or "< " in answer:
+                answer = answer[2:]
+            self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
+            return answer
+        
+    def respond_text(self, text):  # sourcery skip: remove-pass-elif
+        log.debug("Parsing user input with ai.respond_text")
+        answer = None
         self.history.append(self.to_canonical(text))
-        # TODO: next in story must return also list of variables' values or something similar
-
         for story in self.stories:
+            # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
+            # імплементуємо елемент історії, який має бути наступним
             if next_node := self.get_next(self.history, story):
-                # зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
                 for n in self.nodes_until_input(next_node):
-                    # TODO: повторювати усе з if next_node доки не закінчиться історія або наступим елементом не буде intextnode
-                    if isinstance(n, FnNode):
-                        self.execute_fn(n)
-                        answer = 'not_None'
-                    else:
-                        answer = n.value
-                        if "system_command" in text:
-                            del self.history[-1]
-                        else:
-                            self.history.append(answer)
-                        if "> " in answer or "< " in answer:
-                            answer = answer[2:]
-                        self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
+                    answer = self.implement(n)   
                 break
                 
         if not answer:
             self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(f"Default answer on '{text}'", self.runtime_vars)))
-        
-
 
     def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)
@@ -299,11 +329,13 @@ class AI:
             if isinstance(st.first_node, FnNode):
                 next_answer = self.run_fn(st.first_node)
             else:
-                next_answer = TemplatesHandler.substitute(st.first_node.value, self.runtime_vars)
+                next_answer = self.implement(st.first_node)
+                # TemplatesHandler.substitute(st.first_node.value, self.runtime_vars)
                 # if "> " in next_answer or "< " in next_answer:
                 #     next_answer = next_answer[2:]
-            self.history.append(next_answer)
-            if "< " in next_answer or "> " in next_answer:
-                self.modules['messages'].say(next_answer[2:])
-            else:
-                self.modules['messages'].say(next_answer)
+            if next_answer != 'not_None':
+                self.history.append(next_answer)
+                if "< " in next_answer or "> " in next_answer:
+                    self.modules['messages'].say(next_answer[2:])
+                else:
+                    self.modules['messages'].say(next_answer)

@@ -14,29 +14,36 @@ logging.basicConfig(level=logging.DEBUG)
 logging.debug(os.getcwd())
 
 from robin_ai.ai_core2.rs_parser import RSParser   # noqa: F403, F401
-from robin_ai.ai_core2.ast_nodes import OutputNode  # noqa: E501
+from robin_ai.ai_core2.ast_nodes import InputNode, OutputNode  # noqa: E501
 from robin_ai.ai_core2.ast_nodes import FnNode
 from robin_ai.ai_core2.story import Story
 from robin_ai.robin_db import RobinDb
 from robin_ai.robin_events import Robin_events
 from robin_ai.handle_config import init_config
+from robin_ai.actions_queue import ActionsQueue
 from robin_ai.ai_core2.ai_core import AI
 from robin_ai.messages import Messages
 from robin_ai.ai_core2.input_templates import TemplatesHandler
 
+def get_aicore() -> AI:
+    config = init_config()
+    MODULES = {'config': config}
+    ac = AI(MODULES)
+    aq = ActionsQueue()
+    MODULES['actions_queue'] = aq
+    aq.respond_to_user_message_callback = ac.respond_text
+    return ac
 
 def check_next(log, s, goal, result_class=OutputNode):
     ''' Check if goal is next element in story with a given log
     Parameters:
         s : str Story script
     '''
-    config = init_config()
-    MODULES = {'config': config}
-    ac = AI(MODULES)
-    next = ac.get_next(log, s)
-    assert next is not None, f"next is None, must be Node:{goal}"
-    assert isinstance(next, result_class), f"next must be {result_class.__name__}"
-    res = ac.run_fn(next) if result_class.__name__ == "FnNode" else next.value
+    ac = get_aicore()
+    nxt = ac.get_next(log, s)
+    assert nxt is not None, f"next is None, must be Node:{goal}"
+    assert isinstance(nxt, result_class), f"next must be {result_class.__name__}"
+    res = ac.execute_fn(nxt) if result_class.__name__ == "FnNode" else nxt.value
     assert TemplatesHandler.substitute(res, ac.runtime_vars) == goal, f"AICore.next_in_story: must be {goal}"
 
 
@@ -226,6 +233,53 @@ def test_if_statement():
     lst.extend(("> Nope.", "< Yaha"))
     check_next(lst, st, "> Yahaha")
 
+def test_if_else_statement():
+    source = """
+        story test1{
+            < <intent>greetings
+            > Good to see u again, boss.
+            < *
+            <if False>
+                > Nope.
+            <elif li == "Really?"> 
+                {
+                > What?
+                < Whatever
+                > As u command.
+                }
+            <else>
+                > Npoe
+            < Yaha
+            > Yahaha
+        }
+    """
+    # TODO: змінні в метод який перевіряє умови
+    # TODO: як вивід fn в лозі спілкування відображати так щоб наступний потрібний оператор детектився? аналогічно рішення if оператора  на момент знаходження наступної відповіді в діалозі
+    # можна кожен прохід по такого типу узлам story фіксувати в лозі 
+    # вузли story мають дві функції. дати наступний вузул відносно поточного. друга - ідентифікувати частини кожної конкретної story які мали місце в актуальному лозі спілкування
+    """
+        тобто щоб визначити наступний вузол потрбно зафіксувати достатньо достовірно в лозі спілкування усі попередні. це важливий момент
+        інший важливий момент - достовірно розпізнати за записом в лозі елементи діалогу
+        має бути map_in_log(node) == node.id
+        чи node.trace_in_log == node.trace_to_be_pasted_in_log
+        обидва параметри відносно складно продумати для if оператора. 
+        це знову повертає до проблеми=необхідності мати можливість працювати з кількома діями (вивід, функії, зокрема if) Робіна підряд.
+        зате отримана гнучкість буде вражаючою        
+        має бути можливим перевірити точно map_in_log(node) == node.trace_to_be_pasted_in_log
+        великого об'єму код можна замінити хеш-кодами
+    """
+    st = RSParser.create_from_text(source)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains("< <intent>greetings"), "st.contains must work"
+    lst = ["< <intent>greetings"]
+    check_next(lst, st, "> Good to see u again, boss.")
+    lst.extend(("> Good to see u again, boss.", "< Really?"))
+    check_next(lst, st, "> Npoe")
+    lst.extend(("> Npoe", "< Yaha"))
+    check_next(lst, st, "> Yahaha")
+
 
 def test_grammar():
     raw_gr = r"""
@@ -282,14 +336,18 @@ def test_rs_parser():
 
 
 def test_func():
+    # TODO: change db record in fn and check if that was made
+    # TODO: test if after user input next after fn execution output will be as given one
     raw_story = r"""
         story testname {
             < func
-            > <fn>
+            <fn>
                 s = "Hello, world!"
                 print(s)
                 ret = s
               </fn>
+            < Great!
+            > Do most important! Don't waste time!
         }
     """
     st = RSParser.create_from_text(raw_story)
@@ -297,29 +355,13 @@ def test_func():
     assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< func"), "st.contains must work"
+    ac = get_aicore()
     lst = ["< func"]
-    check_next(lst, st, "Hello, world!", FnNode)
-
-
-def test_func1():
-    raw_story = r"""
-        story testname1 {
-            < func
-            > <fn>
-                if True:
-                    ret = "if works!"
-                else:
-                    ret = "else works!"
-              </fn>
-        }
-    """
-    st = RSParser.create_from_text(raw_story)
-    st = st[0]
-    assert st is not None, "StoryFactory.create_from_text error"
-    assert isinstance(st, Story), "st must be Story"
-    assert st.contains("< func"), "st.contains must work"
-    lst = ["< func"]
-    check_next(lst, st, "if works!", FnNode)
+    fn_node = ac.get_next(lst, st)
+    assert fn_node is not None, "next is None, must be FnNode"
+    assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
+    lst.extend((hash(fn_node), '< Great!'))
+    check_next(lst, st, "> Do most important! Don't waste time!",OutputNode )
 
 
 @pytest.mark.asyncio
@@ -388,9 +430,9 @@ def test_parametrized_input2():
     raw_story = r"""
     story {
         < query goals %s 
-        > <fn>
+        <fn>
             ret = 'yes we can'
-          </fn>
+        </fn>
     }
     """
     st = RSParser.create_from_text(raw_story)

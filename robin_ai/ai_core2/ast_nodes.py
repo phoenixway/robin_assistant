@@ -19,7 +19,7 @@ class AstNode:
         return str(self)
 
     def equals(self, item):
-        raise Exception("Not implemented yet")
+        return False
 
 
 class StringNode(AstNode):
@@ -130,6 +130,7 @@ class OutputNode(StringNode):
 class FnNode(AstNode):
     def __init__(self, fn_body):
         self.value = fn_body
+        super().__init__()
         
     def __hash__(self) -> int:
         return hash(self.value)

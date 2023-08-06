@@ -12,11 +12,12 @@
         "--disable=F0401"
     ],
     "[python]": {
-        "editor.defaultFormatter": "ms-python.autopep8"
+        "editor.defaultFormatter": "ms-python.python"
     },
     "python.formatting.provider": "none",
     "python.linting.flake8Args": [
         "--max-line-length=120",
         "--ignore=E402",
-    ]
+    ],
+    "workbench.experimental.sidePanel.enabled": true
 }
