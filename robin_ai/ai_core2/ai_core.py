@@ -122,6 +122,8 @@ class AI:
                 return False
         elif isinstance(n, FnNode):
             return hash(n) == int(real_text)
+        elif isinstance(n, IfNode):
+            return n.map_to_history == real_text
         else:
             return n.equals(real_text)
 
@@ -227,31 +229,40 @@ class AI:
             return 'not_None'
         elif isinstance(n, IfNode):
             # TODO: check conditions, process (run/send message/whatever) depending on them
-            self.history.append(hash(n))
+            self.history.append(n.map_to_history())
             if self.eval_expr(n.condition):
                 self.implement(n.next_if_true)
             else:
-                for item in n.elif_variants:
-                    if self.eval_expr(item.condition):
-                        self.implement(item.node)
-                        return 'not_None'
+                if n.elif_variants:
+                    for item in n.elif_variants:
+                        if self.eval_expr(item.condition):
+                            self.implement(item.node)
+                            return 'not_None'
                 self.implement(n.next_if_else)
             return 'not_None'
         else:
             answer = n.value
-            if "system_command" in n.value:
-                del self.history[-1]
-            else:
-                self.history.append(answer)
+            self.history.append(answer)
             if "> " in answer or "< " in answer:
                 answer = answer[2:]
             self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
             return answer
-        
+            
+    def do_system_call(self, test):
+        match test:
+            case "@@force_own_will":
+                self.force_own_will_story()
+            case _:
+                return
+    
     def respond_text(self, text):  # sourcery skip: remove-pass-elif
         log.debug("Parsing user input with ai.respond_text")
+        if "@@" not in text:
+            self.history.append(self.to_canonical(text))
+        else:
+            self.do_system_call(text)
+            return
         answer = None
-        self.history.append(self.to_canonical(text))
         for story in self.stories:
             # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
             # імплементуємо елемент історії, який має бути наступним
@@ -326,16 +337,4 @@ class AI:
         st = [i for i in self.stories if i.name == story_id][0]
         if story_id and st:
             # TODO: parse any nodes
-            if isinstance(st.first_node, FnNode):
-                next_answer = self.run_fn(st.first_node)
-            else:
-                next_answer = self.implement(st.first_node)
-                # TemplatesHandler.substitute(st.first_node.value, self.runtime_vars)
-                # if "> " in next_answer or "< " in next_answer:
-                #     next_answer = next_answer[2:]
-            if next_answer != 'not_None':
-                self.history.append(next_answer)
-                if "< " in next_answer or "> " in next_answer:
-                    self.modules['messages'].say(next_answer[2:])
-                else:
-                    self.modules['messages'].say(next_answer)
+            self.implement(st.first_node)

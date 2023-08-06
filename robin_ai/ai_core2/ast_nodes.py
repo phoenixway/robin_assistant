@@ -177,8 +177,14 @@ class IfNode(AstNode):
         self.next = None
         super().__init__()
 
+    def __hash__(self) -> int:
+        return hash(self.value)
+    
+    def map_to_history(self) -> str:
+        return str(hash(self.condition))
+
     def __str__(self):
-        return f'{id(self)}'
+        return self.map_to_history()
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.condition}"'
