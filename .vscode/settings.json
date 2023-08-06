@@ -19,5 +19,6 @@
         "--max-line-length=120",
         "--ignore=E402",
     ],
-    "workbench.experimental.sidePanel.enabled": true
+    "workbench.experimental.sidePanel.enabled": true,
+    "python.pythonPath": "rom_env/bin/python3.11"
 }
