@@ -13,13 +13,8 @@ class PArtOfLiving(IPlugin):
     async def do_regular_work(self):
         log.debug("Doing regular work")
         ai = PArtOfLiving.modules['ai']
-        # lst = [i for i in ai.stories
-        #        if i.name == "day_preparation"]
-        # if lst:
-        #     first_question = lst[0].first_node.value
-        #     if len(ai.history) == 0 or (len(ai.history) > 0 and ai.history[-1] != first_question):
         ai.add_to_own_will("day_preparation")
-                # ai.force_own_will_story()
+        ai.add_to_own_will("day_time_usage")
 
     async def user_connect_handler(self, event):
         db = PArtOfLiving.modules['db']
@@ -36,9 +31,56 @@ class PArtOfLiving(IPlugin):
         ai = modules['ai']
         modules['events'].add_listener('user_connected',
                                        self.user_connect_handler)
-        # TODO: дві історії, одна щодо планування дня
-        # TODO: чи план з таймінгом, дедлайнами. якщо реалізація не ок відповідь
         s = """
+    story day_time_usage {
+        <fn>
+            if db['day_plan'] == API.today_str():
+                pass
+            else:
+                if API.is_time_between(time(6,0), time(13,0)):
+                    ai.force_say("Day has began! Remember about responsibility for using it right before yourself. Do necessary preparation and fight today battle with all ur strenth!")
+                elif API.is_time_between(time(13,1), time(16,0)):
+                    ai.force_say("It seems like u wasting ur time, boss. Is it really ok for u to lose one more day of ur life? Think about ur pride of warrior. Pull urself together!")
+                elif API.is_time_between(time(16,5), time(20,0)):
+                    ai.force_say("How would u rate the current day? Are u satisfyed with it?")
+        </fn>
+    }
+    
+    story realisation_control{
+        > How ur realisation of the current day-plan? Are u doing most important task for now?
+        <if>
+            <intent>no => {
+                > Why don't to do it right now?
+                <if in>
+                    <intent>yes => {
+                        > Cool!
+                    }
+                    busy => {
+                        > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
+                    }
+                    <intent>no_motivation => {
+                        > What about Levi's method?
+                            < dont want
+                            > Are u realize the consequences? Do you accept them? Responsibility for them?
+                            <if in>
+                                <intent>yes => {
+                                    > Then let's them be. 
+                                }
+                                <intent>no => {
+                                    > Think of them!
+                                }
+                            </if>
+                    }
+                    
+                    not thinking about consenquences => {
+                        > Please, think about consenquences. U will not live the best version of today if u do not set, write and plan most important goals for today!
+                    }
+                </if>
+
+            }
+        </if>
+    }
+    
     story plan_control {
         <if db['day_plan'] != API.today_str() > {
             > Do you have a plan allowing ur day goals to become reality? 
@@ -47,15 +89,18 @@ class PArtOfLiving(IPlugin):
                     <fn>
                         db['day_plan'] = API.today_str()
                     </fn>
-                    > Great! What about realisation?
+                    > Great! 
                 }
                 <intent>no => {
                    > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
             }
             </if>
         }
-        <else>
-            > Great that u planned a day!
+        <else> {
+            <fn>
+                ai.force_story("realisation_control")
+            </fn>
+        }
     }
     story day_preparation {
         <if db['day_priorities'] != API.today_str() > {
@@ -74,8 +119,8 @@ class PArtOfLiving(IPlugin):
                             </fn>
                         }
                         <intent>no => {
+                            > It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.
                             <fn>
-                                ai.force_say("It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.")
                                 ai.force_story("plan_control")
                             </fn>
                         }
@@ -115,8 +160,7 @@ class PArtOfLiving(IPlugin):
         """
         ai.add_story_by_source(s)
         ai.add_to_own_will("day_preparation")
-        # ai.add_to_own_will("is_day_planned")
-        # ai.add_to_own_will()
+        ai.add_to_own_will("day_time_usage")
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
         scheduler.add_job(self.do_regular_work, 'interval', minutes=8,
