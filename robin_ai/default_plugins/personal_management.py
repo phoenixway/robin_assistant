@@ -48,7 +48,7 @@ class PArtOfLiving(IPlugin):
     
     story realisation_control{
         > How ur realisation of the current day-plan? Are u doing most important task for now?
-        <if>
+        <if in>
             <intent>no => {
                 > Why don't to do it right now?
                 <if in>
@@ -71,12 +71,10 @@ class PArtOfLiving(IPlugin):
                                 }
                             </if>
                     }
-                    
                     not thinking about consenquences => {
                         > Please, think about consenquences. U will not live the best version of today if u do not set, write and plan most important goals for today!
                     }
                 </if>
-
             }
         </if>
     }
