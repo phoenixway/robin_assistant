@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import json
+import copy
 import nest_asyncio
 from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -194,40 +195,59 @@ class AI:
         #     # TODO: поки що fnnode без текстової відповіді видаляємо з логу
         #     del self.history[-1]
 
-    def nodes_until_input(self, node) -> list:
+    def nodes_until_input(self, node : AstNode) -> list:
         """Returns all the children nodes until first InputNode"""
         if node is None:
             return []
 
-        if not isinstance(node, (InputNode, IfNode, IfInNode)):
-            return [node] + self.nodes_until_input(node.next) if node.next else [node]
+        if not node.next:
+            return [node]
+        elif not isinstance(node, (InputNode, IfInNode)):
+            return [node] + self.nodes_until_input(node.next)
         else:
             return []
-
-    def implement(self, n : AstNode) -> str:
-        if isinstance(n, FnNode):
-            self.execute_fn(n)
-            return 'not_None'
-        elif isinstance(n, IfNode):
+# l = self.nodes_until_input(n)
+        # if len(l) > 1:
+        #     for item in list(set(copy.deepcopy(l))):
+        #         item.next = None
+        #         self.implement(item)
+    def raw_implement(self, n : AstNode) -> str:
+        answer = None
+        if isinstance(n, IfNode):
             # TODO: check conditions, process (run/send message/whatever) depending on them
             self.history.append(n.map_to_history())
             if self.eval_expr(n.condition):
-                self.implement(n.next_if_true)
+                self.raw_implement(n.next_if_true)
             else:
                 if n.elif_variants:
                     for item in n.elif_variants:
                         if self.eval_expr(item.condition):
-                            self.implement(item.node)
-                            return 'not_None'
-                self.implement(n.next_if_else)
-            return 'not_None'
+                            self.raw_implement(item.node)
+                            answer = 'not_None'
+                            break
+                if answer != 'not_None':
+                    self.implement(n.next_if_else)
+            answer = 'not_None'
+        elif isinstance(n, FnNode):
+            self.execute_fn(n)
+            answer = 'not_None'
+        elif isinstance(n, IfInNode):
+            self.execute_fn(n)
+            answer = 'not_None'
         else:
             answer = n.value
             self.history.append(answer)
             if "> " in answer or "< " in answer:
                 answer = answer[2:]
             self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
-            return answer
+        if n.next is not None and not isinstance(n.next, (InputNode, IfInNode)):
+            self.raw_implement(n.next)
+        return answer
+        
+    def implement(self, n: AstNode) -> str:
+        return self.raw_implement(n)
+        # for n in self.nodes_until_input(n):
+        #     answer = 
             
     def do_system_call(self, test):
         match test.strip():
@@ -276,8 +296,7 @@ class AI:
             # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
             # імплементуємо елемент історії, який має бути наступним
             if next_node := self.get_next(self.history, story):
-                for n in self.nodes_until_input(next_node):
-                    answer = self.implement(n)   
+                answer = self.implement(next_node)   
                 break
                 
         if not answer:
