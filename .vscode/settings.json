@@ -20,5 +20,5 @@
         "--ignore=E402",
     ],
     "workbench.experimental.sidePanel.enabled": true,
-    "python.pythonPath": "rom_env/bin/python3.11"
+    "python.pythonPath": "rom_env/bin/python"
 }

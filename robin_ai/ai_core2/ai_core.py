@@ -109,51 +109,23 @@ class AI:
             res = self.next_str_node(res, log, i)
         return res
 
-    def is_mapped(self, n : AstNode, real_text) -> bool:
+    def is_mapped(self, n : AstNode, item) -> bool:
         """
         Check if n maps to a current history element.
+        item - element of history
         """
         if isinstance(n, ParamInputNode):
-            valid, vars = n.validate(real_text)
+            valid, vars = n.validate(item)
             if valid:
                 self.runtime_vars = vars
                 return True
             else:
                 return False
-        elif isinstance(n, FnNode):
-            return hash(n) == int(real_text)
-        elif isinstance(n, IfNode):
-            return n.map_to_history == real_text
+        elif isinstance(n, (FnNode, IfNode)):
+             n.map_to_history() == item
         else:
-            return n.equals(real_text)
-
-    def get_next(self, history, s) -> AstNode:
-        '''Get story next element'''
-        n = s.first_node
-        # detect if n is user input with parameters
-        # TODO: fix bellow
-        if n is None:
-            return None
-        if self.is_mapped(n, history[-1]):
-            history[-1] = n.value
-
-        # elif n is None or (str(n) not in history):
-        # TODO: replace str(n) in history() for more suitable variant. including fnnode, ifnode cases
-        # TODO: take care for cases where story has several same nodes as first one
-        if str(n) not in history:
-            return None
-        il = len(history) - history[::-1].index(str(n)) - 1
-        # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
-        # TODO: what to do when n is control statement?
-        while True:
-            il = il + 1
-            n = self.next_str_node(n, history, il)
-            # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
-            if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
-                break
-        return None if n is None or (il < len(history) and not self.is_mapped(n, history[il])) else n
-
-
+            return n.equals(item)
+    
     def eat_singal(self, signal):
         pass
 
@@ -200,7 +172,7 @@ class AI:
         return loc.get('ret')
 
     def execute_fn(self, node : FnNode) -> str:
-        self.history.append(hash(node))
+        self.history.append(node.map_to_history())
         if self.modules is None:
             self.modules = {'vars': self.runtime_vars}
         else:
@@ -249,19 +221,47 @@ class AI:
             return answer
             
     def do_system_call(self, test):
-        match test:
-            case "@@force_own_will":
+        match test.strip():
+            case "@force_own_will@":
                 self.force_own_will_story()
             case _:
                 return
+
+    def get_next(self, history, s) -> AstNode:
+        '''Get story next element'''
+        n = s.first_node
+        # detect if n is user input with parameters
+        # TODO: fix bellow
+        if n is None:
+            return None
+        if self.is_mapped(n, history[-1]):
+            history[-1] = n.value
+
+        # elif n is None or (str(n) not in history):
+        # TODO: replace str(n) in history() for more suitable variant. including fnnode, ifnode cases
+        # TODO: take care for cases where story has several same nodes as first one
+        if str(n) not in history:
+            return None
+        il = len(history) - history[::-1].index(str(n)) - 1
+        # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
+        # TODO: what to do when n is control statement?
+        while True:
+            il = il + 1
+            n = self.next_str_node(n, history, il)
+            # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
+            if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
+                break
+        return None if n is None or (il < len(history) and not self.is_mapped(n, history[il])) else n
     
     def respond_text(self, text):  # sourcery skip: remove-pass-elif
         log.debug("Parsing user input with ai.respond_text")
-        if "@@" not in text:
-            self.history.append(self.to_canonical(text))
-        else:
+        # import pdb; pdb.set_trace();
+        sc_match = re.compile(r"@(\w+)@")
+        if sc_match.search(text):
             self.do_system_call(text)
             return
+        else:
+            self.history.append(self.to_canonical(text))
         answer = None
         for story in self.stories:
             # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис

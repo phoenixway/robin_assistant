@@ -138,6 +138,9 @@ class FnNode(AstNode):
     def __str__(self):
         return f'{self.value}'
         # raise Exception("Not implemented")
+        
+    def map_to_history(self) -> str:
+        return str(hash(self.value))
 
     # def run(self, modules):
     #     next_answer = python_execute(self.fn_body.rstrip(),
