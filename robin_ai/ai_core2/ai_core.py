@@ -10,6 +10,7 @@ import json
 import nest_asyncio
 from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from datetime import datetime, time
 
 try:
     from ..actions_queue import SendMessageAction
@@ -30,7 +31,15 @@ log = logging.getLogger('pythonConfig')
 
 class API:
     def today_str():
-        return datetime.datetime.now().strftime('%Y-%m-%d')
+        return datetime.now().strftime('%Y-%m-%d')
+    
+    def is_time_between(begin_time, end_time, check_time=None): 
+        # If check time is not given, default to current time
+        check_time = check_time or datetime.now().time()
+        if begin_time < end_time:
+            return check_time >= begin_time and check_time <= end_time
+        else: # crosses midnight
+            return check_time >= begin_time or check_time <= end_time
 
 
 class AI:
@@ -222,7 +231,7 @@ class AI:
             
     def do_system_call(self, test):
         match test.strip():
-            case "@force_own_will@":
+            case ":force_own_will":
                 self.force_own_will_story()
             case _:
                 return
@@ -256,7 +265,7 @@ class AI:
     def respond_text(self, text):  # sourcery skip: remove-pass-elif
         log.debug("Parsing user input with ai.respond_text")
         # import pdb; pdb.set_trace();
-        sc_match = re.compile(r"@(\w+)@")
+        sc_match = re.compile(r":(\w+)")
         if sc_match.search(text):
             self.do_system_call(text)
             return
