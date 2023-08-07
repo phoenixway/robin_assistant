@@ -47,9 +47,7 @@ class PArtOfLiving(IPlugin):
                     <fn>
                         db['day_plan'] = API.today_str()
                     </fn>
-                    > Great!
-                    <if db['day_plan'] == API.today_str() >
-                        > U're best!
+                    > Great! What about realisation?
                 }
                 <intent>no => {
                    > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
@@ -57,28 +55,62 @@ class PArtOfLiving(IPlugin):
             </if>
         }
         <else>
+            > Great that u planned a day!
+    }
+    story day_preparation {
+        <if db['day_priorities'] != API.today_str() > {
+            > Do u have today priorities? 
+            <if in> 
+                <intent>yes => {
+                    <fn>
+                        db['day_priorities'] = API.today_str()
+                    </fn>
+                    > Great! Having day beams is an absolutely mandatory element of a high level day. What about goal list?
+                    <if in>
+                        <intent>yes => {
+                            > Wonderful!
+                            <fn>
+                                ai.force_story("plan_control")
+                            </fn>
+                        }
+                        <intent>no => {
+                            <fn>
+                                ai.force_say("It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.")
+                                ai.force_story("plan_control")
+                            </fn>
+                        }
+                    </if>
+                }
+                <intent>no => {
+                    > Why don't to do it right now?
+                        <if in>
+                            <intent>yes => {
+                                > Cool!
+                            }
+                            busy => {
+                                > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
+                            }
+                            <intent>no_motivation => {
+                                > What about Levi's method?
+                                < dont want
+                                > Are u realize the consequences? Do you accept them? Responsibility for them?
+                                <if in>
+                                    <intent>yes => {
+                                        > Then let's them be. 
+                                    }
+                                    <intent>no => {
+                                        > Think of them!
+                                    }
+                                </if>
+                            }
+                        </if>
+                }
+            </if>
+        }
+        <else>
             <fn>
                 ai.force_story('plan_control')
             </fn>
-    }
-    story day_preparation {
-            <if db['day_priorities'] != API.today_str() > {
-                > Do u have today priorities? 
-                <if in> 
-                    <intent>yes => {
-                        <fn>
-                            db['day_priorities'] = API.today_str()
-                        </fn>
-                        > Great!
-                        <if db['day_priorities'] == API.today_str() >
-                            > U're best!
-                    }
-                </if>
-            }
-            <else>
-                <fn>
-                    ai.force_story('plan_control')
-                </fn>
     }
         """
         ai.add_story_by_source(s)
