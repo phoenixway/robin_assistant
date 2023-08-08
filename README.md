@@ -29,27 +29,16 @@ Download source code:
 git clone https://github.com/phoenixway/robin_assistant  
 ```
 
-#### Deprecated - creating virtual environment  
-Create and start virtual development enviroment, if you want:
-```sh
-python3 -m venv urname4enviroment
-source urname4enviroment/bin/activate
-```
-
-Install requirements:  
-```sh
-pip3 install -r requirements.txt  
-```
-
-Firstly do not forget to activate virtual enviroment if you installed requirements into it. 
-
 ## Usage
-Then run 2 scripts (run_server.sh must be first) from {source code folder}/scripts in different terminals:  
+For app to start run 2 scripts below (run_server.sh must be first) from {project folder}/scripts in different terminals: 
 
 ```sh
 scripts/run_server.sh  ## server
 scripts/run_client_cli.sh ## cli client
 ```
+They will work in Linux, Macos and in WLS of Windows
+ 
+For format of stories and plugins look at default.brains and default.plugins folders.
  
 ## Malware with same name
 To my big and true sorry malware with same name appeared in Internet in late 2022. Please be sure that it has nothing common with my Robin application. I don't know why that malware appeared and why it uses such a name, but my Robin is AI app which I started to delevop since 2018. 
