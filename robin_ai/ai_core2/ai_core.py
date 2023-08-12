@@ -12,11 +12,14 @@ import nest_asyncio
 from pathlib import Path
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, time
+from pprint import pformat
 
 try:
-    from ..actions_queue import SendMessageAction
+    from ..actions_queue import Action
+    from ..actions_queue import ActionType
 except ImportError:
-    from actions_queue import SendMessageAction
+    from actions_queue import Action
+    from actions_queue import ActionType
 
 from .rs_parser import RSParser
 from .ast_nodes import AstNode, IfInNode, IfNode
@@ -67,7 +70,10 @@ class AI:
         self.repeat_if_silence = False
         self.handle_silence = True
         self.robins_story_ids = []
-        self.set_silence_time(minutes=2)
+        if 'debug' in modules['config']:
+            self.set_silence_time(seconds=15)
+        else:
+            self.set_silence_time(minutes=2)
 
     def recognize_intent(self, text):
         for intent in self.intents:
@@ -132,16 +138,24 @@ class AI:
             else:
                 return False
         elif isinstance(n, (FnNode, IfNode)):
-             n.map_to_history() == item
+            return n.map_to_history() == str(item)
         else:
             return n.equals(item)
     
     def eat_singal(self, signal):
         pass
 
+    def init_key(self, key : str, m : dict) -> dict:
+        if key not in m:
+            m[key] = None
+        return m
+
     def init_runtime_modules(self):
         m = self.modules
-        return m['db'], m['messages'], m['events'], self.runtime_vars, m['ai']
+        m = self.init_key('db', m)
+        m = self.init_key('messages', m)
+        m = self.init_key('events', m)
+        return m['db'], m['messages'], m['events'], self.runtime_vars, self
     
     def eval_expr(self, e):
         db, ms, ev, vars, ai = self.init_runtime_modules()
@@ -160,7 +174,12 @@ class AI:
         else:
             new_code = e.lstrip().rstrip("\n")
         loc = dict(locals())
-        return eval(new_code, globals(), loc)
+        res = False
+        try:
+            res = eval(new_code, globals(), loc)
+        except Exception as e:
+            log.error(f"Error executing <if>: {e}")
+        return res
 
     def run_code(self, c):
         db, ms, ev, vars, ai = self.init_runtime_modules()
@@ -178,7 +197,12 @@ class AI:
         new_code = "\n".join(newlines)
         loc = dict(locals())
         ret = None
-        exec(new_code, globals(), loc)
+        try:
+            exec(new_code, globals(), loc)
+        except Exception as e:
+            log.error(f"Error executing <fn>: {e}")
+            log.debug(pformat(c))
+            return f"Error executing <fn>: {e}"
         return loc.get('ret')
 
     def execute_fn(self, node : FnNode) -> str:
@@ -189,7 +213,7 @@ class AI:
             self.modules['vars'] = self.runtime_vars
         if answer := self.run_code(node.value.rstrip()):
             self.history.append(f"> {answer}")
-            self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))    
+            self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, self.runtime_vars)))    
         
         # else:
         #     # TODO: поки що fnnode без текстової відповіді видаляємо з логу
@@ -239,7 +263,7 @@ class AI:
             self.history.append(answer)
             if "> " in answer or "< " in answer:
                 answer = answer[2:]
-            self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(answer, self.runtime_vars)))
+            self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, self.runtime_vars)))
         if n.next is not None and not isinstance(n.next, (InputNode, IfInNode)):
             self.raw_implement(n.next)
         return answer
@@ -249,15 +273,10 @@ class AI:
         # for n in self.nodes_until_input(n):
         #     answer = 
             
-    def do_system_call(self, test):
-        match test.strip():
-            case ":force_own_will":
-                self.force_own_will_story()
-            case _:
-                return
-
     def get_next(self, history, s) -> AstNode:
         '''Get story next element'''
+        # if s.name == 'day_preparation':
+                 # breakpoint()
         n = s.first_node
         # detect if n is user input with parameters
         # TODO: fix bellow
@@ -265,18 +284,21 @@ class AI:
             return None
         if self.is_mapped(n, history[-1]):
             history[-1] = n.value
+        if n.map_to_history() not in history:
+            return None
 
         # elif n is None or (str(n) not in history):
         # TODO: replace str(n) in history() for more suitable variant. including fnnode, ifnode cases
         # TODO: take care for cases where story has several same nodes as first one
-        if str(n) not in history:
-            return None
+        # if str(n) not in history:
+        #     return None
         il = len(history) - history[::-1].index(str(n)) - 1
         # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
         # TODO: what to do when n is control statement?
         while True:
             il = il + 1
             n = self.next_str_node(n, history, il)
+            # breakpoint()
             # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
             if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
                 break
@@ -287,20 +309,22 @@ class AI:
         # import pdb; pdb.set_trace();
         sc_match = re.compile(r":(\w+)")
         if sc_match.search(text):
-            self.do_system_call(text)
+            self.modules['actions_queue'].add_action(Action(ActionType.SystemCommand, text.strip()))
             return
         else:
             self.history.append(self.to_canonical(text))
         answer = None
         for story in self.stories:
+            # if story.name == 'day_preparation':
+                # breakpoint()
             # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
             # імплементуємо елемент історії, який має бути наступним
             if next_node := self.get_next(self.history, story):
-                answer = self.implement(next_node)   
+                # breakpoint()
+                answer = self.implement(next_node)
                 break
-                
         if not answer:
-            self.modules['actions_queue'].add_action(SendMessageAction(TemplatesHandler.substitute(f"Default answer on '{text}'", self.runtime_vars)))
+            self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(f"Default answer on '{text}'", self.runtime_vars)))
 
     def add_to_own_will(self, story_id):
         self.robins_story_ids.append(story_id)
@@ -311,13 +335,17 @@ class AI:
         # for s in new_stories:
         #     if s.name in
         self.stories.extend(new_stories)
+        self.story_ids.extend([s.name for s in new_stories])
 
     def force_own_will_story(self):
         log.debug("force_own_will_story")
         if self.robins_story_ids:
             s = self.robins_story_ids.pop(0)
             if s is not None:
+                log.debug(f"Story: {s}")
                 self.force_story(s)
+            else:
+                log.debug(f"No story to be forcely called")
 
     async def start_silence(self):
         log.debug("Silence detection started")
@@ -361,8 +389,12 @@ class AI:
         # FIXME:whole func
         if not self.modules['messages'].websockets:
             return
-        log.debug("Make story start")
-        st = [i for i in self.stories if i.name == story_id][0]
-        if story_id and st:
-            # TODO: parse any nodes
-            self.implement(st.first_node)
+        log.debug(f"Make to start the story: {story_id}")
+        stories = [i for i in self.stories if i.name == story_id]
+        if len(stories) > 0:
+            st = stories[0]
+            if story_id and st:
+                # TODO: parse any nodes
+                self.implement(st.first_node)
+        else:
+            log.debug(f"No story with such name: {story_id}")

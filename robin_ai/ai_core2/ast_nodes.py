@@ -15,11 +15,11 @@ class AstNode:
     def __repr__(self):
         return f'{self.__class__.__name__}'
 
-    def log_form(self):
-        return str(self)
-
+    def map_to_history(self) -> str:
+        return str(self.value)
+    
     def equals(self, item):
-        return False
+        return self.map_to_history() == str(item)
 
 
 class StringNode(AstNode):
@@ -32,9 +32,6 @@ class StringNode(AstNode):
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.value}"'
-
-    def equals(self, item):
-        return self.value == item
 
 
 class InputNode(StringNode):

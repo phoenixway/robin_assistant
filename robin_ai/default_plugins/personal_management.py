@@ -34,15 +34,23 @@ class PArtOfLiving(IPlugin):
         s = """
     story day_time_usage {
         <fn>
+            if len(ai.history):
+                del ai.history[-1] 
             if db['day_plan'] == API.today_str():
                 pass
             else:
                 if API.is_time_between(time(6,0), time(13,0)):
-                    ai.force_say("Day has began! Remember about responsibility for using it right before yourself. Do necessary preparation and fight today battle with all ur strenth!")
+                    if db['day_time_usage_morning '] != API.today_str():
+                        ai.force_say("Day has began! Remember about responsibility for using it right before yourself. Do necessary preparation and fight today battle with all ur strenth!")
+                        db['day_time_usage_morning '] = API.today_str()
                 elif API.is_time_between(time(13,1), time(16,0)):
-                    ai.force_say("It seems like u wasting ur time, boss. Is it really ok for u to lose one more day of ur life? Think about ur pride of warrior. Pull urself together!")
+                    if db['day_time_usage_daytime '] != API.today_str():
+                        db['day_time_usage_daytime '] = API.today_str(
+                        ai.force_say("It seems like u wasting ur time, boss. Is it really ok for u to lose one more day of ur life? Think about ur pride of warrior. Pull urself together!")
                 elif API.is_time_between(time(16,5), time(20,0)):
-                    ai.force_say("How would u rate the current day? Are u satisfyed with it?")
+                    if db['day_time_usage_evening '] != API.today_str():
+                        db['day_time_usage_evening '] = API.today_str()
+                        ai.force_say("How would u rate the current day? Are u satisfyed with it?")
         </fn>
     }
     
@@ -161,6 +169,6 @@ class PArtOfLiving(IPlugin):
         ai.add_to_own_will("day_time_usage")
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(self.do_regular_work, 'interval', minutes=8,
+        scheduler.add_job(self.do_regular_work, 'interval', minutes=1,
                           id="do_most_important_id")
         scheduler.start()

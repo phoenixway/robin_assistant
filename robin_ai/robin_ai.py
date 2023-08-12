@@ -30,6 +30,10 @@ log = None
 MODULES = {}
 
 
+def close_server():
+    sys.exit(0)
+
+
 def init_logger():
     global log
     log = logging.getLogger('pythonConfig')
@@ -48,6 +52,7 @@ def init_modules():
     global MODULES
     MODULES['config'] = init_config()
     MODULES['config']['debug_server_mode'] = False
+    MODULES['config']['debug'] = True if (hasattr(sys, 'gettrace') and sys.gettrace() is not None) or (len(sys.argv) > 1) else False
     debug_server_mode = MODULES['config']['debug_server_mode']
     actions_queue = ActionsQueue()
     MODULES['actions_queue'] = actions_queue
@@ -62,8 +67,9 @@ def init_modules():
         MODULES['db'] = RobinDb('memory', MODULES)
         MODULES['ai'] = AI(MODULES)
         actions_queue.respond_to_user_message_callback = MODULES['ai'].respond_text
+        actions_queue.force_own_will_callback = MODULES['ai'].force_own_will_story
 
-
+    actions_queue.close_server_callback = close_server
 
 async def quit_handler(data):
     log.debug("quit_handler launched")

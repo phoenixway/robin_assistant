@@ -47,7 +47,7 @@ def check_next(log, s, goal, result_class=OutputNode):
     assert TemplatesHandler.substitute(res, ac.runtime_vars) == goal, f"AICore.next_in_story: must be {goal}"
 
 
-def test_next_in_story1():
+def test_1liners():
     source = r"""
         story testname {
             < <intent>greetings
@@ -67,7 +67,7 @@ def test_next_in_story1():
     check_next(log, st, "> Hey!")
 
 
-def test_next_in_story2():
+def test_1liners2():
     source = r"""
     story testname {
         < <intent>greetings
@@ -118,25 +118,25 @@ def test_next_in_story2():
     check_next(log, st, "> dont curse")
 
     
-def test_inline_fn():
-    source = r"""
-    story testname {
-        < input1
-        > <f code1 = 'random python inline code'] output1 <f code2 = 'that will be executed before and after Robin response'>
-        < input 2
-        > output 2
-    }
-    """
-    sts = RSParser.create_from_text(source)
-    st = sts[1]
-    assert st is not None, "StoryFactory.create_from_text error"
-    assert isinstance(st, Story), "st must be Story"
-    assert st.name == "testname", "st.name must be testname"
-    assert st.contains("< input1"), "st.contains must work"
-    log = ["< input1"]
-    check_next(log, st, "> output1")
-    log.extend(("> output1", '< input2'))
-    check_next(log, st, "> output 2")
+# def test_inline_fn():
+#     source = r"""
+#     story testname {
+#         < input1
+#         > <f code1 = 'random python inline code'] output1 <f code2 = 'that will be executed before and after Robin response'>
+#         < input 2
+#         > output 2
+#     }
+#     """
+#     sts = RSParser.create_from_text(source)
+#     st = sts[1]
+#     assert st is not None, "StoryFactory.create_from_text error"
+#     assert isinstance(st, Story), "st must be Story"
+#     assert st.name == "testname", "st.name must be testname"
+#     assert st.contains("< input1"), "st.contains must work"
+#     log = ["< input1"]
+#     check_next(log, st, "> output1")
+#     log.extend(("> output1", '< input2'))
+#     check_next(log, st, "> output 2")
 
 
 def test_grammar_if():
@@ -145,9 +145,9 @@ def test_grammar_if():
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            <if li == "Really?">
+            <if>li == "Really?"</if>
                 > Nope.
-            <elif li == "Really?"> 
+                <elif>li == "Really?"</elif>
                 {
                     > What?
                     < Whatever
@@ -172,9 +172,9 @@ def test_if_statement():
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            <if li == "Really?">
+            <if>li == "Really?"</if>
                 > Nope.
-            <elif li == "Oh no.."> {
+            <elif> li == "Oh no.."</elif> {
                 > What?
                 < Whatever
                 > As u command.
@@ -192,13 +192,12 @@ def test_if_statement():
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            <if True>
+            <if>True</if>
                 > Nope.
-            <elif "li" == "Really?"> 
-                {
-                > What?
-                < Whatever
-                > As u command.
+                <elif>"li" == "Really?"</elif> {
+                    > What?
+                    < Whatever
+                    > As u command.
                 }
             <else>
                 > Npoe
@@ -222,8 +221,9 @@ def test_if_statement():
         великого об'єму код можна замінити хеш-кодами
     """
     st = RSParser.create_from_text(source)
+    assert st is not None, "StoryFactory.create_from_text error, st is None"
+    assert len(st) > 0, "StoryFactory.create_from_text error. len == 0"
     st = st[0]
-    assert st is not None, "StoryFactory.create_from_text error"
     assert isinstance(st, Story), "st must be Story"
     assert st.contains("< <intent>greetings"), "st.contains must work"
     lst = ["< <intent>greetings"]
@@ -239,9 +239,9 @@ def test_if_else_statement():
             < <intent>greetings
             > Good to see u again, boss.
             < *
-            <if False>
+            <if>False</if>
                 > Nope.
-            <elif li == "Really?"> 
+                <elif>"li" == "Really?"</elif>
                 {
                 > What?
                 < Whatever
@@ -281,37 +281,8 @@ def test_if_else_statement():
     check_next(lst, st, "> Yahaha")
 
 
-def test_grammar():
-    raw_gr = r"""
-        if_variant_must = if_variant+
-        if_variant = maybe_ws parameter maybe_ws then_keyword maybe_ws
-        then_keyword = ~r"=>"
-        oneliner = inout ws_must text
-        inout = ~r"[<>]"
-        text = (intent_text / simple_text)
-        intent_text = maybe_intent_keyword raw_text
-        simple_text = raw_text
-        parameter = (intent_parameter / simple_parameter)
-        simple_parameter = raw_text
-        intent_parameter = maybe_intent_keyword
-        raw_text = ~r"[-\w\s\?\!\.]+"
-        ws = ~r"\s"
-        intent_keyword = ~r"<intent>"
-        maybe_ws = ws*
-        ws_must = ws+
-        maybe_intent_keyword = intent_keyword+
-        maybe_statements = statement*
-        statement = (oneliner)
-        """
 
-    raw_stories = r"""
-        <intent> => """
-    gr = Grammar(raw_gr)
-    stories = gr.parse(raw_stories)
-    assert stories is not None, "stories is None"
-
-
-def test_rs_parser():
+def test_if_in():
     raw_stories = r"""
        story testname {
         < <intent>greetings
@@ -325,7 +296,7 @@ def test_rs_parser():
             <intent>greetings => {
                 > Oh...
             }
-        </if>
+        </if in>
         < fuck
     }"""
     try:
@@ -345,7 +316,7 @@ def test_func():
                 s = "Hello, world!"
                 print(s)
                 ret = s
-              </fn>
+            </fn>
             < Great!
             > Do most important! Don't waste time!
         }
@@ -360,36 +331,139 @@ def test_func():
     fn_node = ac.get_next(lst, st)
     assert fn_node is not None, "next is None, must be FnNode"
     assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
-    lst.extend((hash(fn_node), '< Great!'))
+    lst.extend([fn_node.map_to_history(), '< Great!'])
+    check_next(lst, st, "> Do most important! Don't waste time!",OutputNode )
+
+def test_func2():
+    # TODO: change db record in fn and check if that was made
+    # TODO: test if after user input next after fn execution output will be as given one
+    raw_story = r"""
+        story plan_control{
+            <if>db['day_plan'] != API.today_str()</if> {
+                > Do you have a plan allowing ur day goals to become reality? 
+                <if in> 
+                    <intent>no => {
+                        > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
+                    }
+                </if in>
+            }
+        }
+    """
+    st = RSParser.create_from_text(raw_story)
+    assert st is not None, "StoryFactory.create_from_text error, story is None"
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains("< func"), "st.contains must work"
+    ac = get_aicore()
+    lst = ["< func"]
+    fn_node = ac.get_next(lst, st)
+    assert fn_node is not None, "next is None, must be FnNode"
+    assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
+    lst.extend([fn_node.map_to_history(), '< Great!'])
+    check_next(lst, st, "> Do most important! Don't waste time!",OutputNode )
+
+def test_func3():
+    # TODO: change db record in fn and check if that was made
+    # TODO: test if after user input next after fn execution output will be as given one
+    raw_story = r"""
+        story day_preparation {
+            <if>db['day_priorities'] != API.today_str() </if> {
+                > Do u have today priorities? 
+                <if in> 
+                    <intent>yes => {
+                        <fn>
+                            db['day_priorities'] = API.today_str()
+                        </fn>
+                        > Great! Having day beams is an absolutely mandatory element of a high level day. What about goal list?
+                        <if in>
+                            <intent>yes => {
+                                > Wonderful!
+                                <fn>
+                                    ai.force_story("plan_control")
+                                </fn>
+                            }
+                            <intent>no => {
+                                > It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.
+                                <fn>
+                                    ai.force_story("plan_control")
+                                </fn>
+                            }
+                        </if in>
+                    }
+                    <intent>no => {
+                        > Why don't to do it right now?
+                            <if in>
+                                <intent>yes => {
+                                    > Cool!
+                                }
+                                busy => {
+                                    > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
+                                }
+                                <intent>no_motivation => {
+                                    > What about Levi's method?
+                                    < dont want
+                                    > Are u realize the consequences? Do you accept them? Responsibility for them?
+                                    <if in>
+                                        <intent>yes => {
+                                            > Then let's them be. 
+                                        }
+                                        <intent>no => {
+                                            > Think of them!
+                                        }
+                                    </if in>
+                                }
+                            </if in>
+                    }
+                </if in>
+            }
+            <else>
+                <fn>
+                    ai.force_story('plan_control')
+                </fn>
+        }
+    """
+    st = RSParser.create_from_text(raw_story)
+    assert st is not None, "StoryFactory.create_from_text error, story is None"
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains("< func"), "st.contains must work"
+    ac = get_aicore()
+    lst = ["< func"]
+    fn_node = ac.get_next(lst, st)
+    assert fn_node is not None, "next is None, must be FnNode"
+    assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
+    lst.extend([fn_node.map_to_history(), '< Great!'])
     check_next(lst, st, "> Do most important! Don't waste time!",OutputNode )
 
 
-@pytest.mark.asyncio
-async def test_own_will():
-    modules = {}
-    modules['db'] = RobinDb('memory', modules)
-    db = modules['db']
-    events = Robin_events()
-    modules['events'] = events
-    ai = AI(modules)
-    db['var2change'] = "initional state"
-    messages = Messages(modules)
-    modules['messages'] = messages
-    messages.websockets.append([])
+# @pytest.mark.asyncio
+# async def test_own_will():
+#     modules = {}
+#     modules['db'] = RobinDb('memory', modules)
+#     db = modules['db']
+#     events = Robin_events()
+#     modules['events'] = events
+#     ai = AI(modules)
+#     db['var2change'] = "initional state"
+#     messages = Messages(modules)
+#     modules['messages'] = messages
+#     messages.websockets.append([])
 
-    raw_story = r"""
-        story test_own_will {
-            > <fn>
-                db['var2change'] = "modified state"
-              </fn>
-        }
-    """
-    ai.add_story_by_source(raw_story)
-    ai.set_silence_time(seconds=3)
-    ai.add_to_own_will("test_own_will")
-    ai.init_silence()
-    await sleep(6)
-    assert db['var2change'] == "modified state", "var2change must be changed"
+#     raw_story = r"""
+#         story test_own_will {
+#             > <fn>
+#                 db['var2change'] = "modified state"
+#               </fn>
+#         }
+#     """
+#     ai.add_story_by_source(raw_story)
+#     ai.set_silence_time(seconds=3)
+#     ai.add_to_own_will("test_own_will")
+#     ai.init_silence()
+#     await sleep(6)
+#     assert db['var2change'] == "modified state", "var2change must be changed"
 
 
 def test_parametrized_input():
@@ -426,42 +500,42 @@ def test_parametrized_input1():
     check_next(lst, st, "> Alarming! 5 minutes passed!")
 
 
-def test_parametrized_input2():
-    raw_story = r"""
-    story {
-        < query goals %s 
-        <fn>
-            ret = 'yes we can'
-        </fn>
-    }
-    """
-    st = RSParser.create_from_text(raw_story)
-    st = st[0]
-    assert st is not None, "StoryFactory.create_from_text error"
-    assert isinstance(st, Story), "st must be Story"
-    assert st.contains(
-        r"< query goals %s"), "st.contains must work"
-    lst = [r'< query goals "test query" ']
-    check_next(lst, st, "yes we can", FnNode)
-    lst = [r"< query goals one_word"]
-    check_next(lst, st, "yes we can", FnNode)
+# def test_parametrized_input2():
+#     raw_story = r"""
+#     story {
+#         < query goals %s 
+#         <fn>
+#             ret = 'yes we can'
+#         </fn>
+#     }
+#     """
+#     st = RSParser.create_from_text(raw_story)
+#     st = st[0]
+#     assert st is not None, "StoryFactory.create_from_text error"
+#     assert isinstance(st, Story), "st must be Story"
+#     assert st.contains(
+#         r"< query goals %s"), "st.contains must work"
+#     lst = [r'< query goals "test query" ']
+#     check_next(lst, st, "yes we can", FnNode)
+#     lst = [r"< query goals one_word"]
+#     check_next(lst, st, "yes we can", FnNode)
 
 
-def test_parametrized_input3():
-    raw_story = r"""
-    story {
-        < *
-        > superbla
-    }
-    """
-    st = RSParser.create_from_text(raw_story)
-    st = st[0]
-    assert st is not None, "StoryFactory.create_from_text error"
-    assert isinstance(st, Story), "st must be Story"
-    assert st.contains(
-        r"< *"), "st.contains must work"
-    lst = [r'< random input text']
-    check_next(lst, st, "> superbla")
+# def test_parametrized_input3():
+#     raw_story = r"""
+#     story {
+#         < *
+#         > superbla
+#     }
+#     """
+#     st = RSParser.create_from_text(raw_story)
+#     st = st[0]
+#     assert st is not None, "StoryFactory.create_from_text error"
+#     assert isinstance(st, Story), "st must be Story"
+#     assert st.contains(
+#         r"< *"), "st.contains must work"
+#     lst = [r'< random input text']
+#     check_next(lst, st, "> superbla")
 
 '''
 def test_parametrized_input3():

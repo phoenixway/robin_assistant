@@ -7,9 +7,11 @@ import signal
 import sys
 
 try:
-    from .actions_queue import RespondToUserMessageAction
+    from .actions_queue import Action
+    from .actions_queue import ActionType
 except ImportError:
-    from actions_queue import RespondToUserMessageAction
+    from actions_queue import Action
+    from actions_queue import ActionType
 #from robin_ai.robin_ai import MODULES
 # from tgclient import TelegramBot
 
@@ -112,7 +114,7 @@ class Messages:
         while True:
             try:
                 input_text = await websocket.recv()
-                self.action_queue.add_action(RespondToUserMessageAction(input_text))
+                self.action_queue.add_action(Action(ActionType.RespondToUserMessage, input_text))
                 error = False
                 log.debug(f"Ws server received: {input_text}")
                 # TODO: telegram optionally

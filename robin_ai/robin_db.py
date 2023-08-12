@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import shelve
 import sqlite3
-# import contextlib
 import os
 
 
