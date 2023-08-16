@@ -4,6 +4,9 @@
 	* todotxt
     * time tracker
   
+* websockets client 
+    * system wide notifications
+
 * ввід з параметрами
   * подальший розвиток парсення вводу на параметри
   * %s параметр
