@@ -9,7 +9,7 @@
             <intent>no => {
                 > Oh...
             }
-        </if>
+        </if in>
         < fuck
     }
     story quit {
@@ -98,24 +98,22 @@
         <fn>
             import subprocess
             try:
-                result = subprocess.run(['motivate'], stdout=subprocess.PIPE)
-                ret = result.stdout.decode('utf-8').strip()
+                result = subprocess.run(["motivate"], encoding="utf-8", stdout=subprocess.PIPE)
+                print(result.stdout)
+                import re
+                pattern = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                # pattern = r'"([A-Za-z0-9_\./\\-]*)"'
+                # m = re.search(pattern, result.stdout)
+                ret = pattern.sub('', result.stdout)
+                # ret = result.stdout.decode('utf-8', errors='strict').strip()
+                print(ret)
             except subprocess.CalledProcessError:
                 ret = "Can't, sorry."
-        </fn>
-    }
-    story force_own_will {
-        < system_command force_own_will
-        <fn>
-            ai.force_own_will_story()
-            ret = "System command executed, boss!"
         </fn>
     }
     story {
         < <intent>thanku
         <fn>
-            # local a = {'u welcome', 'im here to serve'}
-            # return a[ math.random( #a ) ]  
             db['test']='u welcome'          
             ret=db['test']
         </fn>

@@ -7,7 +7,7 @@
     "((.* no motivation)|(don't want))": "no_motivation",
     "(no|nope)": "no",
     "(stop|(stop that)|forget|(shut up))": "stop_phrase",
-    "((thank)|(thx))": "thanku",
+    "((thank)|(thx)|(thanks)|(thanx))": "thanku",
     "((.* about yourself)|bot)": "about"
 
 }

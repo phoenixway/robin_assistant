@@ -68,7 +68,7 @@ class AI:
         self.silence_task = None
         self.is_started = True
         self.repeat_if_silence = False
-        self.handle_silence = True
+        self.handle_silence = False
         self.robins_story_ids = []
         if 'debug' in modules['config']:
             self.set_silence_time(seconds=15)
@@ -98,22 +98,44 @@ class AI:
         m = self.modules
         return eval(expr, globals(), locals())
 
+    def evaluate(self, n : AstNode) -> AstNode:
+        res = None
+        if self.eval_expr(n.condition):
+            res = n.next_if_true
+        else:
+            res = n.next_if_else
+            if n.elif_variants:
+                for v in n.elif_variants:
+                    r1 = self.run_expr(v.condition)
+                    if r1:
+                        res = v.node
+                        break
+        return res
+
     def next_str_node(self, n, log, i):
+        """
+        i: поточний індекс в лозі
+        n: вузол до якого шукаємо наступний вузол
+        """
         res = None
         if isinstance(n, (InputNode, OutputNode, FnNode, ParamInputNode)):
             res = n.next
         elif isinstance(n, IfNode):
-            res = None
-            if self.eval_expr(n.condition):
-                res = n.next_if_true
-            else: 
-                if n.elif_variants:
-                    for v in n.elif_variants:
-                        r1 = self.run_expr(v.condition)
-                        if r1:
-                            res = v.node
+            # TODO: прочесати лог чи є в ньому відобаження then частин. якщо є повернути їх як next. 
+            if n.map_to_history() in log:
+                if log[-1] == n.map_to_history():
+                    res = self.evaluate(n)
+                else:
+                    consequences = [n.next_if_true]
+                    consequences.extend(n.elif_variants)
+                    consequences.add(n.next_if_else)
+                    res = None
+                    for c in consequences:
+                        if c.map_to_history() in log:
+                            res = c
                             break
-                res = n.next_if_else
+            else:
+                res = self.evaluate(n)
         elif isinstance(n, IfInNode):
             if lst := [it for it in n.variants if str(it) == log[i]]:
                 res = lst[0]
@@ -235,18 +257,18 @@ class AI:
         #     for item in list(set(copy.deepcopy(l))):
         #         item.next = None
         #         self.implement(item)
-    def raw_implement(self, n : AstNode) -> str:
+    def implement(self, n : AstNode) -> str:
         answer = None
         if isinstance(n, IfNode):
             # TODO: check conditions, process (run/send message/whatever) depending on them
             self.history.append(n.map_to_history())
             if self.eval_expr(n.condition):
-                self.raw_implement(n.next_if_true)
+                self.implement(n.next_if_true)
             else:
                 if n.elif_variants:
                     for item in n.elif_variants:
                         if self.eval_expr(item.condition):
-                            self.raw_implement(item.node)
+                            self.implement(item.node)
                             answer = 'not_None'
                             break
                 if answer != 'not_None':
@@ -265,26 +287,30 @@ class AI:
                 answer = answer[2:]
             self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, self.runtime_vars)))
         if n.next is not None and not isinstance(n.next, (InputNode, IfInNode)):
-            self.raw_implement(n.next)
+            self.implement(n.next)
         return answer
         
-    def implement(self, n: AstNode) -> str:
-        return self.raw_implement(n)
-        # for n in self.nodes_until_input(n):
-        #     answer = 
-            
     def get_next(self, history, s) -> AstNode:
         '''Get story next element'''
-        # if s.name == 'day_preparation':
-                 # breakpoint()
+        # if s.name == 'alarm':
+        #     breakpoint()
         n = s.first_node
         # detect if n is user input with parameters
         # TODO: fix bellow
         if n is None:
             return None
-        if self.is_mapped(n, history[-1]):
-            history[-1] = n.value
-        if n.map_to_history() not in history:
+        # FIXME: no value, можливо позбутися цього взагалі
+        # if self.is_mapped(n, history[-1]):
+        #     history[-1] = n.value
+        in_history = False
+        i2 = len(history) - 1
+        for item in history[::-1]:
+            if self.is_mapped(n, item):
+                in_history = True
+                break
+            i2 = i2 - 1
+        if not in_history:
+            # FIXME: if n.map == text.to_log: вернути get_next(hiostory, s, text, n)
             return None
 
         # elif n is None or (str(n) not in history):
@@ -292,7 +318,10 @@ class AI:
         # TODO: take care for cases where story has several same nodes as first one
         # if str(n) not in history:
         #     return None
-        il = len(history) - history[::-1].index(str(n)) - 1
+        # FIXME: шукати в history не str(n) а n.map_to_history()
+        # il = len(history) - history[::-1].index(str(n)) - 1
+        # il = len(history) - history[::-1].index(n.map_to_history()) - 1
+        il = len(history) - i2 - 1
         # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
         # TODO: what to do when n is control statement?
         while True:
@@ -302,7 +331,8 @@ class AI:
             # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
             if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
                 break
-        return None if n is None or (il < len(history) and not self.is_mapped(n, history[il])) else n
+        res = None if n is None or (il < len(history) and not self.is_mapped(n, history[il])) else n
+        return res
     
     def respond_text(self, text):  # sourcery skip: remove-pass-elif
         log.debug("Parsing user input with ai.respond_text")
@@ -312,6 +342,7 @@ class AI:
             self.modules['actions_queue'].add_action(Action(ActionType.SystemCommand, text.strip()))
             return
         else:
+            # FIXME: ДОДАВАТИ mapping, а не self.to_canonical(text)
             self.history.append(self.to_canonical(text))
         answer = None
         for story in self.stories:
@@ -319,6 +350,7 @@ class AI:
                 # breakpoint()
             # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
             # імплементуємо елемент історії, який має бути наступним
+            # FIXME: передавати ще і text, в лог додавати пізніше а не в лінії 320
             if next_node := self.get_next(self.history, story):
                 # breakpoint()
                 answer = self.implement(next_node)

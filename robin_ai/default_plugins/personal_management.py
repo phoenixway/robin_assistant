@@ -14,7 +14,7 @@ class PArtOfLiving(IPlugin):
         log.debug("Doing regular work")
         ai = PArtOfLiving.modules['ai']
         ai.add_to_own_will("day_preparation")
-        ai.add_to_own_will("day_time_usage")
+        # ai.add_to_own_will("day_time_usage")
 
     async def user_connect_handler(self, event):
         db = PArtOfLiving.modules['db']
@@ -45,7 +45,7 @@ class PArtOfLiving(IPlugin):
                         db['day_time_usage_morning '] = API.today_str()
                 elif API.is_time_between(time(13,1), time(16,0)):
                     if db['day_time_usage_daytime '] != API.today_str():
-                        db['day_time_usage_daytime '] = API.today_str(
+                        db['day_time_usage_daytime '] = API.today_str()
                         ai.force_say("It seems like u wasting ur time, boss. Is it really ok for u to lose one more day of ur life? Think about ur pride of warrior. Pull urself together!")
                 elif API.is_time_between(time(16,5), time(20,0)):
                     if db['day_time_usage_evening '] != API.today_str():
@@ -77,18 +77,17 @@ class PArtOfLiving(IPlugin):
                                 <intent>no => {
                                     > Think of them!
                                 }
-                            </if>
+                            </if in>
                     }
                     not thinking about consenquences => {
                         > Please, think about consenquences. U will not live the best version of today if u do not set, write and plan most important goals for today!
                     }
-                </if>
+                </if in>
             }
-        </if>
+        </if in>
     }
-    
-    story plan_control {
-        <if db['day_plan'] != API.today_str() > {
+    story plan_control{
+        <if>db['day_plan'] != API.today_str()</if> {
             > Do you have a plan allowing ur day goals to become reality? 
             <if in> 
                 <intent>yes => {
@@ -100,7 +99,7 @@ class PArtOfLiving(IPlugin):
                 <intent>no => {
                    > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
             }
-            </if>
+            </if in>
         }
         <else> {
             <fn>
@@ -108,67 +107,70 @@ class PArtOfLiving(IPlugin):
             </fn>
         }
     }
-    story day_preparation {
-        <if db['day_priorities'] != API.today_str() > {
-            > Do u have today priorities? 
-            <if in> 
-                <intent>yes => {
-                    <fn>
-                        db['day_priorities'] = API.today_str()
-                    </fn>
-                    > Great! Having day beams is an absolutely mandatory element of a high level day. What about goal list?
-                    <if in>
+        """
+        ai.add_story_by_source(s)
+        s = """
+            story day_preparation {
+                <if>db['day_priorities'] != API.today_str() </if> {
+                    > Do u have today priorities? 
+                    <if in> 
                         <intent>yes => {
-                            > Wonderful!
                             <fn>
-                                ai.force_story("plan_control")
+                                db['day_priorities'] = API.today_str()
                             </fn>
+                            > Great! Having day beams is an absolutely mandatory element of a high level day. What about goal list?
+                            <if in>
+                                <intent>yes => {
+                                    > Wonderful!
+                                    <fn>
+                                        ai.force_story("plan_control")
+                                    </fn>
+                                }
+                                <intent>no => {
+                                    > It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.
+                                    <fn>
+                                        ai.force_story("plan_control")
+                                    </fn>
+                                }
+                            </if in>
                         }
                         <intent>no => {
-                            > It's all right, mostly. Achieve 3 top priorities of today, only then you may begin to worry about another goals.
-                            <fn>
-                                ai.force_story("plan_control")
-                            </fn>
-                        }
-                    </if>
-                }
-                <intent>no => {
-                    > Why don't to do it right now?
-                        <if in>
-                            <intent>yes => {
-                                > Cool!
-                            }
-                            busy => {
-                                > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
-                            }
-                            <intent>no_motivation => {
-                                > What about Levi's method?
-                                < dont want
-                                > Are u realize the consequences? Do you accept them? Responsibility for them?
+                            > Why don't to do it right now?
                                 <if in>
                                     <intent>yes => {
-                                        > Then let's them be. 
+                                        > Cool!
                                     }
-                                    <intent>no => {
-                                        > Think of them!
+                                    busy => {
+                                        > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
                                     }
-                                </if>
-                            }
-                        </if>
+                                    <intent>no_motivation => {
+                                        > What about Levi's method?
+                                        < dont want
+                                        > Are u realize the consequences? Do you accept them? Responsibility for them?
+                                        <if in>
+                                            <intent>yes => {
+                                                > Then let's them be. 
+                                            }
+                                            <intent>no => {
+                                                > Think of them!
+                                            }
+                                        </if in>
+                                    }
+                                </if in>
+                        }
+                    </if in>
                 }
-            </if>
-        }
-        <else>
-            <fn>
-                ai.force_story('plan_control')
-            </fn>
-    }
+                <else>
+                    <fn>
+                        ai.force_story('plan_control')
+                    </fn>
+            }
         """
         ai.add_story_by_source(s)
         ai.add_to_own_will("day_preparation")
-        ai.add_to_own_will("day_time_usage")
+        # ai.add_to_own_will("day_time_usage")
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(self.do_regular_work, 'interval', minutes=1,
+        scheduler.add_job(self.do_regular_work, 'interval', minutes=15,
                           id="do_most_important_id")
         scheduler.start()

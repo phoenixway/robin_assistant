@@ -81,7 +81,7 @@ def test_1liners2():
             nothing => {
                 > Oh...
             }
-        </if>
+        </if in>
         < fuck
     }
     story testname1 {
@@ -96,7 +96,7 @@ def test_1liners2():
             nothing => {
                 > Oh...
             }
-        </if>
+        </if in>
         < fuck
         > dont curse
     }
@@ -118,25 +118,25 @@ def test_1liners2():
     check_next(log, st, "> dont curse")
 
     
-# def test_inline_fn():
-#     source = r"""
-#     story testname {
-#         < input1
-#         > <f code1 = 'random python inline code'] output1 <f code2 = 'that will be executed before and after Robin response'>
-#         < input 2
-#         > output 2
-#     }
-#     """
-#     sts = RSParser.create_from_text(source)
-#     st = sts[1]
-#     assert st is not None, "StoryFactory.create_from_text error"
-#     assert isinstance(st, Story), "st must be Story"
-#     assert st.name == "testname", "st.name must be testname"
-#     assert st.contains("< input1"), "st.contains must work"
-#     log = ["< input1"]
-#     check_next(log, st, "> output1")
-#     log.extend(("> output1", '< input2'))
-#     check_next(log, st, "> output 2")
+def test_inline_fn():
+    source = r"""
+    story testname {
+        < input1
+        > <f code1 = 'random python inline code'] output1 <f code2 = 'that will be executed before and after Robin response'>
+        < input 2
+        > output 2
+    }
+    """
+    sts = RSParser.create_from_text(source)
+    st = sts[1]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.name == "testname", "st.name must be testname"
+    assert st.contains("< input1"), "st.contains must work"
+    log = ["< input1"]
+    check_next(log, st, "> output1")
+    log.extend(("> output1", '< input2'))
+    check_next(log, st, "> output 2")
 
 
 def test_grammar_if():
@@ -500,42 +500,38 @@ def test_parametrized_input1():
     check_next(lst, st, "> Alarming! 5 minutes passed!")
 
 
-# def test_parametrized_input2():
-#     raw_story = r"""
-#     story {
-#         < query goals %s 
-#         <fn>
-#             ret = 'yes we can'
-#         </fn>
-#     }
-#     """
-#     st = RSParser.create_from_text(raw_story)
-#     st = st[0]
-#     assert st is not None, "StoryFactory.create_from_text error"
-#     assert isinstance(st, Story), "st must be Story"
-#     assert st.contains(
-#         r"< query goals %s"), "st.contains must work"
-#     lst = [r'< query goals "test query" ']
-#     check_next(lst, st, "yes we can", FnNode)
-#     lst = [r"< query goals one_word"]
-#     check_next(lst, st, "yes we can", FnNode)
+def test_parametrized_input2():
+    raw_story = r"""
+    story {
+        < query goals %s 
+        > yes we can
+    }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< query goals %s"), "st.contains must work"
+    lst = [r'< query goals "test query" ']
+    check_next(lst, st, "> yes we can")
 
 
-# def test_parametrized_input3():
-#     raw_story = r"""
-#     story {
-#         < *
-#         > superbla
-#     }
-#     """
-#     st = RSParser.create_from_text(raw_story)
-#     st = st[0]
-#     assert st is not None, "StoryFactory.create_from_text error"
-#     assert isinstance(st, Story), "st must be Story"
-#     assert st.contains(
-#         r"< *"), "st.contains must work"
-#     lst = [r'< random input text']
-#     check_next(lst, st, "> superbla")
+def test_parametrized_input3():
+    raw_story = r"""
+    story {
+        < *
+        > superbla
+    }
+    """
+    st = RSParser.create_from_text(raw_story)
+    st = st[0]
+    assert st is not None, "StoryFactory.create_from_text error"
+    assert isinstance(st, Story), "st must be Story"
+    assert st.contains(
+        r"< *"), "st.contains must work"
+    lst = [r'< random input text']
+    check_next(lst, st, "> superbla")
 
 '''
 def test_parametrized_input3():
