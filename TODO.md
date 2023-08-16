@@ -6,6 +6,7 @@
   
 * websockets client 
     * system wide notifications
+    * autocompletion, including from history, system commands, etc
 
 * ввід з параметрами
   * подальший розвиток парсення вводу на параметри
