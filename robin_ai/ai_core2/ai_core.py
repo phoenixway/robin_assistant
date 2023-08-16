@@ -295,8 +295,8 @@ class AI:
         
     def get_next(self, history, s) -> AstNode:
         '''Get story next element'''
-        if s.name == 'day_preparation':
-            breakpoint()
+        # if s.name == 'day_preparation':
+        #     breakpoint()
         n = s.first_node
         # detect if n is user input with parameters
         # TODO: fix bellow
