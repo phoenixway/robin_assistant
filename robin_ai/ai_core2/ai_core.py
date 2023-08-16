@@ -127,8 +127,11 @@ class AI:
                     res = self.evaluate(n)
                 else:
                     consequences = [n.next_if_true]
-                    consequences.extend(n.elif_variants)
-                    consequences.add(n.next_if_else)
+                    # TODO: make this work
+                    if n.elif_variants:
+                        consequences.extend(n.elif_variants)
+                    if n.next_if_else:
+                        consequences.append(n.next_if_else)
                     res = None
                     for c in consequences:
                         if c.map_to_history() in log:
@@ -292,8 +295,8 @@ class AI:
         
     def get_next(self, history, s) -> AstNode:
         '''Get story next element'''
-        # if s.name == 'alarm':
-        #     breakpoint()
+        if s.name == 'day_preparation':
+            breakpoint()
         n = s.first_node
         # detect if n is user input with parameters
         # TODO: fix bellow
