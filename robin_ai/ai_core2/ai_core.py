@@ -303,6 +303,7 @@ class AI:
         # if self.is_mapped(n, history[-1]):
         #     history[-1] = n.value
         in_history = False
+        # last_index of first node in history
         i2 = len(history) - 1
         for item in history[::-1]:
             if self.is_mapped(n, item):
@@ -321,7 +322,8 @@ class AI:
         # FIXME: шукати в history не str(n) а n.map_to_history()
         # il = len(history) - history[::-1].index(str(n)) - 1
         # il = len(history) - history[::-1].index(n.map_to_history()) - 1
-        il = len(history) - i2 - 1
+        # il = len(history) - i2 - 1
+        il = i2
         # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
         # TODO: what to do when n is control statement?
         while True:
