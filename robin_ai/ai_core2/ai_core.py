@@ -68,7 +68,7 @@ class AI:
         self.silence_task = None
         self.is_started = True
         self.repeat_if_silence = False
-        self.handle_silence = False
+        self.handle_silence = True
         self.robins_story_ids = []
         if 'debug' in modules['config']:
             self.set_silence_time(seconds=15)
