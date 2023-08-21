@@ -143,6 +143,9 @@ class AI:
 
         return res
 
+""" 
+older, not refactored code
+"""
     # def next_str_node(self, n, log, i):
     #     """
     #     i: поточний індекс в лозі
@@ -287,11 +290,25 @@ class AI:
             return [node] + self.nodes_until_input(node.next)
         else:
             return []
-# l = self.nodes_until_input(n)
-        # if len(l) > 1:
-        #     for item in list(set(copy.deepcopy(l))):
-        #         item.next = None
-        #         self.implement(item)
+    
+    def is_repeating(self, n : OutputNode) -> bool:
+        """Checks if the given OutputNode is repeating in history
+
+        Args:
+            n (AstNode): [description]
+
+        Returns:
+            bool: [description]
+        """
+        res = False
+        l = self.history.reverse()
+        i = 0
+        while i < len(l) and not isinstance(l[i], (IfInNode, IfNode, FnNode)):
+            if n.map_to_history() == l[i].map_to_history():
+                res = True
+            i += 1
+        return False
+    
     def implement(self, n : AstNode) -> str:
         answer = None
         if isinstance(n, IfNode):
@@ -317,7 +334,9 @@ class AI:
             answer = 'not_None'
         else:
             answer = n.value
-            if self.history[-1] != answer:
+            if isinstance(n, OutputNode) and self.is_repeating(n):
+                pass
+            else:
                 self.history.append(answer)
                 if "> " in answer or "< " in answer:
                     answer = answer[2:]
@@ -459,9 +478,8 @@ class AI:
 
     def force_say(self, text):
         s = self.to_canonical(text)
-        if self.history is not None and len(self.history) > 0 and self.history[-1] != s:
-            self.history.append(s)
-            self.modules['messages'].say(text)
+        self.history.append(s)
+        self.modules['messages'].say(text)
 
     def force_story(self, story_id):
         # FIXME:whole func
