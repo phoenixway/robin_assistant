@@ -99,7 +99,6 @@ class AI:
         return eval(expr, globals(), locals())
 
     def evaluate(self, n : AstNode) -> AstNode:
-        res = None
         if self.eval_expr(n.condition):
             res = n.next_if_true
         else:
@@ -143,9 +142,9 @@ class AI:
 
         return res
 
-""" 
-older, not refactored code
-"""
+    """ 
+    older, not refactored code
+    """
     # def next_str_node(self, n, log, i):
     #     """
     #     i: поточний індекс в лозі
