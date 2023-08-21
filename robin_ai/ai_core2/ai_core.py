@@ -300,12 +300,12 @@ class AI:
             bool: [description]
         """
         res = False
-        l = self.history.reverse()
-        i = 0
-        while i < len(l) and not isinstance(l[i], (IfInNode, IfNode, FnNode)):
-            if n.map_to_history() == l[i].map_to_history():
+        l = self.history
+        i = len(l) - 1
+        while i > -1 and not isinstance(l[i], (IfInNode, IfNode, FnNode)):
+            if n.map_to_history() == l[i]:
                 res = True
-            i += 1
+            i -= 1
         return False
     
     def implement(self, n : AstNode) -> str:
