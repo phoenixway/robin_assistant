@@ -317,10 +317,13 @@ class AI:
             answer = 'not_None'
         else:
             answer = n.value
-            self.history.append(answer)
-            if "> " in answer or "< " in answer:
-                answer = answer[2:]
-            self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, self.runtime_vars)))
+            if self.history[-1] != answer:
+                self.history.append(answer)
+                if "> " in answer or "< " in answer:
+                    answer = answer[2:]
+                self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, self.runtime_vars)))
+                if "> " in answer or "< " in answer:
+                    answer = answer[2:]
         if n.next is not None and not isinstance(n.next, (InputNode, IfInNode)):
             self.implement(n.next)
         return answer
