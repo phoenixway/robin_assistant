@@ -1,13 +1,13 @@
 {
-    "(fuck|shit|bitch)": "cursing",
     "(hello|hey|hi|(good day))": "greetings",
     "i planned day": "i_planned_day",
     "(bye|exit|(quit))": "bye",
-    "(yes|yeah|sure|ok|maybe)": "yes",
+    "(yes|yeah|sure|ok|maybe|yez)": "yes",
     "((.* no motivation)|(don't want))": "no_motivation",
-    "(no|nope)": "no",
+    "(no|nope|(fuck u)|(fuck off)|(go to hell)|(don't want))": "no",
     "(stop|(stop that)|forget|(shut up))": "stop_phrase",
     "((thank)|(thx)|(thanks)|(thanx))": "thanku",
-    "((.* about yourself)|bot)": "about"
+    "((.* about yourself)|bot)": "about",
+    "((.* fuck .*)|shit|bitch)": "cursing"
 
 }

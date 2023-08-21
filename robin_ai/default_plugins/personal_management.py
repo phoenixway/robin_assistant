@@ -84,6 +84,9 @@ class PArtOfLiving(IPlugin):
                     }
                 </if in>
             }
+            <intent>yes => {
+               > Carry on!
+            }
         </if in>
     }
     story plan_control{
@@ -98,6 +101,14 @@ class PArtOfLiving(IPlugin):
                 }
                 <intent>no => {
                    > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
+                   <if in>
+                        <intent>yes => {
+                            > Great, boss! Don't forget ur promise!
+                        }
+                        <intent>no => {
+                            > What prevents u?
+                        }
+                   </if in>
             }
             </if in>
         }
@@ -112,8 +123,11 @@ class PArtOfLiving(IPlugin):
         s = """
             story day_preparation {
                 <if>db['day_priorities'] != API.today_str() </if> {
-                    > Do u have today priorities? 
-                    <if in> 
+                    > Do u have written today priorities?
+                    <if in>
+                        working on it => {
+                            > Do ur best!
+                        }
                         <intent>yes => {
                             <fn>
                                 db['day_priorities'] = API.today_str()
@@ -142,6 +156,9 @@ class PArtOfLiving(IPlugin):
                                     }
                                     busy => {
                                         > Please, choose exact time. Then provide a way to guarantee execution of that. Maybe, set timer with reminder.
+                                    }
+                                    soon => {
+                                        > When?
                                     }
                                     <intent>no_motivation => {
                                         > What about Levi's method?

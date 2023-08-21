@@ -18,12 +18,28 @@
             import sys
             sys.exit(0)
         </fn>
-    }    
+    }
+
     story {
         < <intent>cursing
         > Dont curse
     }
-   
+
+    story chatgpt{
+        < ask chatgpt %s
+        <fn>
+            query = vars.unnamed_vars[0].value
+            import openai
+            openai.api_key = "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"
+            messages = [ {"role": "system", "content": "You are a intelligent assistant."} ]
+            messages.append( {"role": "user", "content": query}, )
+            chat = openai.ChatCompletion.create( model="gpt-3.5-turbo", messages=messages )
+            log.debug(query)
+            ms.say(chat.choices[0].message.content)
+            # log.log(chat.choices[0].message.content)
+        </fn>
+    }
+
     story alarm{
         < alarm in %d m
         <fn>
@@ -50,6 +66,17 @@
             ret = str(datetime.now())
         </fn> 
     }
+
+    story {
+        < google %s
+        <fn>
+            import webbrowser
+            query = vars.unnamed_vars[0].value
+            webbrowser.open('https://www.google.com/search?q={}'.format(query.replace(' ', '+')))
+            ret = "Enjoy, sir."
+        </fn> 
+    }
+
     story {
         < anime time!
         <fn>

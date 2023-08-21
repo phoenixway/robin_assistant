@@ -11,3 +11,4 @@ websocket-server==0.6.4
 websockets==10.4
 Yapsy==1.12.2
 pytz
+openai

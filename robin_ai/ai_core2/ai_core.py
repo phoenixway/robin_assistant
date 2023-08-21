@@ -118,37 +118,69 @@ class AI:
         n: вузол до якого шукаємо наступний вузол
         """
         res = None
+
         if isinstance(n, (InputNode, OutputNode, FnNode, ParamInputNode)):
             res = n.next
         elif isinstance(n, IfNode):
-            # TODO: прочесати лог чи є в ньому відобаження then частин. якщо є повернути їх як next. 
+            # Check if there are any "then" parts in the log and return them as next nodes
             if n.map_to_history() in log:
                 if log[-1] == n.map_to_history():
                     res = self.evaluate(n)
                 else:
                     consequences = [n.next_if_true]
-                    # TODO: make this work
                     if n.elif_variants:
                         consequences.extend(n.elif_variants)
                     if n.next_if_else:
                         consequences.append(n.next_if_else)
-                    res = None
-                    for c in consequences:
-                        if c.map_to_history() in log:
-                            res = c
-                            break
+                    res = next((c for c in consequences if c.map_to_history() in log), None)
             else:
                 res = self.evaluate(n)
         elif isinstance(n, IfInNode):
-            if lst := [it for it in n.variants if str(it) == log[i]]:
-                res = lst[0]
-            else:
-                res = None
-        else:
-            res = None
+            res = next((it for it in n.variants if str(it) == log[i]), None)
+
         if res is not None and isinstance(res, (IfNode, IfInNode)):
             res = self.next_str_node(res, log, i)
+
         return res
+
+    # def next_str_node(self, n, log, i):
+    #     """
+    #     i: поточний індекс в лозі
+    #     n: вузол до якого шукаємо наступний вузол
+    #     """
+    #     res = None
+    #     if isinstance(n, (InputNode, OutputNode, FnNode, ParamInputNode)):
+    #         res = n.next
+    #     elif isinstance(n, IfNode):
+    #         # TODO: прочесати лог чи є в ньому відобаження then частин. якщо є повернути їх як next. 
+    #         if n.map_to_history() in log:
+    #             if log[-1] == n.map_to_history():
+    #                 res = self.evaluate(n)
+    
+        #         else:
+        #             consequences = [n.next_if_true]
+        #             # TODO: make this work
+        #             if n.elif_variants:
+        #                 consequences.extend(n.elif_variants)
+        #             if n.next_if_else:
+        #                 consequences.append(n.next_if_else)
+        #             res = None
+        #             for c in consequences:
+        #                 if c.map_to_history() in log:
+        #                     res = c
+        #                     break
+        #     else:
+        #         res = self.evaluate(n)
+        # elif isinstance(n, IfInNode):
+        #     if lst := [it for it in n.variants if str(it) == log[i]]:
+        #         res = lst[0]
+        #     else:
+        #         res = None
+        # else:
+        #     res = None
+        # if res is not None and isinstance(res, (IfNode, IfInNode)):
+        #     res = self.next_str_node(res, log, i)
+        # return res
 
     def is_mapped(self, n : AstNode, item) -> bool:
         """
@@ -336,8 +368,12 @@ class AI:
             # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
             if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
                 break
-        res = None if n is None or (il < len(history) and not self.is_mapped(n, history[il])) else n
-        return res
+        return (
+            None
+            if n is None
+            or (il < len(history) and not self.is_mapped(n, history[il]))
+            else n
+        )
     
     def respond_text(self, text):  # sourcery skip: remove-pass-elif
         log.debug("Parsing user input with ai.respond_text")
@@ -382,7 +418,7 @@ class AI:
                 log.debug(f"Story: {s}")
                 self.force_story(s)
             else:
-                log.debug(f"No story to be forcely called")
+                log.debug("No story to be forcely called")
 
     async def start_silence(self):
         log.debug("Silence detection started")
@@ -419,16 +455,17 @@ class AI:
         self.init_silence()
 
     def force_say(self, text):
-        self.history.append(self.to_canonical(text))
-        self.modules['messages'].say(text)
+        s = self.to_canonical(text)
+        if self.history is not None and len(self.history) > 0 and self.history[-1] != s:
+            self.history.append(s)
+            self.modules['messages'].say(text)
 
     def force_story(self, story_id):
         # FIXME:whole func
         if not self.modules['messages'].websockets:
             return
         log.debug(f"Make to start the story: {story_id}")
-        stories = [i for i in self.stories if i.name == story_id]
-        if len(stories) > 0:
+        if stories := [i for i in self.stories if i.name == story_id]:
             st = stories[0]
             if story_id and st:
                 # TODO: parse any nodes
