@@ -306,7 +306,14 @@ class AI:
             if n.map_to_history() == l[i]:
                 res = True
             i -= 1
-        return False
+        return res
+
+    # def getLastOutput(self) -> str:
+    #     l = self.history
+    #     i = len(l) - 1
+    #     while i > -1 and not l[i].startswith('> '):
+    #         i -= 1
+    #     return l[i] if i > -1 else None
     
     def implement(self, n : AstNode) -> str:
         answer = None
@@ -477,6 +484,7 @@ class AI:
 
     def force_say(self, text):
         s = self.to_canonical(text)
+        # if s != self.getLastOutput():
         self.history.append(s)
         self.modules['messages'].say(text)
 

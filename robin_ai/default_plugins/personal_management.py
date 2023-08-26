@@ -103,7 +103,7 @@ class PArtOfLiving(IPlugin):
                    > Goals without plan have big chances to stay only intentions. Plan is a way to guarantee goals implementation. Will you do it within a sane peace of time?
                    <if in>
                         <intent>yes => {
-                            > Great, boss! Don't forget ur promise!
+                            > Great, boss! Don't forget ur promise! Please, set time when u'll start and finish.
                         }
                         <intent>no => {
                             > What prevents u?
@@ -188,6 +188,6 @@ class PArtOfLiving(IPlugin):
         # ai.add_to_own_will("day_time_usage")
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(self.do_regular_work, 'interval', minutes=10,
+        scheduler.add_job(self.do_regular_work, 'interval', minutes=1,
                           id="do_most_important_id")
         scheduler.start()
