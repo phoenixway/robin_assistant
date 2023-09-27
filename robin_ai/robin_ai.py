@@ -66,7 +66,7 @@ def init_modules():
     if not debug_server_mode:
         MODULES['db'] = RobinDb('memory', MODULES)
         MODULES['ai'] = AI(MODULES)
-        actions_queue.respond_to_user_message_callback = MODULES['ai'].respond_text
+        actions_queue.respond_to_user_message_callback = MODULES['ai'].respond
         actions_queue.force_own_will_callback = MODULES['ai'].force_own_will_story
 
     actions_queue.close_server_callback = close_server

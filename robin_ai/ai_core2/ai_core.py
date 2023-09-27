@@ -111,7 +111,8 @@ class AI:
                         break
         return res
 
-    def next_str_node(self, n, log, i):
+    # TODO: create astnode.next property instead
+    def next_node(self, n, log, i):
         """
         i: поточний індекс в лозі
         n: вузол до якого шукаємо наступний вузол
@@ -138,7 +139,7 @@ class AI:
             res = next((it for it in n.variants if str(it) == log[i]), None)
 
         if res is not None and isinstance(res, (IfNode, IfInNode)):
-            res = self.next_str_node(res, log, i)
+            res = self.next_node(res, log, i)
 
         return res
 
@@ -352,27 +353,29 @@ class AI:
         if n.next is not None and not isinstance(n.next, (InputNode, IfInNode)):
             self.implement(n.next)
         return answer
-        
-    def get_next(self, history, s) -> AstNode:
+
+    # TODO: remove history from func declaration
+    # TODO: change name to find_next_node(self, s). return none or node from story s that must be next based on current history
+    def next_in_story(self, s) -> AstNode:
         '''Get story next element'''
         # if s.name == 'day_preparation':
         #     breakpoint()
-        n = s.first_node
         # detect if n is user input with parameters
         # TODO: fix bellow
-        if n is None:
+        if s.first_node is None:
             return None
+        n = s.first_node
         # FIXME: no value, можливо позбутися цього взагалі
         # if self.is_mapped(n, history[-1]):
         #     history[-1] = n.value
         in_history = False
         # last_index of first node in history
-        i2 = len(history) - 1
-        for item in history[::-1]:
-            if self.is_mapped(n, item):
+        last_index = len(self.history) - 1
+        for item in self.history[::-1]:
+            if self.is_mapped(s.first_node, item):
                 in_history = True
                 break
-            i2 = i2 - 1
+            last_index = last_index - 1
         if not in_history:
             # FIXME: if n.map == text.to_log: вернути get_next(hiostory, s, text, n)
             return None
@@ -386,24 +389,26 @@ class AI:
         # il = len(history) - history[::-1].index(str(n)) - 1
         # il = len(history) - history[::-1].index(n.map_to_history()) - 1
         # il = len(history) - i2 - 1
-        il = i2
+        # TODO: rename il to index_to_check
+        il = last_index
         # TODO: how to handle ifinnode as n and one of its variants's key as log[il]?
         # TODO: what to do when n is control statement?
         while True:
             il = il + 1
-            n = self.next_str_node(n, history, il)
+            n = self.next_node(n, self.history, il)
             # breakpoint()
             # if (il >= len(log)) or (n is None) or ( log[il] != n.log_form()):
-            if (il >= len(history)) or (n is None) or (not self.is_mapped(n, history[il])):
+            if (il >= len(self.history)) or (n is None) or (not self.is_mapped(n, self.history[il])):
                 break
         return (
-            None
-            if n is None
-            or (il < len(history) and not self.is_mapped(n, history[il]))
-            else n
+            None 
+                if n is None or (il < len(self.history) and not self.is_mapped(n, self.history[il]))
+            else 
+                n
         )
-    
-    def respond_text(self, text):  # sourcery skip: remove-pass-elif
+    # TODO: change to respond with named parameter text
+    # TODO: refactor to use get_responce(text = text) -> Action or None to be easily tested
+    def respond(self, text=None, signal=None):  # sourcery skip: remove-pass-elif
         log.debug("Parsing user input with ai.respond_text")
         # import pdb; pdb.set_trace();
         sc_match = re.compile(r":(\w+)")
@@ -413,18 +418,19 @@ class AI:
         else:
             # FIXME: ДОДАВАТИ mapping, а не self.to_canonical(text)
             self.history.append(self.to_canonical(text))
-        answer = None
+        answer_found = False
         for story in self.stories:
             # if story.name == 'day_preparation':
                 # breakpoint()
             # якщо зловили story, перша частину якої від її початку пересікається з останньою частиною логу спілкування, включаючи останню запис
             # імплементуємо елемент історії, який має бути наступним
             # FIXME: передавати ще і text, в лог додавати пізніше а не в лінії 320
-            if next_node := self.get_next(self.history, story):
+            if next_node := self.next_in_story(story):
                 # breakpoint()
-                answer = self.implement(next_node)
+                self.implement(next_node)
+                answer_found = True
                 break
-        if not answer:
+        if not answer_found:
             self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(f"Default answer on '{text}'", self.runtime_vars)))
 
     def add_to_own_will(self, story_id):

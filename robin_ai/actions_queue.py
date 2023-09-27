@@ -31,7 +31,7 @@ class ActionsQueue:
                 try:
                     a = await self.queue.get()
                     if a.action_type == ActionType.RespondToUserMessage:
-                        self.respond_to_user_message_callback(a.value)
+                        self.respond_to_user_message_callback(text=a.value)
                     elif a.action_type == ActionType.SendMessage:
                         log.debug(f'Sended message: {a.value}')
                         self.send_message_callback(a.value)

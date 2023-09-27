@@ -31,7 +31,7 @@ def get_aicore() -> AI:
     ac = AI(MODULES)
     aq = ActionsQueue()
     MODULES['actions_queue'] = aq
-    aq.respond_to_user_message_callback = ac.respond_text
+    aq.respond_to_user_message_callback = ac.respond
     return ac
 
 def check_next(log, s, goal, result_class=OutputNode):
@@ -40,7 +40,8 @@ def check_next(log, s, goal, result_class=OutputNode):
         s : str Story script
     '''
     ac = get_aicore()
-    nxt = ac.get_next(log, s)
+    ac.history = log
+    nxt = ac.next_in_story(s)
     assert nxt is not None, f"next is None, must be Node:{goal}"
     assert isinstance(nxt, result_class), f"next must be {result_class.__name__}"
     res = ac.execute_fn(nxt) if result_class.__name__ == "FnNode" else nxt.value
@@ -118,6 +119,7 @@ def test_1liners2():
     check_next(log, st, "> dont curse")
 
     
+
 def test_inline_fn():
     source = r"""
     story testname {
@@ -328,7 +330,8 @@ def test_func():
     assert st.contains("< func"), "st.contains must work"
     ac = get_aicore()
     lst = ["< func"]
-    fn_node = ac.get_next(lst, st)
+    ac.history = lst
+    fn_node = ac.next_in_story(st)
     assert fn_node is not None, "next is None, must be FnNode"
     assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
     lst.extend([fn_node.map_to_history(), '< Great!'])
@@ -357,7 +360,8 @@ def test_func2():
     assert st.contains("< func"), "st.contains must work"
     ac = get_aicore()
     lst = ["< func"]
-    fn_node = ac.get_next(lst, st)
+    ac.history = lst
+    fn_node = ac.next_in_story(st)
     assert fn_node is not None, "next is None, must be FnNode"
     assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
     lst.extend([fn_node.map_to_history(), '< Great!'])
@@ -431,7 +435,8 @@ def test_func3():
     assert st.contains("< func"), "st.contains must work"
     ac = get_aicore()
     lst = ["< func"]
-    fn_node = ac.get_next(lst, st)
+    ac.history = lst
+    fn_node = ac.next_in_story(st)
     assert fn_node is not None, "next is None, must be FnNode"
     assert isinstance(fn_node, FnNode), f"next must be {FnNode.__name__}"
     lst.extend([fn_node.map_to_history(), '< Great!'])
@@ -533,12 +538,17 @@ def test_parametrized_input3():
     lst = [r'< random input text']
     check_next(lst, st, "> superbla")
 
-'''
-def test_parametrized_input3():
+
+def test_variable_output():
     raw_story = r"""
-    story{
-        < I went there <date: yesterday|recently>, bought <goods1: %s> and <goods2: %s>
-        > ur data are: $date $goods1 $goods2
+    # story{
+    #     < I went there <date: yesterday|recently>, bought <goods1: %s> and <goods2: %s>
+    #     > ur data are: $date $goods1 $goods2
+    # }
+    # 
+    raw_story{
+        < I went there
+        > This text<or>That text with random variation1|variation2|"variation3 with spaces"<or>the ultracool third text
     }
     """
     st = RSParser.create_from_text(raw_story)
@@ -548,4 +558,4 @@ def test_parametrized_input3():
     assert st.contains(
         r"< report <let when>yesterday|%d|(%i days ago)</let>"), "st.contains must work"
     lst = [r"< report <let when>yesterday|%d|(%i days ago)</let>"]
-    check_next(lst, st, "> it's parametrized input!")'''
+    check_next(lst, st, "> it's parametrized input!")

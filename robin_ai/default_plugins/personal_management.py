@@ -188,6 +188,6 @@ class PArtOfLiving(IPlugin):
         # ai.add_to_own_will("day_time_usage")
         # FIXME: new event - userconnected
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(self.do_regular_work, 'interval', minutes=1,
+        scheduler.add_job(self.do_regular_work, 'interval', minutes=2"""  """,
                           id="do_most_important_id")
         scheduler.start()
