@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 from parsimonious.nodes import NodeVisitor
-from .ast_nodes import ElifVariant, IfInNode, IfNode, AstNode, InputNode, OutputNode, FnNode, ParamInputNode  # noqa: E501
+from .fn_node import FnNode
+from .ast_nodes import ElifVariant, IfInNode, IfNode, AstNode, InputNode, OutputNode, ParamInputNode  # noqa: E501
 from .story import Story
 
 

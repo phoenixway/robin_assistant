@@ -2,6 +2,17 @@
 # import re
 
 from .input_templates import TemplatesHandler
+from .fn_runner import FnRunner
+
+try:
+    from ..actions_queue import Action
+    from ..actions_queue import ActionType
+except ImportError:
+    from actions_queue import Action
+    from actions_queue import ActionType
+
+
+fn_runner_obj = FnRunner()
 
 
 class AstNode:
@@ -21,6 +32,9 @@ class AstNode:
     def equals(self, item):
         return self.map_to_history() == str(item)
 
+    def implement(modules : dict) -> str:
+        raise Exception("Not implemented yet!") 
+
 
 class StringNode(AstNode):
     def __init__(self, text):
@@ -33,6 +47,27 @@ class StringNode(AstNode):
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.value}"'
 
+    def implement(self, modules : dict) -> str:
+        answer = self.value
+        # FIXME: do smt with repeation of output
+        # if isinstance(n, OutputNode) and self.is_repeating(n):
+        #     pass
+        # else:
+        #     self.history.append(answer)
+        #     if "> " in answer or "< " in answer:
+        #         answer = answer[2:]
+        #     self.modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, self.runtime_vars)))
+        #     if "> " in answer or "< " in answer:
+        #         answer = answer[2:]
+        modules['ai'].history.append(answer)
+        if "> " in answer or "< " in answer:
+            answer = answer[2:]
+        modules['actions_queue'].add_action(Action(ActionType.SendMessage, TemplatesHandler.substitute(answer, modules['vars'])))
+        if "> " in answer or "< " in answer:
+            answer = answer[2:]
+        if self.next is not None and not isinstance(self.next, (InputNode, IfInNode)):
+            self.next.implement(modules)
+        return answer
 
 class InputNode(StringNode):
     def __init__(self, text):
@@ -40,38 +75,6 @@ class InputNode(StringNode):
 
     def validate(message):
         return message[0:2] == "< "
-
-
-"""
-class ParamInputNode(StringNode):
-    def __init__(self, text):
-        super().__init__(text.replace('%d', r'(\d+)'))
-
-    def validate(self, message):
-        if not message[0:2] == "< ":
-            return False, None
-        if r"(\d+)" in self.value:
-            digitsRegex = re.compile(self.value)
-            matches = digitsRegex.findall(message)
-            return True, matches
-        return False, None"""
-
-
-"""
-є можливий елемент сценарію - ввід користувача з параметрами.
-реальне текстове повідомлення користувача слід вміти 
-    - перевірити на відповідність сценарному
-    - його параметри визначити 
-    - і передати модулю управління відповіддю ші 
-    - правильно запустити наступний сценарний елемент
-Алгоритм цього наступний:
-    - корстуючись peg отримати ast вузли сценарного шаблону
-    - циклом перевірити усі ast nodes на те чи знахїодяться вони послідовно в реальній строці
-    - зберігати при цьому поточну позицію строки реальної, на якій йде робота. 
-    - очевидно при невідповідності або закінченні реальної строки - що слід контролювати - закінчити і повернути false
-    - при відповідності - заповнити змінні які при успіху перевірок передати в управління 
-усе сказане слід покрити тестами
-"""
 
 
 class ParamInputNode(StringNode):
@@ -95,60 +98,6 @@ class OutputNode(StringNode):
         return message[0:2] == "> "
 
 
-# def python_execute(code, modules):
-#     if modules:
-#         if 'db' in modules:
-#             db = modules['db']
-#         if 'messages' in modules:
-#             ms = modules['messages']
-#         if 'events' in modules:
-#             ev = modules['events']
-#         if 'vars' in modules:
-#             vars = modules['vars']
-#     scheduler = AsyncIOScheduler()
-#     lines = code.splitlines()
-#     if len(lines[0]) == 0:
-#         lines.pop(0)
-#     m = re.search(r"(^\s+)", lines[0])
-#     zero_indent = len(m.group(1))
-#     newlines = []
-#     for line in lines:
-#         line = re.sub(r"(^\s{"+str(zero_indent)+r"})", "", line)
-#         newlines.append(line)
-#     new_code = "\n".join(newlines)
-#     loc = dict(locals())
-#     exec(new_code, globals(), loc)
-#     if 'ret' in loc:
-#         return loc['ret']
-#     else:
-#         return None
-
-
-class FnNode(AstNode):
-    def __init__(self, fn_body):
-        self.value = fn_body
-        super().__init__()
-        
-    def __hash__(self) -> int:
-        return hash(self.value)
-
-    def __str__(self):
-        return f'{self.value}'
-        # raise Exception("Not implemented")
-        
-    def map_to_history(self) -> str:
-        return str(hash(self.value))
-
-    # def run(self, modules):
-    #     next_answer = python_execute(self.fn_body.rstrip(),
-    #                                  modules)
-    #     if next_answer is None:
-    #         next_answer = "> Done"
-    #     else:
-    #         next_answer = "> " + next_answer
-    #     return next_answer
-
-
 class IfInNode(AstNode):
     def __init__(self):
         self.variants = {}
@@ -169,6 +118,7 @@ class ElifVariant():
 
 
 class IfNode(AstNode):
+
     def __init__(self):
         self.condition = None
         self.next_if_true = None
@@ -188,7 +138,24 @@ class IfNode(AstNode):
 
     def __repr__(self):
         return f'{self.__class__.__name__}: "{self.condition}"'
+    
+    def implement(self, modules : dict) -> str:
+        # FIXME implement is recursive, so changes to aicore.history are needed
+        modules['ai'].history.append(self.map_to_history())
 
+        if self.eval_expr(n.condition):
+            n.next_if_true.implement(modules)
+        else:
+            if n.elif_variants:
+                for item in n.elif_variants:
+                    if self.eval_expr(item.condition):
+                        item.node.implement(modules)
+                        answer = 'not_None'
+                        break
+            if answer != 'not_None':
+                n.next_if_else.implement(modules)
+        answer = 'not_None'
+        return answer
 
 class NodeFactory:
     def create_node(text):

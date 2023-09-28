@@ -70,6 +70,7 @@ def init_modules():
         actions_queue.force_own_will_callback = MODULES['ai'].force_own_will_story
 
     actions_queue.close_server_callback = close_server
+    
 
 async def quit_handler(data):
     log.debug("quit_handler launched")
