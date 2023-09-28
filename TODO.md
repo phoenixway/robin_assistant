@@ -1,14 +1,22 @@
+---
+id: "TODO"
+aliases: []
+tags: []
+---
+
 * практичні функції
 	* швитдкі нотатки
 	* щоденник
 	* todotxt
-    * time tracker
+    * time tracker, перс лог
   
 * websockets client 
     * system wide notifications
     * autocompletion, including from history, system commands, etc
     * що робити коли сервак вирубається. reconnect при розриві
     * заватажувати з файлу адресу ссервака
+    * нормальна поведінка при втраті зєднання
+    *  е 
 
 * ввід з параметрами
   * подальший розвиток парсення вводу на параметри
