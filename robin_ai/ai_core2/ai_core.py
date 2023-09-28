@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import datetime
 import asyncio
 import logging
 import os
@@ -34,19 +33,6 @@ sys.path.append(os.getcwd())
 nest_asyncio.apply()
 tasks = set()
 log = logging.getLogger('pythonConfig')
-
-
-class API:
-    def today_str():
-        return datetime.now().strftime('%Y-%m-%d')
-    
-    def is_time_between(begin_time, end_time, check_time=None): 
-        # If check time is not given, default to current time
-        check_time = check_time or datetime.now().time()
-        if begin_time < end_time:
-            return check_time >= begin_time and check_time <= end_time
-        else: # crosses midnight
-            return check_time >= begin_time or check_time <= end_time
 
 
 class AI:
@@ -247,6 +233,7 @@ class AI:
         self.story_ids.extend([s.name for s in new_stories])
 
     def force_own_will_story(self):
+
         log.debug("force_own_will_story")
         if self.robins_story_ids:
             s = self.robins_story_ids.pop(0)
@@ -258,6 +245,8 @@ class AI:
 
     async def start_silence(self):
         log.debug("Silence detection started")
+        
+
         while self.handle_silence and self.modules['messages'].websockets:
             log.debug(f"Waiting silence for {self.silence_time} seconds")
             await asyncio.sleep(self.silence_time)
@@ -266,21 +255,24 @@ class AI:
                 self.force_own_will_story()
 
     def init_silence(self):
-        if not self.handle_silence:
-            return
-        if self.silence_task is not None:
-            self.silence_task.cancel()
         try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
+            if not self.handle_silence:
+                return
+            if self.silence_task is not None:
+                self.silence_task.cancel()
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
 
-        if loop is None or not (loop.is_running()):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        self.silence_task = loop.create_task(self.start_silence())
-        tasks.add(self.silence_task)
-            # self.silence_task = asyncio.create_task(self.start_silence())
+            if loop is None or not (loop.is_running()):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            self.silence_task = loop.create_task(self.start_silence())
+            tasks.add(self.silence_task)
+                # self.silence_task = asyncio.create_task(self.start_silence())
+        except Exception as e:
+            log.error(e)
 
     async def message_received_handler(self, data):
         log.debug('message received handler')
@@ -298,6 +290,7 @@ class AI:
 
     def force_story(self, story_id):
         # FIXME:whole func
+
         if not self.modules['messages'].websockets:
             return
         log.debug(f"Make to start the story: {story_id}")
@@ -305,6 +298,6 @@ class AI:
             st = stories[0]
             if story_id and st:
                 # TODO: parse any nodes
-                self.implement(st.first_node)
+                st.first_node.implement(self.modules)
         else:
             log.debug(f"No story with such name: {story_id}")

@@ -141,20 +141,24 @@ class IfNode(AstNode):
     
     def implement(self, modules : dict) -> str:
         # FIXME implement is recursive, so changes to aicore.history are needed
-        modules['ai'].history.append(self.map_to_history())
-
-        if self.eval_expr(n.condition):
-            n.next_if_true.implement(modules)
-        else:
-            if n.elif_variants:
-                for item in n.elif_variants:
-                    if self.eval_expr(item.condition):
-                        item.node.implement(modules)
-                        answer = 'not_None'
-                        break
-            if answer != 'not_None':
-                n.next_if_else.implement(modules)
-        answer = 'not_None'
+        answer = "error"
+        try:
+            modules['ai'].history.append(self.map_to_history())
+            fn_runner_obj.modules = modules
+            if fn_runner_obj.eval_expr(self.condition, modules):
+                self.next_if_true.implement(modules)
+            else:
+                if n.elif_variants:
+                    for item in n.elif_variants:
+                        if self.eval_expr(item.condition):
+                            item.node.implement(modules)
+                            answer = 'not_None'
+                            break
+                if answer != 'not_None':
+                    n.next_if_else.implement(modules)
+            answer = 'not_None'
+        except Exception as e:
+            log.error(e)
         return answer
 
 class NodeFactory:
