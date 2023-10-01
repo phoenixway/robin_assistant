@@ -15,7 +15,7 @@ logging.debug(os.getcwd())
 
 from robin_ai.ai_core2.rs_parser import RSParser   # noqa: F403, F401
 from robin_ai.ai_core2.ast_nodes import InputNode, OutputNode  # noqa: E501
-from robin_ai.ai_core2.ast_nodes import FnNode
+from robin_ai.ai_core2.fn_node import FnNode
 from robin_ai.ai_core2.story import Story
 from robin_ai.robin_db import RobinDb
 from robin_ai.robin_events import Robin_events

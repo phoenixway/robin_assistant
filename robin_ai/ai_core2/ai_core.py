@@ -7,14 +7,12 @@ import sys
 import json
 import re
 import copy
-import nest_asyncio
 from pathlib import Path
 from datetime import datetime, time
 from pprint import pformat
 
-
-
 from .rs_parser import RSParser
+from .silence_breaker import SilenceBreaker
 from .fn_runner import FnRunner
 from .ast_nodes import AstNode, IfInNode, IfNode
 from .ast_nodes import InputNode
@@ -30,8 +28,6 @@ except ImportError:
     from actions_queue import ActionType
 
 sys.path.append(os.getcwd())
-nest_asyncio.apply()
-tasks = set()
 log = logging.getLogger('pythonConfig')
 
 
@@ -56,15 +52,11 @@ class AI:
             if 'events' in modules:
                 modules['events'].add_listener('message_received', self.message_received_handler)  # noqa: E501
                 modules['events'].add_listener('message_send', self.message_send_handler)  # noqa: E501
-        self.silence_task = None
+        self.silence_breaker = SilenceBreaker(debug = 'debug' in modules['config'])
+        self.silence_breaker.silence_breaker_callback = self.force_own_will_story
         self.is_started = True
-        self.repeat_if_silence = False
-        self.handle_silence = True
         self.robins_story_ids = []
-        if 'debug' in modules['config']:
-            self.set_silence_time(seconds=15)
-        else:
-            self.set_silence_time(minutes=2)
+
 
     def evaluate(self, n : AstNode) -> AstNode:
         if FnRunner.eval_expr(n.condition, self.modules):
@@ -95,8 +87,7 @@ class AI:
         # TODO: combine intents and parameters
         return res
 
-    def set_silence_time(self, minutes=0, seconds=0):
-        self.silence_time = minutes * 60 + seconds
+
 
     # TODO: create astnode.next property instead
     def next_node(self, n, log, i):
@@ -233,7 +224,6 @@ class AI:
         self.story_ids.extend([s.name for s in new_stories])
 
     def force_own_will_story(self):
-
         log.debug("force_own_will_story")
         if self.robins_story_ids:
             s = self.robins_story_ids.pop(0)
@@ -243,44 +233,13 @@ class AI:
             else:
                 log.debug("No story to be forcely called")
 
-    async def start_silence(self):
-        log.debug("Silence detection started")
-        
-
-        while self.handle_silence and self.modules['messages'].websockets:
-            log.debug(f"Waiting silence for {self.silence_time} seconds")
-            await asyncio.sleep(self.silence_time)
-            log.debug("Silence detected")
-            if self.robins_story_ids:
-                self.force_own_will_story()
-
-    def init_silence(self):
-        try:
-            if not self.handle_silence:
-                return
-            if self.silence_task is not None:
-                self.silence_task.cancel()
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
-
-            if loop is None or not (loop.is_running()):
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            self.silence_task = loop.create_task(self.start_silence())
-            tasks.add(self.silence_task)
-                # self.silence_task = asyncio.create_task(self.start_silence())
-        except Exception as e:
-            log.error(e)
-
     async def message_received_handler(self, data):
         log.debug('message received handler')
-        self.init_silence()
+        self.silence_breaker.start_silence()
 
     async def message_send_handler(self, data):
         log.debug('message send handler')
-        self.init_silence()
+        self.silence_breaker.start_silence()
 
     def force_say(self, text):
         s = self.parse_intents(text)
