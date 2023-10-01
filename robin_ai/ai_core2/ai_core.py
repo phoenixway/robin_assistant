@@ -52,7 +52,7 @@ class AI:
             if 'events' in modules:
                 modules['events'].add_listener('message_received', self.message_received_handler)  # noqa: E501
                 modules['events'].add_listener('message_send', self.message_send_handler)  # noqa: E501
-        self.silence_breaker = SilenceBreaker(debug = 'debug' in modules['config'])
+        self.silence_breaker = SilenceBreaker(debug=modules['config']['debug'])
         self.silence_breaker.silence_breaker_callback = self.force_own_will_story
         self.is_started = True
         self.robins_story_ids = []
