@@ -52,7 +52,10 @@ def init_modules():
     global MODULES
     MODULES['config'] = init_config()
     MODULES['config']['debug_server_mode'] = False
-    MODULES['config']['debug'] = True if (hasattr(sys, 'gettrace') and sys.gettrace() is not None) or (len(sys.argv) > 1) else False
+    MODULES['config']['debug'] = bool(
+        (hasattr(sys, 'gettrace') and sys.gettrace() is not None)
+        or (len(sys.argv) > 1)
+    )
     debug_server_mode = MODULES['config']['debug_server_mode']
     actions_queue = ActionsQueue()
     MODULES['actions_queue'] = actions_queue
@@ -62,7 +65,7 @@ def init_modules():
         MODULES['plugins'] = Plugins(MODULES)
     MODULES['messages'] = Messages(actions_queue, events)
     actions_queue.send_message_callback = MODULES['messages'].say
-    
+
     if not debug_server_mode:
         MODULES['db'] = RobinDb('memory', MODULES)
         MODULES['ai'] = AI(MODULES)
