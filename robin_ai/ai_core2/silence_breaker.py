@@ -38,15 +38,16 @@ class SilenceBreaker:
         return l
     
     def start_silence(self):
-        try:
-            if not self.handle_silence:
-                return
-            if self.silence_task is not None:
-                self.silence_task.cancel()
-            self.silence_task = self.get_loop().create_task(self.start_silence_async())
-            tasks.add(self.silence_task)
-        except Exception as e:
-            log.error(e)
+        while self.handle_silence:
+            try:
+                if not self.handle_silence:
+                    return
+                if self.silence_task is not None:
+                    self.silence_task.cancel()
+                self.silence_task = self.get_loop().create_task(self.start_silence_async())
+                tasks.add(self.silence_task)
+            except Exception as e:
+                log.error(e)
 
     def set_silence_time(self, minutes=0, seconds=0):
         self.silence_time = minutes * 60 + seconds
